@@ -1,0 +1,25 @@
+{
+  "name": "rag-qa-system-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for the RAG Question Answering System",
+  "author": "Your Name",
+  "license": "MIT",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "element-plus": "^2.9.6",
+    "vue": "^3.0.0",
+    "vue-router": "^4.0.0",
+    "vuex": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-service": "^4.5.0",
+    "@vue/compiler-sfc": "^3.0.0",
+    "eslint": "^7.0.0",
+    "eslint-plugin-vue": "^7.0.0"
+  }
+}

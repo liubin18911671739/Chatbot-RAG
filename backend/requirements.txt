@@ -1,0 +1,17 @@
+Flask
+Flask-Cors
+Flask-RESTful
+numpy
+pandas
+faiss-cpu
+torch
+langchain
+mysql-connector-python
+#vllm
+torch
+transformers
+scikit-learn
+Pillow
+python-dotenv
+pytest
+pytest-cov
