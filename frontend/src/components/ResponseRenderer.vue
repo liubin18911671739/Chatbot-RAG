@@ -1,5 +1,3 @@
-<|vq_12345|>### ResponseRenderer.vue
-
 <template>
   <div class="response-renderer">
     <div v-if="response.text" class="text-response">

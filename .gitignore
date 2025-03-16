@@ -8,8 +8,9 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
-*.lnk
-
+*.pkl
+*.faiss
+。pkl
 # macOS
 .DS_Store
 .AppleDouble

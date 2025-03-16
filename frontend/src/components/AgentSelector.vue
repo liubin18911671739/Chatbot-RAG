@@ -1,5 +1,3 @@
-<|vq_13436|>### AgentSelector.vue
-
 <template>
   <div class="agent-selector">
     <h2>选择智能体场景</h2>

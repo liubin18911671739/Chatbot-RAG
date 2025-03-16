@@ -1,6 +1,4 @@
-<|vq_15066|>### ChatBox.vue
-
-<template>
+<<template>
   <div class="chat-box">
     <div class="chat-history">
       <HistoryPanel :messages="messages" />
