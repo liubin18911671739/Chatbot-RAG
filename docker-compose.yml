@@ -17,7 +17,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=mysql://user:password@mysql/db
+      - DATABASE_URL=mysql://robin:Robin123@mysql/db
       - RAG_MODEL_URL=http://vllm:8000
     volumes:
       - ./backend/data:/app/data
@@ -30,9 +30,9 @@ services:
       dockerfile: mysql.Dockerfile
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: ichat
+      MYSQL_USER: robin
+      MYSQL_PASSWORD: Robin123
     volumes:
       - mysql_data:/var/lib/mysql
 

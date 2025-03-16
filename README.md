@@ -35,8 +35,8 @@
    # Windows
    set MYSQL_HOST=localhost
    set MYSQL_PORT=3306
-   set MYSQL_USER=root
-   set MYSQL_PASSWORD=password
+   set MYSQL_USER=robin
+   set MYSQL_PASSWORD=Robin123
    set MYSQL_DATABASE=rag
    set VLLM_SERVICE_URL=http://localhost:8000
 

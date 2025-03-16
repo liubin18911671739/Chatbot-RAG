@@ -1,8 +1,12 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime
-from backend.app import db
+from sqlalchemy.ext.declarative import declarative_base
 
-class ChatRecord(db.Model):
+
+Base = declarative_base()
+
+
+class ChatRecord(Base):
     __tablename__ = 'chat_records'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
