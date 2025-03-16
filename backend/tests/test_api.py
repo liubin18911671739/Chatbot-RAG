@@ -1,5 +1,6 @@
 from app import create_app
 import pytest
+import unittest
 
 @pytest.fixture
 def client():
@@ -47,3 +48,6 @@ def test_admin_get_users_unauthorized(client):
     response = client.get('/api/admin/users', headers={'Authorization': 'Bearer invalidtoken'})
     assert response.status_code == 401
     assert 'msg' in response.json
+    
+if __name__ == '__main__':
+    unittest.main()
