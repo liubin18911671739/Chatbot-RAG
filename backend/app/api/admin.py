@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
 from app.models.user import User
-from app.services.rag_service import RagService
+from app.services.rag_service import RAGService
 
 admin_bp = Blueprint('admin', __name__)
-rag_service = RagService()
+rag_service = RAGService()
 
 @admin_bp.route('/upload', methods=['POST'])
 def upload_document():

@@ -1,21 +1,46 @@
 from flask import Blueprint, request, jsonify
-from app.services.rag_service import RAGService
 import asyncio
 import os
 import base64
+from app.services.rag_service import RAGService
 
 chat_bp = Blueprint('chat', __name__)
-rag_service = RAGService()
-# def get_scenes():
-#     response = requests.get(f"{API_SERVER}/api/scenes", timeout=5)
-#     return response.json()
-def load_sensitive_words(filepath):
-    # 逐行读取文件，并去除换行符
-    with open(filepath, 'r', encoding='utf-8') as f:
-        words = f.read().splitlines()
-    return words
+rag_service = RAGService("vector_index.faiss")
 
-sensitive_words = load_sensitive_words('sensitive_words.txt')
+def load_sensitive_words(filename='sensitive_words.txt'):
+    """
+    加载敏感词列表，尝试多个可能的位置
+    """
+    possible_paths = [
+        # 当前工作目录
+        filename,
+        # 相对于当前脚本的位置
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), filename),
+        # 相对于项目根目录的位置
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), filename),
+        # 配置目录
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config", filename)
+    ]
+    
+    for path in possible_paths:
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                words = f.read().splitlines()
+                print(f"成功从 {path} 加载了 {len(words)} 个敏感词")
+                return words
+        except (FileNotFoundError, IOError):
+            continue
+    
+    # 如果所有路径都失败，返回空列表并打印警告
+    print(f"警告: 无法找到敏感词文件 '{filename}'，使用空列表代替")
+    return []
+
+# 尝试加载敏感词，如果失败则使用空列表
+try:
+    sensitive_words = load_sensitive_words()
+except Exception as e:
+    print(f"加载敏感词时出错: {str(e)}，使用空列表代替")
+    sensitive_words = []
 
 def contains_sensitive_word(prompt, sensitive_words):
     """

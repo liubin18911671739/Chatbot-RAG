@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Component Test</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  
+  <!-- 导入组件 -->
+  <script type="module">
+    import ChatComponent from '../src/components/ChatComponent.vue';
+    window.ChatComponent = ChatComponent;
+    
+    // 组件挂载方法将由Cypress调用
+    if (window.mountChatComponent) {
+      window.mountChatComponent();
+    }
+  </script>
+</body>
+</html>

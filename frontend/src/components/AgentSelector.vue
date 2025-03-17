@@ -26,26 +26,26 @@ export default {
           name: '通用场景',
           image: require('@/assets/images/agents/general.png'),
         },
-        {
-          id: 2,
-          name: '中阿场景',
-          image: require('@/assets/images/agents/china-arab.png'),
-        },
+        // {
+        //   id: 2,
+        //   name: '中阿场景',
+        //   image: require('@/assets/images/agents/china-arab.png'),
+        // },
         {
           id: 3,
           name: '思政场景',
           image: require('@/assets/images/agents/political.png'),
         },
-        {
-          id: 4,
-          name: '区域国别场景',
-          image: require('@/assets/images/agents/region.png'),
-        },
-        {
-          id: 5,
-          name: '阿拉伯名人智能体',
-          image: require('@/assets/images/agents/arab-figure.png'),
-        },
+        // {
+        //   id: 4,
+        //   name: '区域国别场景',
+        //   image: require('@/assets/images/agents/region.png'),
+        // },
+        // {
+        //   id: 5,
+        //   name: '阿拉伯名人智能体',
+        //   image: require('@/assets/images/agents/arab-figure.png'),
+        // },
       ],
     };
   },

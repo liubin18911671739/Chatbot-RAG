@@ -1,5 +1,15 @@
 <template>
   <div class="main-container">
+    <!-- 历史对话面板 -->
+    <HistoryPanel
+      v-if="showHistory"
+      :selectedChatId="currentChatId"
+      @select-chat="loadChat"
+      @create-new-chat="createNewChat"
+      @chat-deleted="handleChatDeleted"
+      class="history-panel"
+    />
+    
     <!-- 左侧边栏 -->
     <div class="sidebar">
       <!-- 顶部按钮 -->
@@ -53,6 +63,11 @@
 
       <!-- 聊天消息区域 -->
       <div class="chat-messages" ref="messagesContainer">
+        <div v-if="!currentMessages.length && !loading" class="welcome-message">
+          <div class="message ai-message">
+            <div class="message-content">{{ welcomeMessage }}</div>
+          </div>
+        </div>
         <div v-for="(message, index) in currentMessages" :key="index" 
              :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
           <div class="message-content">{{ message.content }}</div>
@@ -66,12 +81,22 @@
       <div class="chat-input">
         <input 
           v-model="userInput" 
-          @keyup.enter="sendMessage" 
+          @keyup.enter="!loading && userInput.trim() && sendMessage()" 
+          @keydown.up="recallLastMessage"
           placeholder="请输入您的问题..."
           :disabled="loading"
+          ref="inputField"
         />
-        <button @click="sendMessage" :disabled="loading || !userInput.trim()">
-          发送
+        <button 
+          @click="sendMessage" 
+          :disabled="loading || !userInput.trim()"
+          class="send-button"
+          :class="{ 'sending': loading }"
+          :title="loading ? '正在发送...' : '发送消息'"
+        >
+          <span v-if="!loading" class="button-text">发送</span>
+          <span v-else class="loading-dots"></span>
+          <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
         </button>
       </div>
     </div>
@@ -79,52 +104,24 @@
 </template>
 
 <script>
+import HistoryPanel from '@/components/HistoryPanel.vue';
+import { chatService } from '@/api/chatService'; // 导入chatService
+
 export default {
   name: 'ChatView',
+  components: {
+    HistoryPanel
+  },
   data() {
     return {
-      scenes: [
-        { 
-          id: 'general',
-          name: '通用场景',
-          iconUrl: '/icons/general.png',
-          bannerUrl: '/banners/general.jpg',
-          prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
-        },
-        { 
-          id: 'china-arab',
-          name: '中阿场景',
-          iconUrl: '/icons/china-arab.png',
-          bannerUrl: '/banners/china-arab.jpg',
-          prompts: ['中阿旅游合作现状如何?', '沙特阿拉伯有哪些著名景点?', '阿拉伯文化的特点是什么?']
-        },
-        { 
-          id: 'ideological',
-          name: '思政场景',
-          iconUrl: '/icons/ideological.png',
-          bannerUrl: '/banners/ideological.jpg',
-          prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
-        },
-        { 
-          id: 'regional',
-          name: '区域国别场景',
-          iconUrl: '/icons/regional.png',
-          bannerUrl: '/banners/regional.jpg',
-          prompts: ['一带一路倡议的主要内容是什么?', '中东地区的主要国家有哪些?', '北非地区的文化特色是什么?']
-        },
-        { 
-          id: 'digital-human',
-          name: '阿拉伯名人数字人',
-          iconUrl: '/icons/digital-human.png',
-          bannerUrl: '/banners/digital-human.jpg',
-          prompts: ['伊本·西那的主要贡献是什么?', '阿维森纳在医学上有哪些成就?', '阿拉伯黄金时代有哪些著名学者?']
-        }
-      ],
+      scenes: [], // 改为空数组，将通过API加载
       currentScene: null,
       messagesHistory: {}, // 按场景ID存储消息历史
       userInput: '',
       loading: false,
-      showHistory: false
+      showHistory: false,
+      currentChatId: null,
+      welcomeMessage: '你好！我是您的AI助手，请问有什么我可以帮您的？' // 默认欢迎消息
     }
   },
   computed: {
@@ -133,16 +130,86 @@ export default {
       return this.messagesHistory[this.currentScene.id] || [];
     }
   },
-  created() {
-    // 初始化选择第一个场景
-    this.currentScene = this.scenes[0];
+  async created() {
+    await this.loadScenes();
+    await this.loadWelcomeMessage();
     
     // 初始化每个场景的消息历史
     this.scenes.forEach(scene => {
-      this.messagesHistory[scene.id] = [];
+      if (!this.messagesHistory[scene.id]) {
+        this.messagesHistory[scene.id] = [];
+      }
     });
   },
   methods: {
+    async loadScenes() {
+      try {
+        this.loading = true;
+        // 使用chatService获取场景数据
+        const response = await chatService.getScenes();
+        
+        if (response.data && Array.isArray(response.data)) {
+          this.scenes = response.data;
+        } else {
+          // 如果API不可用或数据格式不对，使用默认场景
+          this.scenes = [
+            { 
+              id: 'general',
+              name: '通用场景',
+              iconUrl: '/icons/general.png',
+              bannerUrl: '/banners/general.jpg',
+              prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
+            },
+            { 
+              id: 'ideological',
+              name: '思政场景',
+              iconUrl: '/icons/ideological.png',
+              bannerUrl: '/banners/ideological.jpg',
+              prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+            }
+          ];
+        }
+        
+        // 初始化选择第一个场景
+        if (this.scenes.length > 0) {
+          this.currentScene = this.scenes[0];
+        }
+      } catch (error) {
+        console.error('加载场景数据失败:', error);
+        // 加载失败时使用默认场景
+        this.scenes = [
+          { 
+            id: 'general',
+            name: '通用场景',
+            iconUrl: '/icons/general.png',
+            bannerUrl: '/banners/general.jpg',
+            prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
+          },
+          { 
+            id: 'ideological',
+            name: '思政场景',
+            iconUrl: '/icons/ideological.png',
+            bannerUrl: '/banners/ideological.jpg',
+            prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+          }
+        ];
+        this.currentScene = this.scenes[0];
+      } finally {
+        this.loading = false;
+      }
+    },
+    async loadWelcomeMessage() {
+      try {
+        // 使用chatService获取欢迎消息
+        const response = await chatService.getGreeting();
+        if (response.data && response.data.greeting) {
+          this.welcomeMessage = response.data.greeting;
+        }
+      } catch (error) {
+        console.error('获取欢迎消息失败:', error);
+        // 使用默认欢迎消息
+      }
+    },
     selectScene(scene) {
       this.currentScene = scene;
       this.scrollToBottom();
@@ -152,11 +219,54 @@ export default {
       if (this.currentScene) {
         this.messagesHistory[this.currentScene.id] = [];
       }
+      this.currentChatId = null;
+      // 如果在历史页面创建新对话，则关闭历史面板
+      if (this.showHistory && window.innerWidth < 768) {
+        this.showHistory = false;
+      }
     },
     toggleHistory() {
       this.showHistory = !this.showHistory;
-      // 这里需要添加查看历史对话的逻辑
-      // 可能需要从后端API获取历史对话
+    },
+    async loadChat(chatId) {
+      try {
+        this.loading = true;
+        this.currentChatId = chatId;
+        
+        // 从API获取对话历史
+        const response = await fetch(`/api/chats/${chatId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        const chatData = await response.json();
+        
+        // 设置当前场景
+        const sceneId = chatData.sceneId || 'general';
+        this.currentScene = this.scenes.find(scene => scene.id === sceneId) || this.scenes[0];
+        
+        // 加载消息
+        this.messagesHistory[sceneId] = chatData.messages || [];
+        
+        // 在移动端设备上选择对话后自动关闭历史面板
+        if (window.innerWidth < 768) {
+          this.showHistory = false;
+        }
+        
+      } catch (error) {
+        console.error('加载对话失败:', error);
+      } finally {
+        this.loading = false;
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
+      }
+    },
+    handleChatDeleted() {
+      // 如果当前对话被删除，清空当前对话
+      this.currentChatId = null;
+      this.createNewChat();
     },
     usePrompt(prompt) {
       this.userInput = prompt;
@@ -176,25 +286,25 @@ export default {
       this.loading = true;
       
       try {
-        // 发送请求到后端API，包含场景信息
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            question: userQuestion,
-            scene: sceneId
-          })
-        });
+        // 使用chatService发送请求到后端API
+        const response = await chatService.sendChatMessage(
+          userQuestion,
+          localStorage.getItem('studentId') || '未知用户',
+          sceneId
+        );
         
-        const data = await response.json();
+        const data = response.data;
         
         // 添加AI回复到聊天记录
         this.messagesHistory[sceneId].push({
-          content: data.answer,
+          content: data.answer || data.response || '没有回答',
           sender: 'ai'
         });
+
+        // 如果是新对话且返回了chat_id，保存它
+        if (!this.currentChatId && data.chat_id) {
+          this.currentChatId = data.chat_id;
+        }
       } catch (error) {
         console.error('获取回答时出错:', error);
         this.messagesHistory[sceneId].push({
@@ -214,6 +324,27 @@ export default {
           this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
         }
       });
+    },
+    // 回溯最后一条用户消息（用于修改或重新发送）
+    recallLastMessage() {
+      if (!this.userInput.trim() && this.currentScene) {
+        const messages = this.messagesHistory[this.currentScene.id] || [];
+        // 从后向前查找最近一条用户消息
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i].sender === 'user') {
+            this.userInput = messages[i].content;
+            this.$nextTick(() => {
+              // 将光标移到文本末尾
+              this.$refs.inputField.focus();
+              this.$refs.inputField.setSelectionRange(
+                this.userInput.length,
+                this.userInput.length
+              );
+            });
+            break;
+          }
+        }
+      }
     }
   }
 }
@@ -225,6 +356,21 @@ export default {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  position: relative; /* 为历史面板提供相对定位 */
+}
+
+/* 历史面板样式 */
+.history-panel {
+  position: absolute;
+  height: 100vh;
+  z-index: 10;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  animation: slide-in 0.3s ease;
+}
+
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
 /* 左侧边栏样式 */
@@ -429,5 +575,95 @@ export default {
 .chat-input button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+/* 发送按钮样式增强 */
+.send-button {
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  min-width: 90px;
+}
+
+/* 按钮悬停效果 */
+.send-button:not(:disabled):hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* 按钮按下效果 */
+.send-button:not(:disabled):active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* 禁用状态 */
+.send-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 发送过程中样式 */
+.send-button.sending {
+  background-color: #2196f3;
+  animation: pulse 1.5s infinite;
+}
+
+/* 图标样式 */
+.icon-send {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.icon-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+/* 加载中动画 */
+.loading-dots:after {
+  content: '';
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* 添加欢迎消息样式 */
+.welcome-message {
+  margin-top: 20px;
 }
 </style>

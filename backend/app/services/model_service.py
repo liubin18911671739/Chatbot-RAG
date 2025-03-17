@@ -1,22 +1,51 @@
 import requests
 import os
-from flask import current_app
 
 class ModelService:
     def __init__(self):
-        # Ollama服务URL，可从环境变量或配置中获取
-        self.ollama_url = current_app.config.get('OLLAMA_URL', 'http://localhost:11434')
-        self.model_name = current_app.config.get('MODEL_NAME', 'deepseek-r1:1.5b')
+        # 使用默认值初始化，延迟获取配置值
+        self._ollama_url = None
+        self._model_name = None
     
-    def generate_response(self, prompt, max_length=150, temperature=0.7):
+    @property
+    def ollama_url(self):
+        # 懒加载模式：仅在需要时获取配置
+        if self._ollama_url is None:
+            try:
+                from flask import current_app
+                self._ollama_url = current_app.config.get('OLLAMA_URL', 'http://localhost:11434')
+            except RuntimeError:
+                # 应用上下文不可用时使用默认值
+                self._ollama_url = 'http://localhost:11434'
+        return self._ollama_url
+    
+    @property
+    def model_name(self):
+        # 懒加载模式：仅在需要时获取配置
+        if self._model_name is None:
+            try:
+                from flask import current_app
+                self._model_name = current_app.config.get('MODEL_NAME', 'deepseek-r1:1.5b')
+            except RuntimeError:
+                # 应用上下文不可用时使用默认值
+                self._model_name = 'deepseek-r1:1.5b'
+        return self._model_name
+    
+    def generate_response(self, prompt, relevant_docs=None, max_length=150, temperature=0.7):
         """
         使用Ollama API生成响应
         :param prompt: 输入提示词
+        :param relevant_docs: 相关文档（如果有）
         :param max_length: 最大输出长度
         :param temperature: 温度参数（较高值增加随机性）
         :return: 模型生成的文本响应
         """
         try:
+            # 如果有相关文档，将其整合到提示中
+            if relevant_docs:
+                context = "\n\n".join([doc.get('content', '') for doc in relevant_docs])
+                prompt = f"基于以下信息回答问题:\n\n{context}\n\n问题: {prompt}"
+            
             # 准备请求数据
             data = {
                 "model": self.model_name,
@@ -38,11 +67,21 @@ class ModelService:
                 result = response.json()
                 return result.get("response", "无法获取回复")
             else:
-                current_app.logger.error(f"Ollama API错误: {response.status_code} - {response.text}")
+                try:
+                    from flask import current_app
+                    current_app.logger.error(f"Ollama API错误: {response.status_code} - {response.text}")
+                except RuntimeError:
+                    # 应用上下文不可用时简单打印错误
+                    print(f"Ollama API错误: {response.status_code} - {response.text}")
                 return f"API调用失败，状态码: {response.status_code}"
                 
         except Exception as e:
-            current_app.logger.error(f"调用Ollama时出错: {str(e)}")
+            try:
+                from flask import current_app
+                current_app.logger.error(f"调用Ollama时出错: {str(e)}")
+            except RuntimeError:
+                # 应用上下文不可用时简单打印错误
+                print(f"调用Ollama时出错: {str(e)}")
             return f"生成回复时发生错误: {str(e)}"
 
     def generate_multimodal_response(self, prompt, max_length=150):

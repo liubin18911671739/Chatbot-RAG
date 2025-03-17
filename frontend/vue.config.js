@@ -5,11 +5,11 @@ module.exports = {
   devServer: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000', // 后端API地址
+        target: process.env.VUE_APP_API_URL || 'http://10.101.0.208:5000/',
         changeOrigin: true,
-        pathRewrite: {
-          '^/api': ''
-        }
+        // pathRewrite: {
+        //   '^/api': ''
+        // }
       }
     }
   }
