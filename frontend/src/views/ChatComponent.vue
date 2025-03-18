@@ -1,13 +1,20 @@
 <!-- ChatComponent.vue -->
 <template>
   <div class="chat-container">
+    <!-- 网络状态指示器 -->
+    <div v-if="!isApiConnected" class="network-status-warning">
+      <i class="el-icon-warning"></i> 
+      网络连接中断，部分功能可能不可用
+      <button @click="checkApiConnection" class="retry-button">重试</button>
+    </div>
+    
+    <!-- 欢迎消息横幅 -->
+    <div class="greeting-banner">
+      <div class="greeting-content" v-html="welcomeMessage"></div>
+    </div>
+    
     <!-- 聊天消息展示区 -->
     <div class="messages-container" ref="messagesContainer">
-      <div v-if="messages.length === 0 && !isLoading" class="welcome-message">
-        <div class="message assistant">
-          <div class="message-content" v-html="welcomeMessage"></div>
-        </div>
-      </div>
       <div v-for="(message, index) in messages" 
            :key="index" 
            :class="['message', message.sender]">
@@ -86,7 +93,7 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { chatService } from '@/api/chatService';
 
 export default {
@@ -120,6 +127,7 @@ export default {
     const welcomeMessage = ref('你好！有什么我可以帮助你的吗？');
     const inputField = ref(null);
     const enlargedImage = ref(null);
+    const isApiConnected = ref(true);
     
     // 发送消息
     const sendMessage = async () => {
@@ -232,6 +240,12 @@ export default {
       }
     };
     
+    // 检查API连接状态
+    const checkApiConnection = async () => {
+      isApiConnected.value = await chatService.checkApiConnection();
+      return isApiConnected.value;
+    };
+    
     // 检查是否是图片附件
     const isImageAttachment = (filename) => {
       if (!filename) return false;
@@ -289,18 +303,38 @@ export default {
         return;
       }
       
-      try {
-        isLoading.value = true;
-        const response = await chatService.getGreeting();
-        if (response.data && response.data.greeting) {
-          welcomeMessage.value = response.data.greeting;
+      await checkApiConnection();
+      
+      // 如果连接失败，使用备用欢迎消息
+      if (!isApiConnected.value) {
+        welcomeMessage.value = "网络连接失败，但您仍可以输入问题，我们会在网络恢复后处理。";
+      } else {
+        // 常规加载欢迎消息
+        try {
+          isLoading.value = true;
+          const response = await chatService.getGreeting();
+          if (response.data && response.data.greeting) {
+            welcomeMessage.value = response.data.greeting;
+          }
+        } catch (err) {
+          console.error('获取欢迎消息失败:', err);
+          // 使用默认欢迎消息
+        } finally {
+          isLoading.value = false;
         }
-      } catch (err) {
-        console.error('获取欢迎消息失败:', err);
-        // 使用默认欢迎消息
-      } finally {
-        isLoading.value = false;
       }
+    });
+    
+    // 定期检查API连接状态
+    let connectionCheckInterval;
+    onMounted(() => {
+      connectionCheckInterval = setInterval(async () => {
+        await checkApiConnection();
+      }, 30000); // 每30秒检查一次
+    });
+    
+    onUnmounted(() => {
+      clearInterval(connectionCheckInterval);
     });
     
     return {
@@ -320,7 +354,9 @@ export default {
       enlargeImage,
       clearError,
       retryLastMessage,
-      autoResize
+      autoResize,
+      isApiConnected,
+      checkApiConnection
     };
   }
 };
@@ -338,6 +374,21 @@ export default {
   position: relative;
 }
 
+/* 添加欢迎消息横幅样式 */
+.greeting-banner {
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 8px 8px 0 0;
+}
+
+.greeting-content {
+  color: #4a4a4a;
+  font-size: 1.1em;
+  text-align: center;
+  line-height: 1.5;
+}
+
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -346,8 +397,9 @@ export default {
   flex-direction: column;
 }
 
+/* 移除之前的欢迎消息样式 */
 .welcome-message {
-  margin-top: 20px;
+  display: none;
 }
 
 .message {
@@ -574,5 +626,20 @@ export default {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+.network-status-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.network-status-warning .el-icon-warning {
+  margin-right: 5px;
 }
 </style>

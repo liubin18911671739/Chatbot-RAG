@@ -1,15 +1,9 @@
 <template>
   <div class="main-container">
     <!-- 历史对话面板 -->
-    <HistoryPanel
-      v-if="showHistory"
-      :selectedChatId="currentChatId"
-      @select-chat="loadChat"
-      @create-new-chat="createNewChat"
-      @chat-deleted="handleChatDeleted"
-      class="history-panel"
-    />
-    
+    <HistoryPanel v-if="showHistory" :selectedChatId="currentChatId" @select-chat="loadChat"
+      @create-new-chat="createNewChat" @chat-deleted="handleChatDeleted" class="history-panel" />
+
     <!-- 左侧边栏 -->
     <div class="sidebar">
       <!-- 顶部按钮 -->
@@ -24,12 +18,8 @@
 
       <!-- 场景选择列表 -->
       <div class="scene-list">
-        <div 
-          v-for="(scene, index) in scenes" 
-          :key="index" 
-          :class="['scene-item', currentScene.id === scene.id ? 'active' : '']"
-          @click="selectScene(scene)"
-        >
+        <div v-for="(scene, index) in scenes" :key="index"
+          :class="['scene-item', currentScene.id === scene.id ? 'active' : '']" @click="selectScene(scene)">
           <div class="scene-icon">
             <img :src="scene.iconUrl" :alt="scene.name" />
           </div>
@@ -46,16 +36,13 @@
         <h2>{{ currentScene.name }}</h2>
       </div>
 
+
+
       <!-- 提示词区域 -->
       <div class="prompt-suggestions">
         <h3>可能的提示词:</h3>
         <div class="prompt-chips">
-          <span 
-            v-for="(prompt, i) in currentScene.prompts" 
-            :key="i" 
-            class="prompt-chip"
-            @click="usePrompt(prompt)"
-          >
+          <span v-for="(prompt, i) in currentScene.prompts" :key="i" class="prompt-chip" @click="usePrompt(prompt)">
             {{ prompt }}
           </span>
         </div>
@@ -68,32 +55,21 @@
             <div class="message-content">{{ welcomeMessage }}</div>
           </div>
         </div>
-        <div v-for="(message, index) in currentMessages" :key="index" 
-             :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
+        <div v-for="(message, index) in currentMessages" :key="index"
+          :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
           <div class="message-content">{{ message.content }}</div>
         </div>
         <div v-if="loading" class="loading-indicator">
           <span>思考中...</span>
         </div>
       </div>
-      
+
       <!-- 输入区域 -->
       <div class="chat-input">
-        <input 
-          v-model="userInput" 
-          @keyup.enter="!loading && userInput.trim() && sendMessage()" 
-          @keydown.up="recallLastMessage"
-          placeholder="请输入您的问题..."
-          :disabled="loading"
-          ref="inputField"
-        />
-        <button 
-          @click="sendMessage" 
-          :disabled="loading || !userInput.trim()"
-          class="send-button"
-          :class="{ 'sending': loading }"
-          :title="loading ? '正在发送...' : '发送消息'"
-        >
+        <input v-model="userInput" @keyup.enter="!loading && userInput.trim() && sendMessage()"
+          @keydown.up="recallLastMessage" placeholder="请输入您的问题..." :disabled="loading" ref="inputField" />
+        <button @click="sendMessage" :disabled="loading || !userInput.trim()" class="send-button"
+          :class="{ 'sending': loading }" :title="loading ? '正在发送...' : '发送消息'">
           <span v-if="!loading" class="button-text">发送</span>
           <span v-else class="loading-dots"></span>
           <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
@@ -133,7 +109,7 @@ export default {
   async created() {
     await this.loadScenes();
     await this.loadWelcomeMessage();
-    
+
     // 初始化每个场景的消息历史
     this.scenes.forEach(scene => {
       if (!this.messagesHistory[scene.id]) {
@@ -147,20 +123,20 @@ export default {
         this.loading = true;
         // 使用chatService获取场景数据
         const response = await chatService.getScenes();
-        
+
         if (response.data && Array.isArray(response.data)) {
           this.scenes = response.data;
         } else {
           // 如果API不可用或数据格式不对，使用默认场景
           this.scenes = [
-            { 
+            {
               id: 'general',
               name: '通用场景',
               iconUrl: '/icons/general.png',
               bannerUrl: '/banners/general.jpg',
               prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
             },
-            { 
+            {
               id: 'ideological',
               name: '思政场景',
               iconUrl: '/icons/ideological.png',
@@ -169,7 +145,7 @@ export default {
             }
           ];
         }
-        
+
         // 初始化选择第一个场景
         if (this.scenes.length > 0) {
           this.currentScene = this.scenes[0];
@@ -178,14 +154,14 @@ export default {
         console.error('加载场景数据失败:', error);
         // 加载失败时使用默认场景
         this.scenes = [
-          { 
+          {
             id: 'general',
             name: '通用场景',
             iconUrl: '/icons/general.png',
             bannerUrl: '/banners/general.jpg',
             prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
           },
-          { 
+          {
             id: 'ideological',
             name: '思政场景',
             iconUrl: '/icons/ideological.png',
@@ -232,28 +208,28 @@ export default {
       try {
         this.loading = true;
         this.currentChatId = chatId;
-        
+
         // 从API获取对话历史
         const response = await fetch(`/api/chats/${chatId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-        
+
         const chatData = await response.json();
-        
+
         // 设置当前场景
         const sceneId = chatData.sceneId || 'general';
         this.currentScene = this.scenes.find(scene => scene.id === sceneId) || this.scenes[0];
-        
+
         // 加载消息
         this.messagesHistory[sceneId] = chatData.messages || [];
-        
+
         // 在移动端设备上选择对话后自动关闭历史面板
         if (window.innerWidth < 768) {
           this.showHistory = false;
         }
-        
+
       } catch (error) {
         console.error('加载对话失败:', error);
       } finally {
@@ -273,33 +249,54 @@ export default {
     },
     async sendMessage() {
       if (!this.userInput.trim() || this.loading) return;
-      
+
       // 添加用户消息到聊天记录
       const sceneId = this.currentScene.id;
       this.messagesHistory[sceneId].push({
         content: this.userInput,
         sender: 'user'
       });
-      
+
       const userQuestion = this.userInput;
       this.userInput = '';
       this.loading = true;
-      
+
       try {
+        // 先检查网络连接状态
+        const isConnected = await chatService.checkApiConnection();
+
+        if (!isConnected) {
+          // 网络不可用时，显示离线提示，但仍保存用户问题
+          console.warn('网络连接不可用，将在恢复后重试');
+          this.messagesHistory[sceneId].push({
+            content: '网络连接不可用，您的问题已保存，将在网络恢复后回答。',
+            sender: 'ai'
+          });
+          return;
+        }
+
         // 使用chatService发送请求到后端API
+        // 参数顺序：studentId, prompt, cardPinyin
         const response = await chatService.sendChatMessage(
-          userQuestion,
-          localStorage.getItem('studentId') || '未知用户',
-          sceneId
+          localStorage.getItem('studentId') || '未知用户', // studentId - 用户ID作为第一个参数
+          userQuestion, // prompt - 用户问题作为第二个参数
+          sceneId  // cardPinyin - 场景ID作为第三个参数
         );
-        
+
         const data = response.data;
-        
+
         // 添加AI回复到聊天记录
         this.messagesHistory[sceneId].push({
           content: data.answer || data.response || '没有回答',
           sender: 'ai'
         });
+
+        // 如果返回了附件数据，显示附件
+        if (data.attachment_data && data.attachment_data.length > 0) {
+          // 处理附件显示逻辑
+          console.log('收到附件数据:', data.attachment_data);
+          // 这里可以添加显示附件的代码
+        }
 
         // 如果是新对话且返回了chat_id，保存它
         if (!this.currentChatId && data.chat_id) {
@@ -307,8 +304,22 @@ export default {
         }
       } catch (error) {
         console.error('获取回答时出错:', error);
+        // 根据错误类型提供不同的错误信息
+        let errorMessage = '抱歉，获取回答时出现问题，请稍后再试。';
+
+        if (error.message && error.message.includes('Network Error')) {
+          errorMessage = '网络连接错误，请检查您的网络状态后重试。';
+        } else if (error.response) {
+          // 服务器返回了错误状态码
+          if (error.response.status === 429) {
+            errorMessage = '请求过于频繁，请稍后再试。';
+          } else if (error.response.status >= 500) {
+            errorMessage = '服务器暂时不可用，请稍后再试。';
+          }
+        }
+
         this.messagesHistory[sceneId].push({
-          content: '抱歉，获取回答时出现问题，请稍后再试。',
+          content: errorMessage,
           sender: 'ai'
         });
       } finally {
@@ -356,7 +367,8 @@ export default {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  position: relative; /* 为历史面板提供相对定位 */
+  position: relative;
+  /* 为历史面板提供相对定位 */
 }
 
 /* 历史面板样式 */
@@ -364,13 +376,18 @@ export default {
   position: absolute;
   height: 100vh;
   z-index: 10;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   animation: slide-in 0.3s ease;
 }
 
 @keyframes slide-in {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* 左侧边栏样式 */
@@ -477,8 +494,23 @@ export default {
   bottom: 10px;
   left: 15px;
   color: white;
-  text-shadow: 0 0 5px rgba(0,0,0,0.8);
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
   margin: 0;
+}
+
+/* 添加欢迎消息横幅样式 */
+.greeting-banner {
+  padding: 12px 15px;
+  background-color: #e8f5e9;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #c8e6c9;
+}
+
+.greeting-content {
+  color: #2e7d32;
+  font-size: 15px;
+  text-align: center;
 }
 
 .prompt-suggestions {
@@ -598,7 +630,7 @@ export default {
 .send-button:not(:disabled):hover {
   background-color: #45a049;
   transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* 按钮按下效果 */
@@ -634,7 +666,7 @@ export default {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: white;
   animation: spin 1s linear infinite;
@@ -647,19 +679,37 @@ export default {
 }
 
 @keyframes loading-dots {
-  0% { content: '.'; }
-  33% { content: '..'; }
-  66% { content: '...'; }
+  0% {
+    content: '.';
+  }
+
+  33% {
+    content: '..';
+  }
+
+  66% {
+    content: '...';
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 /* 添加欢迎消息样式 */
