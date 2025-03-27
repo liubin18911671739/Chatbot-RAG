@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // 网络状态检测函数
-const checkNetworkStatus = async (url = 'http://10.101.0.208:5000/api/greeting') => {
+const checkNetworkStatus = async (url = 'http://10.101.0.208:5000/api/scenes') => {
   try {
     const response = await fetch(url, { 
       method: 'GET',
@@ -58,16 +58,16 @@ apiClient.interceptors.response.use(
   }
 );
 
-export const chatService = {
+// 创建并导出聊天服务对象
+export default {
   /**
    * 发送聊天消息
-   * @param {string} studentId - 用户ID
-   * @param {string} prompt - 用户输入的问题
-   * @param {string|null} cardPinyin - 场景ID
-   * @param {string|null} chatId - 对话ID（可选）
+   * @param {string} prompt - 用户输入的问题 (必填)
+   * @param {string} [studentId='未知用户'] - 用户ID (可选)
+   * @param {string|null} [cardPinyin=null] - 场景ID (可选)
    * @returns {Promise} 聊天响应承诺
    */
-  sendChatMessage(studentId = '未知用户', prompt, cardPinyin = null, chatId = null) {
+  sendChatMessage(prompt, studentId = '未知用户', cardPinyin = null) {
     // 添加基本参数验证
     if (!prompt || prompt.trim() === '') {
       return Promise.reject(new Error('提问内容不能为空'));
@@ -75,14 +75,16 @@ export const chatService = {
     
     // 构建与后端API接口匹配的参数
     const payload = {
-      student_id: studentId,
-      prompt: prompt.trim(),
-      card_pinyin: cardPinyin
+      prompt: prompt.trim()
     };
     
-    // 如果有对话ID，添加到请求中
-    if (chatId) {
-      payload.chat_id = chatId;
+    // 只有当值不为空时添加可选参数
+    if (studentId) {
+      payload.student_id = studentId;
+    }
+    
+    if (cardPinyin) {
+      payload.card_pinyin = cardPinyin;
     }
     
     console.log('发送聊天请求:', payload);
@@ -104,7 +106,7 @@ export const chatService = {
         throw error;
       });
   },
-  
+
   /**
    * 获取所有场景信息
    * @returns {Promise} 场景信息响应

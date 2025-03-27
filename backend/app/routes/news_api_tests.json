@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "多语言新闻系统API测试",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "获取新闻列表",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}{{api_prefix}}/news?page=1&per_page=10&language=zh-cn",
+          "host": ["{{base_url}}"],
+          "path": ["{{api_prefix}}", "news"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "per_page", "value": "10" },
+            { "key": "language", "value": "zh-cn" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"状态码为200\", function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"响应包含数据和分页信息\", function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('per_page');",
+              "    pm.expect(jsonData.pagination).to.have.property('total');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "创建新闻",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"测试新闻标题\",\n  \"content\": \"这是一条用于测试的新闻内容\",\n  \"language\": \"zh-cn\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}{{api_prefix}}/news_create",
+          "host": ["{{base_url}}"],
+          "path": ["{{api_prefix}}", "news_create"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"状态码为201\", function() {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"响应包含成功状态和数据\", function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('success');",
+              "    pm.expect(jsonData.data).to.have.property('id');",
+              "    pm.expect(jsonData.data.title).to.eql('测试新闻标题');",
+              "    if(jsonData.data.id) {",
+              "        pm.environment.set(\"news_id\", jsonData.data.id);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "获取单条新闻",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}{{api_prefix}}/news/{{news_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["{{api_prefix}}", "news", "{{news_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"状态码为200\", function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"返回正确的新闻数据\", function() {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.id).to.eql(parseInt(pm.environment.get(\"news_id\")));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "删除新闻",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}{{api_prefix}}/news/{{news_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["{{api_prefix}}", "news", "{{news_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"状态码为204\", function() {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// 设置测试开始时间",
+          "pm.collectionVariables.set(\"testStartTime\", new Date().toISOString());",
+          "// 日志辅助函数",
+          "pm.collectionVariables.set(\"logRequest\", true);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// 测试结束，计算总耗时",
+          "const startTime = new Date(pm.collectionVariables.get(\"testStartTime\"));",
+          "const endTime = new Date();",
+          "const duration = (endTime - startTime) / 1000;",
+          "console.log(`测试完成，总耗时: ${duration} 秒`);"
+        ]
+      }
+    }
+  ]
+}

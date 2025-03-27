@@ -2,7 +2,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router';
 import ChatView from '../views/ChatView.vue';
-import ChatComponent from '../views/ChatComponent.vue';
+import ChatComponent from '../views/ChatView.vue';
 import LoginView from '../views/LoginView.vue';
 
 const routes = [

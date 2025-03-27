@@ -94,7 +94,7 @@
 
 <script>
 import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
-import { chatService } from '@/api/chatService';
+import chatService from '@/api/chatService';
 
 export default {
   name: 'ChatComponent',
@@ -154,8 +154,8 @@ export default {
       try {
         // 调用API发送消息
         const response = await chatService.sendChatMessage(
+          input,
           props.userId, 
-          input, 
           props.sceneId
         );
         

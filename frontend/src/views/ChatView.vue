@@ -11,9 +11,9 @@
         <button class="action-button new-chat" @click="createNewChat">
           <i class="icon-plus"></i> 新建对话
         </button>
-        <button class="action-button history" @click="toggleHistory">
+        <!-- <button class="action-button history" @click="toggleHistory">
           <i class="icon-history"></i> 历史对话
-        </button>
+        </button> -->
       </div>
 
       <!-- 场景选择列表 -->
@@ -36,7 +36,11 @@
         <h2>{{ currentScene.name }}</h2>
       </div>
 
-
+      <!-- 网络状态指示器 -->
+      <div v-if="!isApiConnected" class="network-status-warning">
+        <span>网络连接中断，部分功能可能不可用</span>
+        <button @click="checkApiConnection" class="retry-button">重试</button>
+      </div>
 
       <!-- 提示词区域 -->
       <div class="prompt-suggestions">
@@ -58,6 +62,33 @@
         <div v-for="(message, index) in currentMessages" :key="index"
           :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
           <div class="message-content">{{ message.content }}</div>
+
+          <!-- 附件展示区 -->
+          <div v-if="message.attachments && message.attachments.length">
+            <div v-for="(attachment, i) in message.attachments" :key="i" class="attachment">
+              <img v-if="isImageAttachment(attachment.name)" :src="`data:image/png;base64,${attachment.data}`"
+                :alt="attachment.name" />
+              <a v-else @click="downloadAttachment(attachment)" href="javascript:void(0)">
+                <span class="attachment-icon"></span>
+                {{ attachment.name }}
+              </a>
+            </div>
+          </div>
+
+          <!-- 来源信息展示区 -->
+          <div v-if="message.sources && message.sources.length" class="sources">
+            <div class="sources-title">参考来源：</div>
+            <ul>
+              <li v-for="(source, i) in message.sources" :key="i">
+                <a v-if="source.url" :href="source.url" target="_blank">
+                  {{ source.title || source.document || '未知来源' }}
+                </a>
+                <span v-else>
+                  {{ source.title || source.document || '未知来源' }}
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
         <div v-if="loading" class="loading-indicator">
           <span>思考中...</span>
@@ -66,22 +97,48 @@
 
       <!-- 输入区域 -->
       <div class="chat-input">
-        <input v-model="userInput" @keyup.enter="!loading && userInput.trim() && sendMessage()"
-          @keydown.up="recallLastMessage" placeholder="请输入您的问题..." :disabled="loading" ref="inputField" />
-        <button @click="sendMessage" :disabled="loading || !userInput.trim()" class="send-button"
-          :class="{ 'sending': loading }" :title="loading ? '正在发送...' : '发送消息'">
-          <span v-if="!loading" class="button-text">发送</span>
-          <span v-else class="loading-dots"></span>
-          <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
-        </button>
-      </div>
+  <input
+    v-model="userInput"
+    @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
+    @keydown.up="recallLastMessage"
+    placeholder="请输入您的问题..."
+    :disabled="loading"
+    ref="inputField"
+  />
+
+  <!-- 附件按钮 -->
+  <!-- <div class="attachment-button">
+    <input type="file" id="file-upload" ref="fileInput" @change="handleFileSelected" style="display:none" />
+    <button class="attach-button" @click="triggerFileUpload" :disabled="loading">
+      <i class="icon-paperclip"></i>
+      <span>附件</span>
+    </button> -->
+    <!-- 文件预览 -->
+    <!-- <div v-if="selectedFile" class="selected-file">
+      <span>{{ selectedFile.name }}</span>
+      <button class="remove-file" @click="removeSelectedFile">✕</button>
+    </div>
+  </div> -->
+
+  <button
+    @click="sendMessage"
+    :disabled="(loading || (!userInput.trim() && !selectedFile))"
+    class="send-button"
+    :title="loading ? '正在发送...' : '发送消息'"
+  >
+    <span v-if="!loading" class="button-text">发送</span>
+    <span v-else class="loading-dots"></span>
+    <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
+  </button>
+</div>
     </div>
   </div>
 </template>
 
 <script>
+import { ref, onMounted, nextTick } from 'vue';
 import HistoryPanel from '@/components/HistoryPanel.vue';
-import { chatService } from '@/api/chatService'; // 导入chatService
+import chatService from '@/api/chatService'; // 导入chatService
 
 export default {
   name: 'ChatView',
@@ -97,7 +154,8 @@ export default {
       loading: false,
       showHistory: false,
       currentChatId: null,
-      welcomeMessage: '你好！我是您的AI助手，请问有什么我可以帮您的？' // 默认欢迎消息
+      welcomeMessage: '你好！我是您的AI助手，请问有什么我可以帮您的？', // 默认欢迎消息
+      selectedFile: null // 新增：用于存储选中的文件
     }
   },
   computed: {
@@ -116,6 +174,66 @@ export default {
         this.messagesHistory[scene.id] = [];
       }
     });
+  },
+  setup() {
+    const isApiConnected = ref(true);
+
+    const checkApiConnection = async () => {
+      isApiConnected.value = await chatService.checkApiConnection();
+    };
+
+    const isImageAttachment = (filename) => {
+      if (!filename) return false;
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+      return imageExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+    };
+
+    const downloadAttachment = (attachment) => {
+      const link = document.createElement('a');
+      link.href = `data:application/octet-stream;base64,${attachment.data}`;
+      link.download = attachment.name;
+      link.click();
+    };
+
+    const handleApiError = (error) => {
+      // 可参考 ChatComponent.vue 中的 handleApiError
+      console.error('聊天请求失败:', error);
+      // ...existing or similar error handling code...
+    };
+
+    const sendMessage = async () => {
+      // ...existing code...
+      try {
+        const sceneId = currentScene.value.id; 
+        // 修正参数顺序: (prompt, studentId, cardPinyin)
+        const response = await chatService.sendChatMessage(
+          userQuestion,
+          localStorage.getItem('studentId') || '未知用户',
+          sceneId
+        );
+        // ...existing code...
+      } catch (err) {
+        handleApiError(err);
+      } finally {
+        // ...existing code...
+      }
+    };
+
+    onMounted(async () => {
+      // ...existing code...
+      await checkApiConnection();
+      // ...existing code...
+    });
+
+    return {
+      isApiConnected,
+      checkApiConnection,
+      isImageAttachment,
+      downloadAttachment,
+      handleApiError,
+      sendMessage
+      // ...existing code...
+    };
   },
   methods: {
     async loadScenes() {
@@ -248,7 +366,7 @@ export default {
       this.userInput = prompt;
     },
     async sendMessage() {
-      if (!this.userInput.trim() || this.loading) return;
+      if (!this.userInput.trim() && !this.selectedFile || this.loading) return;
 
       // 添加用户消息到聊天记录
       const sceneId = this.currentScene.id;
@@ -356,6 +474,22 @@ export default {
           }
         }
       }
+    },
+    // 新增：触发文件上传
+    triggerFileUpload() {
+      this.$refs.fileInput.click();
+    },
+    // 新增：处理文件选择
+    handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.selectedFile = file;
+      }
+    },
+    // 新增：移除选中的文件
+    removeSelectedFile() {
+      this.selectedFile = null;
+      this.$refs.fileInput.value = '';
     }
   }
 }
@@ -715,5 +849,52 @@ export default {
 /* 添加欢迎消息样式 */
 .welcome-message {
   margin-top: 20px;
+}
+
+.network-status-warning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.retry-button {
+  margin-left: 10px;
+  background-color: #c62828;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.attachment {
+  margin-top: 10px;
+  /* ...existing code... */
+}
+
+
+.sources {
+  margin-top: 10px;
+  /* ...existing code... */
+}
+
+.sources-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.icon-paperclip {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M16.58 8.09l-5.66 5.66a2 2 0 01-2.83 0 2 2 0 010-2.83l5.66-5.66a1 1 0 011.42 1.42l-5.66 5.66a.002.002 0 000 .004l-.004.004a.75.75 0 101.06 1.06l5.66-5.66A2.998 2.998 0 0012 2a2.998 2.998 0 00-2.12.88l-5.66 5.66a4 4 0 005.66 5.66l5.66-5.66a3 3 0 00-4.24-4.24l-3.54 3.54a1 1 0 101.42 1.42l3.54-3.54c.39-.39 1.02-.39 1.41 0 .38.38.38 1.02 0 1.41l-5.66 5.66a2.5 2.5 0 01-3.53-3.53l5.66-5.66A4 4 0 0116.58 8.09z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 4px;
 }
 </style>

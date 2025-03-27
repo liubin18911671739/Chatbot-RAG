@@ -1,7 +1,10 @@
-# backend/app/models/__init__.py
+from flask_sqlalchemy import SQLAlchemy
 
+db = SQLAlchemy()
+
+from .website import Website
+from .news import News
 from .user import User
-from .chat import ChatRecord
-from .document import Document
+from .crawler_config import CrawlerConfig
 
-__all__ = ['User', 'ChatRecord', 'Document']
+__all__ = ['User', 'News', 'CrawlerConfig']
