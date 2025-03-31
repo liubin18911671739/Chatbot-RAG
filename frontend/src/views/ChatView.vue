@@ -11,9 +11,9 @@
         <button class="action-button new-chat" @click="createNewChat">
           <i class="icon-plus"></i> 新建对话
         </button>
-        <router-link to="/admin" class="action-button admin">
+        <!-- <router-link to="/admin" class="action-button admin">
           <i class="icon-settings"></i> 管理后台
-        </router-link>
+        </router-link> -->
       </div>
 
       <!-- 场景选择列表 -->

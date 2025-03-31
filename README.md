@@ -134,3 +134,71 @@ def greeting():
    npm run build
    ```
    构建后的文件将生成在 dist 目录中
+
+
+# admin-end 
+基于 Flask Bootstrap 的后台管理系统，提供 RAG 系统的管理界面和数据可视化功能。
+
+## 系统概述
+admin-end 是一个专为管理员设计的后台管理系统，用于管理 RAG 问答系统的文档库、查看系统运行状态及用户使用情况统计。该系统采用 Flask 作为后端框架，Bootstrap 作为前端 UI 框架，实现了简洁美观的管理界面。
+
+## 功能特点
+- **文档管理**：上传、删除和更新 RAG 系统的知识库文档
+- **数据可视化**：图表展示系统使用情况、热门问题及性能指标
+- **用户管理**：查看用户活动和使用统计
+- **系统监控**：实时监控系统资源使用情况和模型运行状态
+- **日志查询**：便捷查看系统日志和错误记录
+
+## 运行指南
+1. 进入 admin-end 目录：
+   ```
+   cd admin-end
+   ```
+
+2. 安装依赖：
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. 启动管理后台：
+   ```
+   python admin.py
+   ```
+   或使用生产环境配置:
+   ```
+   gunicorn -w 2 -b 0.0.0.0:5001 admin:app
+   ```
+
+4. 访问管理界面：http://localhost:5001/admin
+
+## 文档上传指南
+1. 登录管理后台
+2. 导航至"文档管理"页面
+3. 点击"上传文档"按钮
+4. 选择文档类型（PDF、DOCX、TXT等）
+5. 选择分类目录
+6. 上传文件并等待系统处理
+7. 系统会自动提取、分割文档并更新知识库
+
+## API 接口
+管理后台提供以下主要 API 接口：
+
+- `/admin/api/documents` - 文档管理接口
+- `/admin/api/statistics` - 系统统计数据接口
+- `/admin/api/users` - 用户数据接口
+- `/admin/api/logs` - 系统日志接口
+- `/admin/api/health` - 系统健康检查接口
+
+## 权限控制
+管理后台实现了基于角色的访问控制：
+- 超级管理员：拥有所有权限
+- 内容管理员：可以管理文档，但无法修改系统设置
+- 只读用户：只能查看数据，不能进行操作
+
+## Docker 部署
+可通过 Docker 独立部署 admin-end：
+
+```
+docker build -t admin-end -f admin-end/Dockerfile .
+docker run -d -p 5001:5001 --name admin-system admin-end
+```

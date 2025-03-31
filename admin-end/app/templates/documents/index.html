@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    {% include 'base.html' %}
+    <div class="container mt-4">
+        <h1>文档管理</h1>
+        <div class="mb-3">
+            <a href="{{ url_for('documents.upload') }}" class="btn btn-primary">上传文档</a>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>文档名称</th>
+                    <th>类型</th>
+                    <th>上传时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for document in documents %}
+                <tr>
+                    <td>{{ document.name }}</td>
+                    <td>{{ document.type }}</td>
+                    <td>{{ document.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>
+                        <a href="{{ url_for('documents.delete', document_id=document.id) }}" class="btn btn-danger btn-sm">删除</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

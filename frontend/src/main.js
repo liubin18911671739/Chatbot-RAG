@@ -102,5 +102,5 @@ app.mount('#app');
 // 添加全局的未捕获错误处理
 app.config.errorHandler = (err, vm, info) => {
   console.error('未捕获的应用错误:', err, info);
-  ElMessage.error('应用发生错误，请刷新页面或联系管理员');
+  // ElMessage.error('应用发生错误，请刷新页面或联系管理员');
 };

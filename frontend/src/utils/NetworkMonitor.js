@@ -111,7 +111,7 @@ class NetworkMonitor {
       
       if (isConnected && !prevState) {
         console.log('API连接已恢复');
-        ElMessage.success('网络连接已恢复');
+        // ElMessage.success('网络连接已恢复');
       } else if (!isConnected && prevState) {
         console.log('API连接已断开');
         ElMessage.error('网络连接已断开，部分功能可能不可用');
