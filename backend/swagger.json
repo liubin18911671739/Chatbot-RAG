@@ -1,0 +1,379 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "BISU-QA System API",
+      "description": "棠心问答系统后端 API 文档",
+      "version": "1.0.0",
+      "contact": {
+        "name": "BISU-QA 开发团队",
+        "email": "support@example.com"
+      }
+    },
+    "servers": [
+      {
+        "url": "http://localhost:5000",
+        "description": "开发环境服务器"
+      },
+      {
+        "url": "http://10.101.0.208:5000",
+        "description": "测试环境服务器"
+      }
+    ],
+    "paths": {
+      "/api/chat": {
+        "post": {
+          "summary": "聊天接口",
+          "description": "接收用户提问并返回智能回答",
+          "operationId": "sendChatMessage",
+          "tags": ["聊天功能"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ChatResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "服务器错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/scenes": {
+        "get": {
+          "summary": "场景列表接口",
+          "description": "获取系统支持的所有场景",
+          "operationId": "getScenes",
+          "tags": ["场景管理"],
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/Scene"
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "服务器错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/feedback": {
+        "post": {
+          "summary": "反馈接口",
+          "description": "提交用户对答案的反馈",
+          "operationId": "submitFeedback",
+          "tags": ["用户反馈"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "服务器错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/greeting": {
+        "get": {
+          "summary": "问候语接口",
+          "description": "获取系统问候语",
+          "operationId": "getGreeting",
+          "tags": ["系统配置"],
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GreetingResponse"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "服务器错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/health": {
+        "get": {
+          "summary": "健康检查接口",
+          "description": "检查API服务是否正常运行",
+          "operationId": "checkHealth",
+          "tags": ["系统状态"],
+          "responses": {
+            "200": {
+              "description": "服务正常",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "example": "ok"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ChatRequest": {
+          "type": "object",
+          "required": ["prompt"],
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "用户的提问内容",
+              "example": "你好，请问什么是中国特色社会主义？"
+            },
+            "scene_id": {
+              "type": "string",
+              "description": "场景ID（可选）",
+              "example": "db_sizheng"
+            },
+            "studentId": {
+              "type": "string",
+              "description": "学生ID（可选）",
+              "example": "2023001"
+            }
+          }
+        },
+        "ChatResponse": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "example": "success"
+            },
+            "response": {
+              "type": "string",
+              "description": "回答内容",
+              "example": "中国特色社会主义是马克思列宁主义基本原则与中国具体实际相结合的产物..."
+            },
+            "attachment_data": {
+              "type": "array",
+              "description": "附件数据",
+              "items": {
+                "type": "object"
+              }
+            },
+            "special_note": {
+              "type": "string",
+              "description": "特殊说明"
+            },
+            "chat_id": {
+              "type": "string",
+              "description": "对话ID（可用于追踪对话）",
+              "example": "chat_12345"
+            }
+          }
+        },
+        "Scene": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "example": "思想政治教育资源"
+            },
+            "icon": {
+              "type": "string",
+              "example": "📚"
+            },
+            "id": {
+              "type": "string",
+              "example": "db_sizheng"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["available", "developing"],
+              "example": "available"
+            }
+          }
+        },
+        "FeedbackRequest": {
+          "type": "object",
+          "required": ["message_id", "rating"],
+          "properties": {
+            "message_id": {
+              "type": "string",
+              "description": "消息ID",
+              "example": "msg_12345"
+            },
+            "rating": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 5,
+              "description": "评分(1-5)",
+              "example": 5
+            },
+            "comment": {
+              "type": "string",
+              "description": "评论内容",
+              "example": "回答非常有帮助！"
+            }
+          }
+        },
+        "GreetingResponse": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "example": "success"
+            },
+            "greeting": {
+              "type": "string",
+              "example": "欢迎使用我们的QA系统!"
+            }
+          }
+        },
+        "SuccessResponse": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "example": "success"
+            },
+            "message": {
+              "type": "string",
+              "example": "操作成功完成"
+            }
+          }
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "example": "error"
+            },
+            "message": {
+              "type": "string",
+              "example": "发生错误"
+            },
+            "error_code": {
+              "type": "string",
+              "example": "SERVER_ERROR"
+            }
+          }
+        }
+      }
+    },
+    "tags": [
+      {
+        "name": "聊天功能",
+        "description": "问答交互相关的API"
+      },
+      {
+        "name": "场景管理",
+        "description": "场景查询与管理"
+      },
+      {
+        "name": "用户反馈",
+        "description": "用户反馈相关功能"
+      },
+      {
+        "name": "系统配置",
+        "description": "系统基础配置信息"
+      },
+      {
+        "name": "系统状态",
+        "description": "检查系统运行状态"
+      }
+    ]
+  }

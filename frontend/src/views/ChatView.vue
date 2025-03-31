@@ -36,10 +36,22 @@
         <h2>{{ currentScene.name }}</h2>
       </div>
 
-      <!-- 网络状态指示器 -->
+      <!-- 增强的网络状态指示器 -->
       <div v-if="!isApiConnected" class="network-status-warning">
-        <span>网络连接中断，部分功能可能不可用</span>
-        <button @click="checkApiConnection" class="retry-button">重试</button>
+        <el-alert
+          title="网络连接中断"
+          type="error"
+          description="无法连接到后端API服务，请检查网络或联系管理员"
+          show-icon
+          :closable="false"
+        >
+          <!-- <template #default>
+            <span>网络连接中断，部分功能可能不可用</span>
+            <el-button @click="checkApiConnection" type="danger" size="small" class="retry-button">
+              重试连接
+            </el-button>
+          </template> -->
+        </el-alert>
       </div>
 
       <!-- 提示词区域 -->
@@ -136,9 +148,9 @@
 </template>
 
 <script>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import HistoryPanel from '@/components/HistoryPanel.vue';
-import chatService from '@/api/chatService'; // 导入chatService
+import chatService from '@/services/chatService'; // 导入chatService
 
 export default {
   name: 'ChatView',
@@ -176,10 +188,30 @@ export default {
     });
   },
   setup() {
-    const isApiConnected = ref(true);
+    const isApiConnected = ref(false);
+    const apiCheckInProgress = ref(false);
+    const retryCount = ref(0);
+    const maxRetries = 3;
 
     const checkApiConnection = async () => {
-      isApiConnected.value = await chatService.checkApiConnection();
+      if (apiCheckInProgress.value) return;
+      
+      apiCheckInProgress.value = true;
+      console.log('检查API连接状态...');
+      
+      try {
+        isApiConnected.value = await chatService.checkApiConnection();
+        console.log('API连接状态:', isApiConnected.value ? '已连接' : '未连接');
+        
+        // 如果连接失败且未超过最大重试次数，则自动重试
+        if (!isApiConnected.value && retryCount.value < maxRetries) {
+          retryCount.value++;
+          console.log(`连接失败，${5000}ms后自动重试 (${retryCount.value}/${maxRetries})...`);
+          setTimeout(checkApiConnection, 5000);
+        }
+      } finally {
+        apiCheckInProgress.value = false;
+      }
     };
 
     const isImageAttachment = (filename) => {
@@ -196,16 +228,13 @@ export default {
     };
 
     const handleApiError = (error) => {
-      // 可参考 ChatComponent.vue 中的 handleApiError
       console.error('聊天请求失败:', error);
-      // ...existing or similar error handling code...
     };
 
     const sendMessage = async () => {
       // ...existing code...
       try {
         const sceneId = currentScene.value.id; 
-        // 修正参数顺序: (prompt, studentId, cardPinyin)
         const response = await chatService.sendChatMessage(
           userQuestion,
           localStorage.getItem('studentId') || '未知用户',
@@ -220,9 +249,19 @@ export default {
     };
 
     onMounted(async () => {
-      // ...existing code...
+      console.log('ChatView组件已挂载，正在初始化...');
       await checkApiConnection();
-      // ...existing code...
+    });
+
+    // 添加网络在线状态监听
+    window.addEventListener('online', () => {
+      console.log('检测到网络已恢复');
+      checkApiConnection();
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('检测到网络已断开');
+      isApiConnected.value = false;
     });
 
     return {
@@ -232,20 +271,17 @@ export default {
       downloadAttachment,
       handleApiError,
       sendMessage
-      // ...existing code...
     };
   },
   methods: {
     async loadScenes() {
       try {
         this.loading = true;
-        // 使用chatService获取场景数据
         const response = await chatService.getScenes();
 
         if (response.data && Array.isArray(response.data)) {
           this.scenes = response.data;
         } else {
-          // 如果API不可用或数据格式不对，使用默认场景
           this.scenes = [
             {
               id: 'general',
@@ -264,13 +300,11 @@ export default {
           ];
         }
 
-        // 初始化选择第一个场景
         if (this.scenes.length > 0) {
           this.currentScene = this.scenes[0];
         }
       } catch (error) {
         console.error('加载场景数据失败:', error);
-        // 加载失败时使用默认场景
         this.scenes = [
           {
             id: 'general',
@@ -294,14 +328,12 @@ export default {
     },
     async loadWelcomeMessage() {
       try {
-        // 使用chatService获取欢迎消息
         const response = await chatService.getGreeting();
         if (response.data && response.data.greeting) {
           this.welcomeMessage = response.data.greeting;
         }
       } catch (error) {
         console.error('获取欢迎消息失败:', error);
-        // 使用默认欢迎消息
       }
     },
     selectScene(scene) {
@@ -309,12 +341,10 @@ export default {
       this.scrollToBottom();
     },
     createNewChat() {
-      // 清空当前场景的消息
       if (this.currentScene) {
         this.messagesHistory[this.currentScene.id] = [];
       }
       this.currentChatId = null;
-      // 如果在历史页面创建新对话，则关闭历史面板
       if (this.showHistory && window.innerWidth < 768) {
         this.showHistory = false;
       }
@@ -327,7 +357,6 @@ export default {
         this.loading = true;
         this.currentChatId = chatId;
 
-        // 从API获取对话历史
         const response = await fetch(`/api/chats/${chatId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -336,14 +365,11 @@ export default {
 
         const chatData = await response.json();
 
-        // 设置当前场景
         const sceneId = chatData.sceneId || 'general';
         this.currentScene = this.scenes.find(scene => scene.id === sceneId) || this.scenes[0];
 
-        // 加载消息
         this.messagesHistory[sceneId] = chatData.messages || [];
 
-        // 在移动端设备上选择对话后自动关闭历史面板
         if (window.innerWidth < 768) {
           this.showHistory = false;
         }
@@ -358,7 +384,6 @@ export default {
       }
     },
     handleChatDeleted() {
-      // 如果当前对话被删除，清空当前对话
       this.currentChatId = null;
       this.createNewChat();
     },
@@ -379,26 +404,17 @@ export default {
       this.loading = true;
 
       try {
-        const isConnected = await chatService.checkApiConnection();
-        if (!isConnected) {
-          console.warn('网络连接不可用，将在恢复后重试');
-          this.messagesHistory[sceneId].push({
-            content: '网络连接不可用，您的问题已保存，将在网络恢复后回答。',
-            sender: 'ai'
-          });
-          return;
-        }
-
         const response = await chatService.sendChatMessage(
-          userQuestion, // prompt
-          localStorage.getItem('studentId') || '未知用户', // studentId
-          sceneId // cardPinyin
+          userQuestion, 
+          sceneId 
         );
 
-        const data = response.data;
+        const data = response;
         this.messagesHistory[sceneId].push({
-          content: data.answer || data.response || '没有回答',
-          sender: 'ai'
+          content: data.response || data.answer || '没有回答',
+          sender: 'ai',
+          attachments: data.attachment_data || [],
+          sources: data.sources || []
         });
 
         if (!this.currentChatId && data.chat_id) {
@@ -406,8 +422,10 @@ export default {
         }
       } catch (error) {
         console.error('获取回答时出错:', error);
+        let errorMessage = '抱歉，获取回答时出现问题，请稍后再试。';
+        
         this.messagesHistory[sceneId].push({
-          content: '抱歉，获取回答时出现问题，请稍后再试。',
+          content: errorMessage,
           sender: 'ai'
         });
       } finally {
@@ -424,16 +442,13 @@ export default {
         }
       });
     },
-    // 回溯最后一条用户消息（用于修改或重新发送）
     recallLastMessage() {
       if (!this.userInput.trim() && this.currentScene) {
         const messages = this.messagesHistory[this.currentScene.id] || [];
-        // 从后向前查找最近一条用户消息
         for (let i = messages.length - 1; i >= 0; i--) {
           if (messages[i].sender === 'user') {
             this.userInput = messages[i].content;
             this.$nextTick(() => {
-              // 将光标移到文本末尾
               this.$refs.inputField.focus();
               this.$refs.inputField.setSelectionRange(
                 this.userInput.length,
@@ -445,18 +460,15 @@ export default {
         }
       }
     },
-    // 新增：触发文件上传
     triggerFileUpload() {
       this.$refs.fileInput.click();
     },
-    // 新增：处理文件选择
     handleFileSelected(event) {
       const file = event.target.files[0];
       if (file) {
         this.selectedFile = file;
       }
     },
-    // 新增：移除选中的文件
     removeSelectedFile() {
       this.selectedFile = null;
       this.$refs.fileInput.value = '';
@@ -472,7 +484,6 @@ export default {
   height: 100vh;
   overflow: hidden;
   position: relative;
-  /* 为历史面板提供相对定位 */
 }
 
 /* 历史面板样式 */
@@ -844,13 +855,10 @@ export default {
 
 .attachment {
   margin-top: 10px;
-  /* ...existing code... */
 }
-
 
 .sources {
   margin-top: 10px;
-  /* ...existing code... */
 }
 
 .sources-title {

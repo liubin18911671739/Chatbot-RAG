@@ -1,12 +1,32 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 from routes import bp  # 导入Blueprint
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+# 配置 Swagger UI
+SWAGGER_URL = '/api/docs'
+API_URL = '/static/swagger.json'
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "BISU-QA System API"
+    }
+)
+
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
 # Register the main API blueprint
 app.register_blueprint(bp, url_prefix='/api')  # 添加url_prefix
+
+# 提供静态 swagger.json 文件
+@app.route('/static/swagger.json')
+def send_swagger_json():
+    return send_from_directory('.', 'swagger.json')
 
 # 打印所有已注册的路由（调试用）
 print("Registered routes:")

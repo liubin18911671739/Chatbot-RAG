@@ -1,7 +1,13 @@
 from flask import jsonify
 from routes import bp
 
-# bp = Blueprint('greeting', __name__)
+@bp.route('/health', methods=['GET'])
+def health_check():
+    """API健康检查端点"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'API服务正常运行'
+    }), 200
 
 @bp.route('/greeting', methods=['GET'])
 def greeting():
