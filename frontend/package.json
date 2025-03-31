@@ -20,7 +20,7 @@
     "@babel/plugin-proposal-optional-chaining": "^7.21.0",
     "@vue/cli-service": "^4.5.0",
     "@vue/compiler-sfc": "^3.0.0",
-    "cypress": "^14.2.0",
+    "cypress": "^12.17.4",
     "eslint": "^7.0.0",
     "eslint-plugin-vue": "^7.0.0"
   }

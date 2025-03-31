@@ -11,9 +11,9 @@
         <button class="action-button new-chat" @click="createNewChat">
           <i class="icon-plus"></i> 新建对话
         </button>
-        <!-- <button class="action-button history" @click="toggleHistory">
-          <i class="icon-history"></i> 历史对话
-        </button> -->
+        <router-link to="/admin" class="action-button admin">
+          <i class="icon-settings"></i> 管理后台
+        </router-link>
       </div>
 
       <!-- 场景选择列表 -->
@@ -368,7 +368,6 @@ export default {
     async sendMessage() {
       if (!this.userInput.trim() && !this.selectedFile || this.loading) return;
 
-      // 添加用户消息到聊天记录
       const sceneId = this.currentScene.id;
       this.messagesHistory[sceneId].push({
         content: this.userInput,
@@ -380,11 +379,8 @@ export default {
       this.loading = true;
 
       try {
-        // 先检查网络连接状态
         const isConnected = await chatService.checkApiConnection();
-
         if (!isConnected) {
-          // 网络不可用时，显示离线提示，但仍保存用户问题
           console.warn('网络连接不可用，将在恢复后重试');
           this.messagesHistory[sceneId].push({
             content: '网络连接不可用，您的问题已保存，将在网络恢复后回答。',
@@ -393,51 +389,25 @@ export default {
           return;
         }
 
-        // 使用chatService发送请求到后端API
-        // 参数顺序：studentId, prompt, cardPinyin
         const response = await chatService.sendChatMessage(
-          localStorage.getItem('studentId') || '未知用户', // studentId - 用户ID作为第一个参数
-          userQuestion, // prompt - 用户问题作为第二个参数
-          sceneId  // cardPinyin - 场景ID作为第三个参数
+          userQuestion, // prompt
+          localStorage.getItem('studentId') || '未知用户', // studentId
+          sceneId // cardPinyin
         );
 
         const data = response.data;
-
-        // 添加AI回复到聊天记录
         this.messagesHistory[sceneId].push({
           content: data.answer || data.response || '没有回答',
           sender: 'ai'
         });
 
-        // 如果返回了附件数据，显示附件
-        if (data.attachment_data && data.attachment_data.length > 0) {
-          // 处理附件显示逻辑
-          console.log('收到附件数据:', data.attachment_data);
-          // 这里可以添加显示附件的代码
-        }
-
-        // 如果是新对话且返回了chat_id，保存它
         if (!this.currentChatId && data.chat_id) {
           this.currentChatId = data.chat_id;
         }
       } catch (error) {
         console.error('获取回答时出错:', error);
-        // 根据错误类型提供不同的错误信息
-        let errorMessage = '抱歉，获取回答时出现问题，请稍后再试。';
-
-        if (error.message && error.message.includes('Network Error')) {
-          errorMessage = '网络连接错误，请检查您的网络状态后重试。';
-        } else if (error.response) {
-          // 服务器返回了错误状态码
-          if (error.response.status === 429) {
-            errorMessage = '请求过于频繁，请稍后再试。';
-          } else if (error.response.status >= 500) {
-            errorMessage = '服务器暂时不可用，请稍后再试。';
-          }
-        }
-
         this.messagesHistory[sceneId].push({
-          content: errorMessage,
+          content: '抱歉，获取回答时出现问题，请稍后再试。',
           sender: 'ai'
         });
       } finally {
@@ -896,5 +866,24 @@ export default {
   background-size: contain;
   background-repeat: no-repeat;
   margin-right: 4px;
+}
+
+.action-button.admin {
+  background-color: #614caf;
+  margin-left: 10px;
+}
+
+.action-button.admin:hover {
+  background-color: #4a3b7d;
+}
+
+.icon-settings {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 5px;
 }
 </style>

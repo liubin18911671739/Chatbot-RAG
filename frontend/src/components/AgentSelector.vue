@@ -12,6 +12,11 @@
         <span>{{ agent.name }}</span>
       </div>
     </div>
+    
+    <!-- 管理员入口 (可以添加额外的样式或权限控制) -->
+    <div class="admin-section">
+      <router-link to="/admin" class="admin-link">管理控制台</router-link>
+    </div>
   </div>
 </template>
 
@@ -82,5 +87,18 @@ export default {
 
 .agent-item:hover {
   background-color: #f0f0f0;
+}
+
+.admin-section {
+  margin-top: 20px;
+}
+
+.admin-link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
 }
 </style>

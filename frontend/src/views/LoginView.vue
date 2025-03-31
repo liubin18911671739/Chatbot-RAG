@@ -2,14 +2,17 @@
   <div class="login-container">
     <div class="login-form">
       <h1>登录</h1>
+      <div class="login-instructions">
+        请使用数字2以外的学号和密码登录系统
+      </div>
       <form @submit.prevent="login">
         <div class="form-group">
-          <label for="username">用户名</label>
+          <label for="username">学号</label>
           <input 
             type="text" 
             id="username" 
             v-model="username" 
-            placeholder="请输入用户名" 
+            placeholder="请输入学号" 
             required
           />
         </div>
@@ -29,15 +32,15 @@
             <label for="remember">记住我</label>
           </div>
           <div class="forgot-password">
-            <router-link to="/forgot-password">忘记密码？</router-link>
+            <a href="javascript:void(0)" @click="showPasswordHelp">忘记密码？</a>
           </div>
         </div>
         <div class="error" v-if="error">{{ error }}</div>
         <button type="submit" :disabled="loading">
           {{ loading ? '登录中...' : '登录' }}
         </button>
-        <div class="register-link">
-          还没有账号？ <router-link to="/register">立即注册</router-link>
+        <div class="help-info">
+          如需帮助，请联系系统管理员
         </div>
       </form>
     </div>
@@ -100,6 +103,9 @@ export default {
       localStorage.setItem('token', 'dev-mode-token');
       // 跳转到聊天页面
       this.$router.push('/chat');
+    },
+    showPasswordHelp() {
+      alert('请联系系统管理员重置密码');
     }
   },
   mounted() {
@@ -148,6 +154,12 @@ h1 {
   text-align: center;
   margin-bottom: 24px;
   color: #333;
+}
+
+.login-instructions {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #666;
 }
 
 .form-group {
@@ -211,6 +223,12 @@ button:disabled {
   margin-bottom: 20px;
 }
 
+.help-info {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+}
+
 .register-link {
   text-align: center;
   margin-top: 20px;
@@ -223,5 +241,21 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+.login-instructions {
+  background-color: #f8f9fa;
+  border-left: 4px solid #4CAF50;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.help-info {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+  font-size: 14px;
 }
 </style>

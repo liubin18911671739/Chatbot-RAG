@@ -22,6 +22,23 @@ const routes = [
     name: 'Login',
     component: LoginView,
   },
+  // 添加管理界面路由
+  {
+    path: '/admin',
+    name: 'Admin',
+    beforeEnter: () => {
+      // 获取后端基础URL
+      const baseUrl = process.env.VUE_APP_API_URL || 'http://10.101.0.208:5000';
+      // 移除URL末尾的/api如果存在
+      const adminBaseUrl = baseUrl.endsWith('/api') 
+        ? baseUrl.slice(0, -4) 
+        : baseUrl;
+      // 重定向到后端管理页面
+      window.location.href = `${adminBaseUrl}/admin`;
+      // 返回false阻止Vue Router继续导航
+      return false;
+    }
+  },
 ];
 
 const router = createRouter({
