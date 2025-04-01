@@ -5,8 +5,8 @@ module.exports = {
   devServer: {
     proxy: {
       '/api': {
-        // 确保target是一个有效的URL字符串
-        target: 'http://127.0.0.1:5000',
+        // target: process.env.VUE_APP_API_BASE_URL || 'http://127.0.0.1:5000',
+        target: 'http://10.101.0.208:5000',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '/api'

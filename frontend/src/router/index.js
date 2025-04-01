@@ -28,7 +28,7 @@ const routes = [
     name: 'Admin',
     beforeEnter: () => {
       // 获取后端基础URL
-      const baseUrl = process.env.VUE_APP_API_URL || 'http://127.0.0.1:5000';
+      const baseUrl = 'http://127.0.0.1:5001';
       // 移除URL末尾的/api如果存在
       const adminBaseUrl = baseUrl.endsWith('/api') 
         ? baseUrl.slice(0, -4) 

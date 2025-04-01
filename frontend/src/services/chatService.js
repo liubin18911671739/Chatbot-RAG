@@ -26,15 +26,15 @@ class ChatService {
       }
       
       // 尝试备用健康检查端点
-      try {
-        console.log('尝试备用API健康检查...');
-        const healthResponse = await axios.get('/api/health', { timeout: 5000 });
-        console.log('备用API连接成功:', healthResponse.status);
-        return true;
-      } catch (healthError) {
-        console.error('备用API连接也失败');
-        return false;
-      }
+      // try {
+      //   console.log('尝试备用API健康检查...');
+      //   const healthResponse = await axios.get('/api/health', { timeout: 5000 });
+      //   console.log('备用API连接成功:', healthResponse.status);
+      //   return true;
+      // } catch (healthError) {
+      //   console.error('备用API连接也失败');
+      //   return false;
+      // }
     }
   }
 

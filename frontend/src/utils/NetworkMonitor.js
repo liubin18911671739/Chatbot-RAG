@@ -72,7 +72,7 @@ class NetworkMonitor {
     
     try {
       const endpoints = [
-        '/api/health',
+        // '/api/health',
         '/api/greeting'
       ];
       
