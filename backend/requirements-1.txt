@@ -1,0 +1,11 @@
+Flask
+Flask-Cors
+# Flask-MySQLdb
+gunicorn
+requests
+numpy
+pandas
+scikit-learn
+transformers
+torch
+tensorflow
