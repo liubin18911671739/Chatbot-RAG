@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:16
 
 # Set the working directory
 WORKDIR /app
@@ -19,4 +19,4 @@ RUN npm run build
 EXPOSE 8080
 
 # Command to run the application
-CMD ["npm", "run", "serve"]
+CMD ["npm", "run", "dev"]
