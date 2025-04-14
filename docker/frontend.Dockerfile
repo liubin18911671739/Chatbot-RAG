@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18 as builder
 
 # Set the working directory
 WORKDIR /app
@@ -15,8 +15,8 @@ COPY frontend/ .
 # Build the application
 RUN npm run build
 
-# Expose the port the app runs on
-EXPOSE 8080
-
-# Command to run the application
-CMD ["npm", "run", "dev"]
+# 第二阶段可选：如果您只想保留构建结果
+FROM nginx:stable-alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

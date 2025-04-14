@@ -11,15 +11,15 @@
         <button class="action-button new-chat" @click="createNewChat">
           <i class="icon-plus"></i> 新建对话
         </button>
-        <!-- <router-link to="/admin" class="action-button admin">
+        <router-link to="/admin" class="action-button admin">
           <i class="icon-settings"></i> 管理后台
-        </router-link> -->
+        </router-link>
       </div>
 
       <!-- 场景选择列表 -->
       <div class="scene-list">
         <div v-for="(scene, index) in scenes" :key="index"
-          :class="['scene-item', currentScene.id === scene.id ? 'active' : '']" @click="selectScene(scene)">
+          :class="['scene-item', currentScene && currentScene.id === scene.id ? 'active' : '']" @click="selectScene(scene)">
           <div class="scene-icon">
             <img :src="scene.iconUrl" :alt="scene.name" />
           </div>
@@ -31,7 +31,7 @@
     <!-- 右侧内容区 -->
     <div class="content">
       <!-- 场景图片展示 -->
-      <div class="scene-banner">
+      <div v-if="currentScene" class="scene-banner">
         <img :src="currentScene.bannerUrl" :alt="currentScene.name" />
         <h2>{{ currentScene.name }}</h2>
       </div>
@@ -55,7 +55,7 @@
       </div>
 
       <!-- 提示词区域 -->
-      <div class="prompt-suggestions">
+      <div v-if="currentScene" class="prompt-suggestions">
         <h3>可能的提示词:</h3>
         <div class="prompt-chips">
           <span v-for="(prompt, i) in currentScene.prompts" :key="i" class="prompt-chip" @click="usePrompt(prompt)">
@@ -109,89 +109,287 @@
 
       <!-- 输入区域 -->
       <div class="chat-input">
-  <input
-    v-model="userInput"
-    @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
-    @keydown.up="recallLastMessage"
-    placeholder="请输入您的问题..."
-    :disabled="loading"
-    ref="inputField"
-  />
+        <input
+          v-model="userInput"
+          @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
+          @keydown.up="recallLastMessage"
+          placeholder="请输入您的问题..."
+          :disabled="loading"
+          ref="inputField"
+        />
 
-  <!-- 附件按钮 -->
-  <!-- <div class="attachment-button">
-    <input type="file" id="file-upload" ref="fileInput" @change="handleFileSelected" style="display:none" />
-    <button class="attach-button" @click="triggerFileUpload" :disabled="loading">
-      <i class="icon-paperclip"></i>
-      <span>附件</span>
-    </button> -->
-    <!-- 文件预览 -->
-    <!-- <div v-if="selectedFile" class="selected-file">
-      <span>{{ selectedFile.name }}</span>
-      <button class="remove-file" @click="removeSelectedFile">✕</button>
-    </div>
-  </div> -->
+        <!-- 附件按钮 -->
+        <!-- <div class="attachment-button">
+          <input type="file" id="file-upload" ref="fileInput" @change="handleFileSelected" style="display:none" />
+          <button class="attach-button" @click="triggerFileUpload" :disabled="loading">
+            <i class="icon-paperclip"></i>
+            <span>附件</span>
+          </button> -->
+          <!-- 文件预览 -->
+          <!-- <div v-if="selectedFile" class="selected-file">
+            <span>{{ selectedFile.name }}</span>
+            <button class="remove-file" @click="removeSelectedFile">✕</button>
+          </div>
+        </div> -->
 
-  <button
-    @click="sendMessage"
-    :disabled="(loading || (!userInput.trim() && !selectedFile))"
-    class="send-button"
-    :title="loading ? '正在发送...' : '发送消息'"
-  >
-    <span v-if="!loading" class="button-text">发送</span>
-    <span v-else class="loading-dots"></span>
-    <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
-  </button>
-</div>
+        <button
+          @click="sendMessage"
+          :disabled="(loading || (!userInput.trim() && !selectedFile))"
+          class="send-button"
+          :title="loading ? '正在发送...' : '发送消息'"
+        >
+          <span v-if="!loading" class="button-text">发送</span>
+          <span v-else class="loading-dots"></span>
+          <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick, watch, computed, reactive } from 'vue';
+import chatService from '@/services/chatService';
 import HistoryPanel from '@/components/HistoryPanel.vue';
-import chatService from '@/services/chatService'; // 导入chatService
+import { ElMessage } from 'element-plus';
 
 export default {
   name: 'ChatView',
   components: {
     HistoryPanel
   },
-  data() {
-    return {
-      scenes: [], // 改为空数组，将通过API加载
-      currentScene: null,
-      messagesHistory: {}, // 按场景ID存储消息历史
-      userInput: '',
-      loading: false,
-      showHistory: false,
-      currentChatId: null,
-      welcomeMessage: '你好！我是您的AI助手，请问有什么我可以帮您的？', // 默认欢迎消息
-      selectedFile: null // 新增：用于存储选中的文件
-    }
-  },
-  computed: {
-    currentMessages() {
-      if (!this.currentScene) return [];
-      return this.messagesHistory[this.currentScene.id] || [];
-    }
-  },
-  async created() {
-    await this.loadScenes();
-    await this.loadWelcomeMessage();
-
-    // 初始化每个场景的消息历史
-    this.scenes.forEach(scene => {
-      if (!this.messagesHistory[scene.id]) {
-        this.messagesHistory[scene.id] = [];
-      }
-    });
-  },
   setup() {
+    // 创建响应式状态
+    const scenes = ref([]);
+    const currentScene = ref(null);
+    const messagesHistory = ref({});
+    const userInput = ref('');
+    const loading = ref(false);
+    const showHistory = ref(false);
+    const currentChatId = ref(null);
+    const welcomeMessage = ref('你好！我是您的AI助手，请问有什么我可以帮您的？');
+    const selectedFile = ref(null);
     const isApiConnected = ref(false);
     const apiCheckInProgress = ref(false);
     const retryCount = ref(0);
-    const maxRetries = 3;
+    
+    // DOM 引用
+    const messagesContainer = ref(null);
+    const inputField = ref(null);
+    const fileInput = ref(null);
+
+    // 计算属性
+    const currentMessages = computed(() => {
+      if (!currentScene.value) return [];
+      return messagesHistory.value[currentScene.value.id] || [];
+    });
+
+    // 方法
+    const loadScenes = async () => {
+      try {
+        loading.value = true;
+        const response = await chatService.getScenes();
+
+        if (response.data && Array.isArray(response.data)) {
+          scenes.value = response.data;
+        } else {
+          // 加载失败时使用默认场景
+          scenes.value = [
+            {
+              id: 'general',
+              name: '通用场景',
+              iconUrl: '/icons/general.png',
+              bannerUrl: '/banners/general.jpg',
+              prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
+            },
+            {
+              id: 'ideological',
+              name: '思政场景',
+              iconUrl: '/icons/ideological.png',
+              bannerUrl: '/banners/ideological.jpg',
+              prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+            }
+          ];
+        }
+
+        // 设置默认选中的场景
+        if (scenes.value.length > 0 && !currentScene.value) {
+          currentScene.value = scenes.value[0];
+          
+          // 初始化消息历史结构
+          scenes.value.forEach(scene => {
+            if (!messagesHistory.value[scene.id]) {
+              messagesHistory.value[scene.id] = [];
+            }
+          });
+        }
+      } catch (error) {
+        console.error('加载场景数据失败:', error);
+        // 加载失败时使用默认场景
+        scenes.value = [
+          {
+            id: 'general',
+            name: '通用场景',
+            iconUrl: '/icons/general.png',
+            bannerUrl: '/banners/general.jpg',
+            prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
+          },
+          {
+            id: 'ideological',
+            name: '思政场景',
+            iconUrl: '/icons/ideological.png',
+            bannerUrl: '/banners/ideological.jpg',
+            prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+          }
+        ];
+        currentScene.value = scenes.value[0];
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const loadWelcomeMessage = async () => {
+      try {
+        const response = await chatService.getGreeting();
+        if (response.data && response.data.greeting) {
+          welcomeMessage.value = response.data.greeting;
+        }
+      } catch (error) {
+        console.error('获取欢迎消息失败:', error);
+      }
+    };
+
+    const selectScene = (scene) => {
+      currentScene.value = scene;
+    };
+
+    const createNewChat = () => {
+      if (currentScene.value) {
+        messagesHistory.value[currentScene.value.id] = [];
+      }
+      currentChatId.value = null;
+      if (showHistory.value && window.innerWidth < 768) {
+        showHistory.value = false;
+      }
+    };
+
+    const toggleHistory = () => {
+      showHistory.value = !showHistory.value;
+    };
+
+    const loadChat = async (chatId) => {
+      try {
+        loading.value = true;
+        currentChatId.value = chatId;
+
+        const response = await fetch(`/api/chats/${chatId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const chatData = await response.json();
+
+        const sceneId = chatData.sceneId || 'general';
+        currentScene.value = scenes.value.find(scene => scene.id === sceneId) || scenes.value[0];
+
+        messagesHistory.value[sceneId] = chatData.messages || [];
+
+        if (window.innerWidth < 768) {
+          showHistory.value = false;
+        }
+      } catch (error) {
+        console.error('加载对话失败:', error);
+        ElMessage.error('加载对话失败');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const handleChatDeleted = () => {
+      currentChatId.value = null;
+      createNewChat();
+    };
+
+    const usePrompt = (prompt) => {
+      userInput.value = prompt;
+    };
+
+    const sendMessage = async () => {
+      if ((!userInput.value.trim() && !selectedFile.value) || loading.value) return;
+
+      const sceneId = currentScene.value.id;
+      messagesHistory.value[sceneId] = messagesHistory.value[sceneId] || [];
+      
+      // 添加用户消息到历史
+      messagesHistory.value[sceneId].push({
+        content: userInput.value,
+        sender: 'user'
+      });
+
+      const userQuestion = userInput.value;
+      userInput.value = '';
+      loading.value = true;
+
+      try {
+        // 调用API发送消息
+        const response = await chatService.sendChatMessage(
+          userQuestion, 
+          sceneId 
+        );
+
+        const data = response;
+        
+        // 添加AI回复到历史
+        messagesHistory.value[sceneId].push({
+          content: data.response || data.answer || '没有回答',
+          sender: 'ai',
+          attachments: data.attachment_data || [],
+          sources: data.sources || []
+        });
+
+        // 如果是新的对话，保存对话ID
+        if (!currentChatId.value && data.chat_id) {
+          currentChatId.value = data.chat_id;
+        }
+      } catch (error) {
+        console.error('获取回答时出错:', error);
+        let errorMessage = '抱歉，获取回答时出现问题，请稍后再试。';
+        
+        // 添加错误消息到历史
+        messagesHistory.value[sceneId].push({
+          content: errorMessage,
+          sender: 'ai'
+        });
+        
+        ElMessage.error(errorMessage);
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const recallLastMessage = () => {
+      if (!userInput.value.trim() && currentScene.value) {
+        const messages = messagesHistory.value[currentScene.value.id] || [];
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i].sender === 'user') {
+            userInput.value = messages[i].content;
+            break;
+          }
+        }
+      }
+    };
+
+    const handleFileSelected = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        selectedFile.value = file;
+      }
+    };
+
+    const removeSelectedFile = () => {
+      selectedFile.value = null;
+    };
 
     const checkApiConnection = async () => {
       if (apiCheckInProgress.value) return;
@@ -203,11 +401,12 @@ export default {
         isApiConnected.value = await chatService.checkApiConnection();
         console.log('API连接状态:', isApiConnected.value ? '已连接' : '未连接');
         
+        const maxRetries = 3;
         // 如果连接失败且未超过最大重试次数，则自动重试
         if (!isApiConnected.value && retryCount.value < maxRetries) {
           retryCount.value++;
-          console.log(`连接失败，${5000}ms后自动重试 (${retryCount.value}/${maxRetries})...`);
-          setTimeout(checkApiConnection, 5000);
+          console.log(`连接失败，5000ms后自动重试 (${retryCount.value}/${maxRetries})...`);
+          setTimeout(() => checkApiConnection(), 5000);
         }
       } finally {
         apiCheckInProgress.value = false;
@@ -229,250 +428,91 @@ export default {
 
     const handleApiError = (error) => {
       console.error('聊天请求失败:', error);
+      ElMessage.error('请求失败，请检查网络连接');
     };
 
-    const sendMessage = async () => {
-      // ...existing code...
-      try {
-        const sceneId = currentScene.value.id; 
-        const response = await chatService.sendChatMessage(
-          userQuestion,
-          localStorage.getItem('studentId') || '未知用户',
-          sceneId
-        );
-        // ...existing code...
-      } catch (err) {
-        handleApiError(err);
-      } finally {
-        // ...existing code...
+    const initialize = async () => {
+      await loadScenes();
+      await loadWelcomeMessage();
+      await checkApiConnection();
+      
+      // 添加网络事件监听
+      window.addEventListener('online', () => {
+        console.log('检测到网络已恢复');
+        checkApiConnection();
+      });
+      
+      window.addEventListener('offline', () => {
+        console.log('检测到网络已断开');
+        isApiConnected.value = false;
+      });
+    };
+
+    // 自动滚动到底部方法
+    const scrollToBottom = () => {
+      nextTick(() => {
+        if (messagesContainer.value) {
+          messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        }
+      });
+    };
+
+    // 触发文件上传
+    const triggerFileUpload = () => {
+      if (fileInput.value) {
+        fileInput.value.click();
       }
     };
 
-    onMounted(async () => {
-      console.log('ChatView组件已挂载，正在初始化...');
-      await checkApiConnection();
-    });
+    // 监听消息变化，自动滚动到底部
+    watch(() => currentMessages.value, () => {
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }, { deep: true });
 
-    // 添加网络在线状态监听
-    window.addEventListener('online', () => {
-      console.log('检测到网络已恢复');
-      checkApiConnection();
-    });
-    
-    window.addEventListener('offline', () => {
-      console.log('检测到网络已断开');
-      isApiConnected.value = false;
+    // 生命周期钩子
+    onMounted(() => {
+      console.log('ChatView组件已挂载，正在初始化...');
+      // 初始化
+      initialize();
     });
 
     return {
+      scenes,
+      currentScene,
+      messagesHistory,
+      userInput,
+      loading,
+      showHistory,
+      currentChatId,
+      welcomeMessage,
+      selectedFile,
       isApiConnected,
+      currentMessages,
+      messagesContainer,
+      inputField,
+      fileInput,
+      loadScenes,
+      loadWelcomeMessage,
+      selectScene,
+      createNewChat,
+      toggleHistory,
+      loadChat,
+      handleChatDeleted,
+      usePrompt,
+      sendMessage,
+      recallLastMessage,
+      handleFileSelected,
+      removeSelectedFile,
       checkApiConnection,
       isImageAttachment,
       downloadAttachment,
       handleApiError,
-      sendMessage
+      initialize,
+      scrollToBottom,
+      triggerFileUpload
     };
-  },
-  methods: {
-    async loadScenes() {
-      try {
-        this.loading = true;
-        const response = await chatService.getScenes();
-
-        if (response.data && Array.isArray(response.data)) {
-          this.scenes = response.data;
-        } else {
-          this.scenes = [
-            {
-              id: 'general',
-              name: '通用场景',
-              iconUrl: '/icons/general.png',
-              bannerUrl: '/banners/general.jpg',
-              prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
-            },
-            {
-              id: 'ideological',
-              name: '思政场景',
-              iconUrl: '/icons/ideological.png',
-              bannerUrl: '/banners/ideological.jpg',
-              prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
-            }
-          ];
-        }
-
-        if (this.scenes.length > 0) {
-          this.currentScene = this.scenes[0];
-        }
-      } catch (error) {
-        console.error('加载场景数据失败:', error);
-        this.scenes = [
-          {
-            id: 'general',
-            name: '通用场景',
-            iconUrl: '/icons/general.png',
-            bannerUrl: '/banners/general.jpg',
-            prompts: ['请介绍下你们学校的历史', '学校的专业设置有哪些?', '如何申请奖学金?']
-          },
-          {
-            id: 'ideological',
-            name: '思政场景',
-            iconUrl: '/icons/ideological.png',
-            bannerUrl: '/banners/ideological.jpg',
-            prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
-          }
-        ];
-        this.currentScene = this.scenes[0];
-      } finally {
-        this.loading = false;
-      }
-    },
-    async loadWelcomeMessage() {
-      try {
-        const response = await chatService.getGreeting();
-        if (response.data && response.data.greeting) {
-          this.welcomeMessage = response.data.greeting;
-        }
-      } catch (error) {
-        console.error('获取欢迎消息失败:', error);
-      }
-    },
-    selectScene(scene) {
-      this.currentScene = scene;
-      this.scrollToBottom();
-    },
-    createNewChat() {
-      if (this.currentScene) {
-        this.messagesHistory[this.currentScene.id] = [];
-      }
-      this.currentChatId = null;
-      if (this.showHistory && window.innerWidth < 768) {
-        this.showHistory = false;
-      }
-    },
-    toggleHistory() {
-      this.showHistory = !this.showHistory;
-    },
-    async loadChat(chatId) {
-      try {
-        this.loading = true;
-        this.currentChatId = chatId;
-
-        const response = await fetch(`/api/chats/${chatId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        const chatData = await response.json();
-
-        const sceneId = chatData.sceneId || 'general';
-        this.currentScene = this.scenes.find(scene => scene.id === sceneId) || this.scenes[0];
-
-        this.messagesHistory[sceneId] = chatData.messages || [];
-
-        if (window.innerWidth < 768) {
-          this.showHistory = false;
-        }
-
-      } catch (error) {
-        console.error('加载对话失败:', error);
-      } finally {
-        this.loading = false;
-        this.$nextTick(() => {
-          this.scrollToBottom();
-        });
-      }
-    },
-    handleChatDeleted() {
-      this.currentChatId = null;
-      this.createNewChat();
-    },
-    usePrompt(prompt) {
-      this.userInput = prompt;
-    },
-    async sendMessage() {
-      if (!this.userInput.trim() && !this.selectedFile || this.loading) return;
-
-      const sceneId = this.currentScene.id;
-      this.messagesHistory[sceneId].push({
-        content: this.userInput,
-        sender: 'user'
-      });
-
-      const userQuestion = this.userInput;
-      this.userInput = '';
-      this.loading = true;
-
-      try {
-        const response = await chatService.sendChatMessage(
-          userQuestion, 
-          sceneId 
-        );
-
-        const data = response;
-        this.messagesHistory[sceneId].push({
-          content: data.response || data.answer || '没有回答',
-          sender: 'ai',
-          attachments: data.attachment_data || [],
-          sources: data.sources || []
-        });
-
-        if (!this.currentChatId && data.chat_id) {
-          this.currentChatId = data.chat_id;
-        }
-      } catch (error) {
-        console.error('获取回答时出错:', error);
-        let errorMessage = '抱歉，获取回答时出现问题，请稍后再试。';
-        
-        this.messagesHistory[sceneId].push({
-          content: errorMessage,
-          sender: 'ai'
-        });
-      } finally {
-        this.loading = false;
-        this.$nextTick(() => {
-          this.scrollToBottom();
-        });
-      }
-    },
-    scrollToBottom() {
-      this.$nextTick(() => {
-        if (this.$refs.messagesContainer) {
-          this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
-        }
-      });
-    },
-    recallLastMessage() {
-      if (!this.userInput.trim() && this.currentScene) {
-        const messages = this.messagesHistory[this.currentScene.id] || [];
-        for (let i = messages.length - 1; i >= 0; i--) {
-          if (messages[i].sender === 'user') {
-            this.userInput = messages[i].content;
-            this.$nextTick(() => {
-              this.$refs.inputField.focus();
-              this.$refs.inputField.setSelectionRange(
-                this.userInput.length,
-                this.userInput.length
-              );
-            });
-            break;
-          }
-        }
-      }
-    },
-    triggerFileUpload() {
-      this.$refs.fileInput.click();
-    },
-    handleFileSelected(event) {
-      const file = event.target.files[0];
-      if (file) {
-        this.selectedFile = file;
-      }
-    },
-    removeSelectedFile() {
-      this.selectedFile = null;
-      this.$refs.fileInput.value = '';
-    }
   }
 }
 </script>

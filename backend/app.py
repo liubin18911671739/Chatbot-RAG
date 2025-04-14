@@ -1,7 +1,8 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-from routes import bp  # 导入Blueprint
+from routes import bp  # 导入主Blueprint
+from routes.auth import auth_bp  # 导入身份验证Blueprint
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -22,6 +23,9 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 # Register the main API blueprint
 app.register_blueprint(bp, url_prefix='/api')  # 添加url_prefix
+
+# Register the auth blueprint
+app.register_blueprint(auth_bp, url_prefix='/api/auth')  # 添加auth路由
 
 # 提供静态 swagger.json 文件
 @app.route('/static/swagger.json')

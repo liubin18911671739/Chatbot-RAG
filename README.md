@@ -99,8 +99,6 @@ def greeting():
     greeting_text = "欢迎使用我们的QA系统!"
     return jsonify({"status": "success", "greeting": greeting_text})
 
-
-
 ## 独立运行服务
 
 ### 运行后端服务
@@ -142,7 +140,6 @@ def greeting():
    npm run build
    ```
    构建后的文件将生成在 dist 目录中
-
 
 # admin-end 
 基于 Flask Bootstrap 的后台管理系统，提供 RAG 系统的管理界面和数据可视化功能。
@@ -210,3 +207,137 @@ admin-end 是一个专为管理员设计的后台管理系统，用于管理 RAG
 docker build -t admin-end -f admin-end/Dockerfile .
 docker run -d -p 5001:5001 --name admin-system admin-end
 ```
+
+# Using Claude 3.7 Agent for Complete System Development and Deployment
+
+## System Overview Prompt
+```
+# iChat RAG-QA System Development Specification
+
+## Project Overview
+Create a comprehensive Retrieval-Augmented Generation Question-Answering (RAG-QA) system called "iChat" with the following components:
+1. Frontend web application using Vue.js
+2. Backend API service using Flask
+3. Admin dashboard for system management
+4. Docker-based deployment architecture
+
+## System Architecture
+
+### Frontend (Vue.js)
+- Single page application with responsive design
+- Features:
+  - User authentication
+  - Chat interface for question answering
+  - Multiple scene selection for different knowledge domains
+  - History tracking of past conversations
+  - Feedback mechanism for answers
+  - User preferences settings
+- UI Components:
+  - Login page
+  - Main chat interface
+  - Scene selection panel
+  - Settings page
+  - About/Help documentation
+
+### Backend (Flask)
+- RESTful API endpoints:
+  - /chat - For receiving queries and providing answers
+  - /scenes - For retrieving available knowledge domains
+  - /feedback - For collecting user feedback
+  - /greeting - For personalized welcome messages
+  - /history - For retrieving chat history
+- Core Services:
+  - Authentication service
+  - RAG pipeline implementation
+  - Vector database integration (using Milvus)
+  - Document processing and indexing
+  - Knowledge base management
+  - Logging and analytics
+
+### Admin Dashboard (Flask + Bootstrap)
+- Web interface for system administrators
+- Features:
+  - Document management (upload, delete, update)
+  - System performance monitoring
+  - Usage statistics and visualizations
+  - User activity tracking
+  - Configuration management
+  - Log viewing and analysis
+- API Endpoints:
+  - /admin/api/documents
+  - /admin/api/statistics
+  - /admin/api/users
+  - /admin/api/logs
+  - /admin/api/health
+
+### Database Architecture
+- MongoDB for storing:
+  - User information
+  - Chat histories
+  - System configurations
+  - Feedback data
+- Milvus for vector storage:
+  - Document embeddings
+  - Semantic search capability
+
+## Technical Implementation Details
+
+### RAG Implementation
+- Text segmentation and chunking
+- Embedding generation using sentence transformers
+- Vector indexing and retrieval
+- Context augmentation
+- LLM integration (with configurable model choice)
+
+### Docker Deployment
+- Multi-container setup using docker-compose
+- Container Services:
+  - frontend (Vue.js + Nginx)
+  - backend (Flask)
+  - admin-end (Flask)
+  - mongodb
+  - milvus
+  - llm-service (optional, for local model deployment)
+- Network configuration with appropriate port mappings
+- Volume mounting for persistent data
+
+### Security Considerations
+- JWT-based authentication
+- Rate limiting
+- Input validation
+- CORS configuration
+- Environment-based secrets management
+
+## Development Requirements
+- Use Python 3.9+ for backend services
+- Vue.js 3 with Composition API for frontend
+- Implement comprehensive testing (unit and integration tests)
+- Follow PEP 8 style guidelines for Python code
+- Include detailed documentation for API endpoints and deployment process
+- Implement proper error handling and logging throughout the system
+
+## Scene-Specific Knowledge Domains
+Implement specialized knowledge bases for:
+1. Academic Learning Guidance
+2. Political Education Resources
+3. Smart Political Education
+4. Research Assistance
+5. Online Administrative Services
+6. General Assistant
+
+Each domain should have dedicated document collections, customized retrieval strategies, and domain-specific answer formatting.
+
+## Performance Expectations
+- Response time under 2 seconds for typical queries
+- Support for concurrent users (minimum 100)
+- Horizontal scalability design
+- Efficient resource utilization (CPU/RAM)
+- Graceful degradation under heavy load
+
+Please implement this system with clean, well-structured code that follows best practices for each technology used. Include comprehensive documentation and deployment instructions.
+```
+
+
+
+
+

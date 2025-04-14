@@ -6,31 +6,21 @@ services:
       context: .
       dockerfile: ./docker/frontend.Dockerfile
     ports:
-      - "8080:8080"
+      - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:5000
       - DANGEROUSLY_DISABLE_HOST_CHECK=true
       - WDS_SOCKET_HOST=localhost
-      - WDS_SOCKET_PORT=8080
+      - WDS_SOCKET_PORT=3000
     restart: unless-stopped
+    volumes:
+      - frontend_build:/app/dist  # 假设构建输出目录是dist
     networks:
-      - app-network  # 添加此行，确保frontend也在app-network中
-  
-  backend:
-    build:
-      context: .
-      dockerfile: ./docker/backend.Dockerfile
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
-    networks:
-      - app-network  # 添加此行，确保backend也在app-network中
+      - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/scenes"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
   
   nginx:
     image: nginx:stable-alpine
@@ -43,7 +33,6 @@ services:
       - ./nginx/certs:/etc/nginx/certs  # 如果需要SSL证书
     depends_on:
       - frontend
-      - backend
     restart: unless-stopped
     networks:
       - app-network

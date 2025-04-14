@@ -6,12 +6,13 @@ import 'element-plus/dist/index.css'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import networkMonitor from './utils/NetworkMonitor'
+import { createPinia } from 'pinia'
 
 // 开发环境下打印更多请求信息
 if (process.env.NODE_ENV !== 'production') {
   console.log('=== API调试模式已开启 ===');
   console.log('当前环境:', process.env.NODE_ENV);
-  console.log('API基础URL:', process.env.VUE_APP_API_BASE_URL || '使用代理默认值(http://10.10.15.210:5000)');
+  console.log('API基础URL:', process.env.VUE_APP_API_BASE_URL || '使用代理默认值(http://localhost:5000)');
 }
 
 // 设置合理的超时时间和基础URL
@@ -87,10 +88,15 @@ axios.interceptors.response.use(
 networkMonitor.startMonitoring(60000); // 每60秒检查一次
 
 const app = createApp(App);
+app.config.devtools = false
+
+// 创建Pinia实例
+const pinia = createPinia()
 
 // 使用插件
 app.use(router);
 app.use(ElementPlus);
+app.use(pinia);
 
 // 全局配置和实例属性
 app.config.globalProperties.$axios = axios;
