@@ -47,11 +47,8 @@ module.exports = {
         // 更精确地定义birpc别名，确保所有引用都能正确解析
         'birpc': require('path').resolve(__dirname, 'node_modules/birpc'),
         '@vue/devtools-kit/node_modules/birpc': require('path').resolve(__dirname, 'node_modules/birpc')
-      },
-      fallback: {
-        // 添加回退选项
-        'birpc': require('path').resolve(__dirname, 'node_modules/birpc')
       }
+      // 移除了fallback配置，因为它在Webpack 4中不支持
     }
   }
 };

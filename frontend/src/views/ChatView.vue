@@ -11,9 +11,9 @@
         <button class="action-button new-chat" @click="createNewChat">
           <i class="icon-plus"></i> 新建对话
         </button>
-        <router-link to="/admin" class="action-button admin">
-          <i class="icon-settings"></i> 管理后台
-        </router-link>
+        <button @click="logoutSystem" class="action-button logout">
+          <i class="icon-logout"></i> 退出系统
+        </button>
       </div>
 
       <!-- 场景选择列表 -->
@@ -471,6 +471,21 @@ export default {
       });
     }, { deep: true });
 
+    // 退出系统功能
+    const logoutSystem = () => {
+      // 清除登录状态
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // 显示退出成功消息
+      ElMessage.success('退出系统成功');
+      
+      // 跳转到登录页面
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+    };
+
     // 生命周期钩子
     onMounted(() => {
       console.log('ChatView组件已挂载，正在初始化...');
@@ -511,7 +526,8 @@ export default {
       handleApiError,
       initialize,
       scrollToBottom,
-      triggerFileUpload
+      triggerFileUpload,
+      logoutSystem
     };
   }
 }
@@ -923,6 +939,26 @@ export default {
 
 .action-button.admin:hover {
   background-color: #4a3b7d;
+}
+
+/* 退出系统按钮样式 */
+.action-button.logout {
+  background-color: #f44336;
+  margin-left: 10px;
+}
+
+.action-button.logout:hover {
+  background-color: #d32f2f;
+}
+
+.icon-logout {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 5px;
 }
 
 .icon-settings {
