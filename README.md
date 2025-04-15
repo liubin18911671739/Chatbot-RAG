@@ -23,7 +23,7 @@
    docker-compose up --build
    ```
 4. 前端访问地址： [http://localhost:8080](http://localhost:8080)
-5. 后端接口访问地址： [http://localhost:5000](http://localhost:5000)
+5. 后端接口访问地址： [http://10.10.15.210:5000](http://10.10.15.210:5000)
 
 # 后端使用flask API
 ## 聊天接口

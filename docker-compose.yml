@@ -26,7 +26,7 @@ services:
     networks:
       - app-network  # 添加此行，确保backend也在app-network中
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/scenes"]
+      test: ["CMD", "curl", "-f", "http://10.10.15.210:5000/api/scenes"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -12,7 +12,7 @@ import { createPinia } from 'pinia'
 if (process.env.NODE_ENV !== 'production') {
   console.log('=== API调试模式已开启 ===');
   console.log('当前环境:', process.env.NODE_ENV);
-  console.log('API基础URL:', process.env.VUE_APP_API_BASE_URL || '使用代理默认值(http://localhost:5000)');
+  console.log('API基础URL:', process.env.VUE_APP_API_BASE_URL || '使用代理默认值(http://10.10.15.210:5000)');
 }
 
 // 设置合理的超时时间和基础URL

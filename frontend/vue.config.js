@@ -7,7 +7,7 @@ module.exports = {
     proxy: {
       '/api': {
         // 根据环境变量选择后端服务器地址，默认为本地开发服务器
-        target: process.env.VUE_APP_API_BASE_URL || 'http://localhost:5000',
+        target: process.env.VUE_APP_API_BASE_URL || 'http://10.10.15.210:5000',
         // 原先的远程服务器地址
         // target: 'http://10.10.15.210:5000',
         changeOrigin: true,

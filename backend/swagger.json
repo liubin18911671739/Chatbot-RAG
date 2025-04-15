@@ -11,7 +11,7 @@
     },
     "servers": [
       {
-        "url": "http://localhost:5000",
+        "url": "http://10.10.15.210:5000",
         "description": "开发环境服务器"
       },
       {

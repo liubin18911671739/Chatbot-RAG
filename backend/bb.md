@@ -552,7 +552,7 @@ graph TD
     # ... (之前的用户 API 路由代码保持不变) ...
 
     # --- Swagger UI Setup ---
-    SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (e.g. http://localhost:5000/api/docs)
+    SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (e.g. http://10.10.15.210:5000/api/docs)
     API_URL = '/static/swagger.yaml'  # URL for exposing the swagger.yaml file
 
     # Call factory function to create our blueprint
@@ -595,7 +595,7 @@ graph TD
         └── test_api_pytest.py
         ```
     *   运行 `python app.py`。
-    *   在浏览器中打开 `http://localhost:5000/api/docs`。
+    *   在浏览器中打开 `http://10.10.15.210:5000/api/docs`。
 
 现在，你应该能看到一个漂亮的交互式 API 文档页面了！你可以在这里：
 *   浏览所有 API 端点及其描述、参数、请求体和响应。

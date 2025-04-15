@@ -46,6 +46,18 @@ class ChatService {
       }
       
       const response = await axios.post('/api/chat', payload);
+      
+      // 处理响应，移除<深度思考>标签中的内容
+      if (response.data && response.data.response) {
+        // 使用正则表达式去除<深度思考>标签及其内容
+        response.data.response = response.data.response.replace(/<深度思考>[\s\S]*?<\/深度思考>/g, '');
+        
+        // 格式化响应，使其更像ChatGPT的格式（去除多余空行，优化段落间距）
+        response.data.response = response.data.response
+          .replace(/\n{3,}/g, '\n\n') // 将3个及以上连续换行符替换为2个
+          .trim(); // 去除首尾空白
+      }
+      
       return response.data;
     } catch (error) {
       console.error('发送聊天消息失败:', error);

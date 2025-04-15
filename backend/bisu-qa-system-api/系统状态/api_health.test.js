@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-const baseUrl = 'http://localhost:5000';
+const baseUrl = 'http://10.10.15.210:5000';
 const pathName = '/';
 const pathUrl = '/api/health';
 const endPoint = `${baseUrl}${pathName}${pathUrl}`;

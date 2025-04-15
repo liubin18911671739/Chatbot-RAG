@@ -200,7 +200,7 @@ export default {
               name: '通用场景',
               iconUrl: '/icons/general.png',
               bannerUrl: '/banners/general.jpg',
-              prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
+              prompts: ['请介绍下北京第二外国语学院http://10.10.15.210:5000', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
             },
             {
               id: 'ideological',
@@ -232,7 +232,7 @@ export default {
             name: '通用场景',
             iconUrl: '/icons/general.png',
             bannerUrl: '/banners/general.jpg',
-            prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业有哪些?', '如何申请北京第二外国语学院奖学金?']
+            prompts: ['请介绍下北京第二外国语学院http://10.10.15.210:5000', '北京第二外国语学院的专业有哪些?', '如何申请北京第二外国语学院奖学金?']
           },
           {
             id: 'ideological',
