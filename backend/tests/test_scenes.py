@@ -19,7 +19,7 @@ def test_get_scenes(client):
     assert "思政学习空间" in data
     assert "智慧思政" in data
     assert "科研辅助" in data
-    assert "网上办事大厅" in data
+    assert "8001" in data
     assert "通用助手" in data
 
     # Check if the structure of the response is correct

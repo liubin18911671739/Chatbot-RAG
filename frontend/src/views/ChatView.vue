@@ -73,7 +73,17 @@
         </div>
         <div v-for="(message, index) in currentMessages" :key="index"
           :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
-          <div class="message-content">{{ message.content }}</div>
+          <div class="message-content">
+            <span v-if="message.sender === 'user'">{{ message.content }}</span>
+            <template v-else>
+              <span v-for="(char, charIndex) in message.content.split('')" 
+                   :key="charIndex" 
+                   class="typewriter-char"
+                   :style="`--char-index: ${charIndex}`">
+                {{ char }}
+              </span>
+            </template>
+          </div>
 
           <!-- 附件展示区 -->
           <div v-if="message.attachments && message.attachments.length">
@@ -629,11 +639,6 @@ export default {
 .scene-icon img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-}
-
-.scene-name {
-  font-weight: 500;
   flex: 1;
 }
 
@@ -969,5 +974,22 @@ export default {
   background-size: contain;
   background-repeat: no-repeat;
   margin-right: 5px;
+}
+
+/* 打字机效果相关样式 */
+.typewriter-char {
+  display: inline-block;
+  opacity: 0;
+  animation: typing-effect 0.05s forwards;
+  animation-delay: calc(var(--char-index, 0) * 0.05s);
+}
+
+@keyframes typing-effect {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 </style>

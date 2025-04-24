@@ -32,7 +32,7 @@ def get_scenes():
             "id": "db_keyanfuzhu",
             "status": "developing"
         },
-        "网上办事大厅": {
+        "8001": {
             "description": "在线办事服务平台",
             "icon": "🏢",
             "id": "db_wangshangbanshiting",
