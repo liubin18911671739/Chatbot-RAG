@@ -75,14 +75,14 @@
           :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
           <div class="message-content">
             <span v-if="message.sender === 'user'">{{ message.content }}</span>
-            <template v-else>
-              <span v-for="(char, charIndex) in message.content.split('')" 
-                   :key="charIndex" 
-                   class="typewriter-char"
-                   :style="`--char-index: ${charIndex}`">
-                {{ char }}
-              </span>
-            </template>
+            <TypewriterText 
+              v-else 
+              :content="renderMarkdown(message.content)" 
+              :typing="enableTypewriter" 
+              :speed="typingSpeed"
+              :htmlContent="true"
+              @typing-finished="onTypingFinished(message)"
+            />
           </div>
 
           <!-- 附件展示区 -->
@@ -161,14 +161,24 @@
 import { ref, onMounted, nextTick, watch, computed, reactive } from 'vue';
 import chatService from '@/services/chatService';
 import HistoryPanel from '@/components/HistoryPanel.vue';
+import TypewriterText from '@/components/TypewriterText.vue';
 import { ElMessage } from 'element-plus';
+import MarkdownIt from 'markdown-it';
 
 export default {
   name: 'ChatView',
   components: {
-    HistoryPanel
+    HistoryPanel,
+    TypewriterText
   },
   setup() {
+    // 创建markdown解析器实例
+    const md = new MarkdownIt({
+      html: false,        // 禁用HTML标签
+      breaks: true,       // 将\n转换为<br>
+      linkify: true       // 自动将URL转为链接
+    });
+    
     // 创建响应式状态
     const scenes = ref([]);
     const currentScene = ref(null);
@@ -182,6 +192,10 @@ export default {
     const isApiConnected = ref(false);
     const apiCheckInProgress = ref(false);
     const retryCount = ref(0);
+    
+    // 添加打字机效果状态
+    const enableTypewriter = ref(true); // 是否启用打字机效果
+    const typingSpeed = ref(30); // 打字速度(ms)
     
     // DOM 引用
     const messagesContainer = ref(null);
@@ -207,17 +221,24 @@ export default {
           scenes.value = [
             {
               id: 'general',
-              name: '通用场景',
+              name: 'AI助手',
               iconUrl: '/icons/general.png',
               bannerUrl: '/banners/general.jpg',
               prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
             },
             {
               id: 'ideological',
-              name: '思政场景',
+              name: '智慧思政',
               iconUrl: '/icons/ideological.png',
               bannerUrl: '/banners/ideological.jpg',
               prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+            },
+            {
+              id: 'digital-human',
+              name: '8001',
+              iconUrl: '/icons/digital-human.png',
+              bannerUrl: '/banners/digital-human.jpg',
+              prompts: ['如何报修网络?', '如何充值饭卡?', '如何充值网费?']
             }
           ];
         }
@@ -239,18 +260,25 @@ export default {
         scenes.value = [
           {
             id: 'general',
-            name: '通用场景',
+            name: 'AI助手',
             iconUrl: '/icons/general.png',
             bannerUrl: '/banners/general.jpg',
             prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业有哪些?', '如何申请北京第二外国语学院奖学金?']
           },
           {
             id: 'ideological',
-            name: '思政场景',
+            name: '智慧思政',
             iconUrl: '/icons/ideological.png',
             bannerUrl: '/banners/ideological.jpg',
             prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
-          }
+          },
+            {
+              id: 'digital-human',
+              name: '8001',
+              iconUrl: '/icons/digital-human.png',
+              bannerUrl: '/banners/digital-human.jpg',
+              prompts: ['如何报修网络?', '如何充值饭卡?', '如何充值网费?']
+            }
         ];
         currentScene.value = scenes.value[0];
       } finally {
@@ -503,6 +531,10 @@ export default {
       initialize();
     });
 
+    const renderMarkdown = (content) => {
+      return md.render(content);
+    };
+
     return {
       scenes,
       currentScene,
@@ -537,7 +569,10 @@ export default {
       initialize,
       scrollToBottom,
       triggerFileUpload,
-      logoutSystem
+      logoutSystem,
+      renderMarkdown,
+      enableTypewriter,
+      typingSpeed
     };
   }
 }
@@ -745,7 +780,7 @@ export default {
 .ai-message {
   align-self: flex-start;
   background-color: #f1f0f0;
-  max-height: 150px;
+  max-height: none;
   overflow-y: auto;
 }
 
@@ -991,5 +1026,107 @@ export default {
   to {
     opacity: 1;
   }
+}
+
+/* Markdown样式 */
+.ai-message :deep(h1),
+.ai-message :deep(h2),
+.ai-message :deep(h3),
+.ai-message :deep(h4),
+.ai-message :deep(h5),
+.ai-message :deep(h6) {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.ai-message :deep(h1) {
+  font-size: 1.6em;
+}
+
+.ai-message :deep(h2) {
+  font-size: 1.4em;
+}
+
+.ai-message :deep(h3) {
+  font-size: 1.2em;
+}
+
+.ai-message :deep(p) {
+  margin-bottom: 0.8em;
+}
+
+.ai-message :deep(ul),
+.ai-message :deep(ol) {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+}
+
+.ai-message :deep(li) {
+  margin-bottom: 0.3em;
+}
+
+.ai-message :deep(code) {
+  background-color: #f0f0f0;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.ai-message :deep(pre) {
+  background-color: #f5f5f5;
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+
+.ai-message :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.ai-message :deep(blockquote) {
+  border-left: 3px solid #cccccc;
+  padding-left: 1em;
+  color: #666666;
+  margin: 0.8em 0;
+}
+
+.ai-message :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.ai-message :deep(th),
+.ai-message :deep(td) {
+  border: 1px solid #ddd;
+  padding: 0.5em;
+  text-align: left;
+}
+
+.ai-message :deep(th) {
+  background-color: #f0f0f0;
+}
+
+.ai-message :deep(a) {
+  color: #2196f3;
+  text-decoration: none;
+}
+
+.ai-message :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.ai-message :deep(img) {
+  max-width: 100%;
+  height: auto;
+  margin: 0.8em 0;
 }
 </style>

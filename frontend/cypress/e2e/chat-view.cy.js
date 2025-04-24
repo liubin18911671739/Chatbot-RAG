@@ -41,7 +41,7 @@ describe('ChatView 组件测试', () => {
           },
           { 
             id: 'ideological',
-            name: '思政场景',
+            name: '智慧思政',
             pinyin: 'ideological',
             iconUrl: '/icons/ideological.png',
             bannerUrl: '/banners/ideological.jpg',
@@ -75,7 +75,7 @@ describe('ChatView 组件测试', () => {
     
     // 使用包含文本断言而不是精确匹配
     cy.get('.scene-list').should('contain', '通用场景');
-    cy.get('.scene-list').should('contain', '思政场景');
+    cy.get('.scene-list').should('contain', '智慧思政');
   });
 
   // 接下来的测试，把详细的元素选择器和断言调整为更宽松的方式

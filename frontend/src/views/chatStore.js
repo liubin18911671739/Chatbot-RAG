@@ -42,17 +42,24 @@ export const useChatStore = defineStore('chat', {
           this.scenes = [
             {
               id: 'general',
-              name: '通用场景',
+              name: 'AI助手',
               iconUrl: '/icons/general.png',
               bannerUrl: '/banners/general.jpg',
               prompts: ['请介绍下北京第二外国语学院http://10.10.15.210:5000', '北京第二外国语学院的专业有哪些?', '北京第二外国语学院如何申请奖学金?']
             },
             {
               id: 'ideological',
-              name: '思政场景',
+              name: '智慧思政',
               iconUrl: '/icons/ideological.png',
               bannerUrl: '/banners/ideological.jpg',
               prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+            },
+            {
+              id: 'digital-human',
+              name: '8001',
+              iconUrl: '/icons/digital-human.png',
+              bannerUrl: '/banners/digital-human.jpg',
+              prompts: ['如何报修网络?', '如何充值饭卡?', '如何充值网费?']
             }
           ];
         }
@@ -74,17 +81,24 @@ export const useChatStore = defineStore('chat', {
         this.scenes = [
           {
             id: 'general',
-            name: '通用场景',
+            name: 'AI助手',
             iconUrl: '/icons/general.png',
             bannerUrl: '/banners/general.jpg',
             prompts: ['请介绍下北京第二外国语学院http://10.10.15.210:5000', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
           },
           {
             id: 'ideological',
-            name: '思政场景',
+            name: '智慧思政',
             iconUrl: '/icons/ideological.png',
             bannerUrl: '/banners/ideological.jpg',
             prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+          },
+          {
+            id: 'digital-human',
+            name: '8001',
+            iconUrl: '/icons/digital-human.png',
+            bannerUrl: '/banners/digital-human.jpg',
+            prompts: ['如何报修网络?', '如何充值饭卡?', '如何充值网费?']
           }
         ];
         this.currentScene = this.scenes[0];

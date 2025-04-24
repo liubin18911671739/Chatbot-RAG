@@ -4,7 +4,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 
 const API_URL = process.env.VUE_APP_API_URL || 'http://10.10.15.210:5000/api/auth/';
-const CAS_SERVICE_URL = 'http://cas1.bisu.edu.cn/tpass/service/LoginService?wsdl';
+const CAS_SERVICE_URL = 'http://cas.bisu.edu.cn/tpass/service/LoginService?wsdl';
 
 class AuthService {
     login(username, password) {

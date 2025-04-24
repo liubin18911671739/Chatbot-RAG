@@ -28,7 +28,7 @@ export default {
       agents: [
         {
           id: 1,
-          name: '通用场景',
+          name: 'AI助手',
           image: require('@/assets/images/agents/general.png'),
         },
         // {
@@ -38,14 +38,14 @@ export default {
         // },
         {
           id: 3,
-          name: '思政场景',
+          name: '智慧思政',
           image: require('@/assets/images/agents/political.png'),
         },
-        // {
-        //   id: 4,
-        //   name: '区域国别场景',
-        //   image: require('@/assets/images/agents/region.png'),
-        // },
+         {
+          id: 4,
+          name: '8001',
+          image: require('@/assets/images/agents/region.png'),
+        },
         // {
         //   id: 5,
         //   name: '阿拉伯名人智能体',

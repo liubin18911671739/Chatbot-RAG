@@ -15,42 +15,54 @@ describe('Chat Service API Testing', () => {
     cy.intercept('GET', '**/api/scenes', {
       statusCode: 200,
       body: [
+        {
           "学习指导": {
               "description": "学习方法与指导服务",
               "icon": "📖",
               "id": "db_xuexizhidao",
               "status": "developing"
-          },
+          }
+        },
+        {
           "思政学习空间": {
               "description": "思想政治教育资源",
               "icon": "📚",
               "id": "db_sizheng",
               "status": "available"
-          },
+          }
+        },
+        {
           "智慧思政": {
               "description": "智能化思政教育平台",
               "icon": "💡",
               "id": "db_zhihuisizheng",
               "status": "developing"
-          },
+          }
+        },
+        {
           "科研辅助": {
               "description": "科研工作辅助服务",
               "icon": "🔬",
               "id": "db_keyanfuzhu",
               "status": "developing"
-          },
-          "网上办事大厅": {
-              "description": "在线办事服务平台",
+          }
+        },
+        {
+          "8001": {
+              "description": "8001服务平台",
               "icon": "🏢",
               "id": "db_wangshangbanshiting",
               "status": "developing"
-          },
-          "通用助手": {
+          }
+        },
+        {
+          "AI助手": {
               "description": "棠心问答通用助手",
               "icon": "🎓",
               "id": null,
               "status": "available"
           }
+        }
       ]
     }).as('getScenes');
   });
