@@ -1,53 +1,92 @@
 <template>
-  <div class="history-panel">
+  <div class="history-panel" :class="{ 'collapsed': isCollapsed }">
     <div class="history-header">
       <h3>历史对话</h3>
-      <button class="refresh-btn" @click="fetchChatHistory" title="刷新">
-        <i class="fas fa-sync-alt"></i>
-      </button>
-    </div>
-    
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>加载中...</p>
-    </div>
-    
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
-      <button @click="fetchChatHistory">重试</button>
-    </div>
-    
-    <div v-else-if="chatHistory.length === 0" class="empty-state">
-      <p>暂无历史对话</p>
-      <button @click="createNewChat">开始新对话</button>
-    </div>
-    
-    <ul v-else class="history-list">
-      <li 
-        v-for="chat in chatHistory" 
-        :key="chat.id" 
-        :class="{ active: selectedChatId === chat.id }"
-        @click="selectChat(chat.id)"
-      >
-        <div class="chat-info">
-          <p class="chat-title">{{ chat.title || '未命名对话' }}</p>
-          <p class="chat-date">{{ formatDate(chat.createdAt) }}</p>
-        </div>
-        <button 
-          class="delete-btn" 
-          @click.stop="confirmDeleteChat(chat.id)" 
-          title="删除"
-        >
-          <i class="fas fa-trash"></i>
+      <div class="header-buttons">
+        <button class="refresh-btn" @click="fetchChatHistory" title="刷新">
+          <i class="fas fa-sync-alt"></i>
         </button>
-      </li>
-    </ul>
-    
-    <div class="history-footer">
-      <button class="new-chat-btn" @click="createNewChat">
-        <i class="fas fa-plus"></i> 新对话
-      </button>
+        <button class="toggle-btn" @click="togglePanel" :title="isCollapsed ? '展开' : '收起'">
+          <i :class="isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+        </button>
+      </div>
     </div>
+    
+    <!-- 只在非收起状态下显示内容 -->
+    <template v-if="!isCollapsed">
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+      </div>
+      
+      <div v-else-if="error" class="error-state">
+        <p>{{ error }}</p>
+        <button @click="fetchChatHistory">重试</button>
+      </div>
+      
+      <div v-else-if="serverChats.length === 0 && recentChats.length === 0" class="empty-state">
+        <p>暂无历史对话</p>
+        <button @click="createNewChat">开始新对话</button>
+      </div>
+      
+      <template v-else>
+        <!-- 最近对话区域 -->
+        <div v-if="recentChats.length > 0" class="recent-chats-section">
+          <h4 class="section-title">最近对话</h4>
+          <ul class="recent-chats-list">
+            <li 
+              v-for="chat in recentChats" 
+              :key="chat.id" 
+              :class="{ active: selectedChatId === chat.id }"
+              @click="loadRecentChat(chat.id)"
+            >
+              <div class="chat-info">
+                <p class="chat-title">{{ chat.title || '未命名对话' }}</p>
+                <p class="chat-date">{{ formatDate(chat.createdAt) }}</p>
+              </div>
+              <button 
+                class="delete-btn" 
+                @click.stop="confirmDeleteRecentChat(chat.id)" 
+                title="删除"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- 服务器历史对话区域(实际上也是本地存储的) -->
+        <div v-if="serverChats.length > 0" class="server-chats-section">
+          <h4 class="section-title">历史对话</h4>
+          <ul class="history-list">
+            <li 
+              v-for="chat in serverChats" 
+              :key="chat.id" 
+              :class="{ active: selectedChatId === chat.id }"
+              @click="selectChat(chat.id)"
+            >
+              <div class="chat-info">
+                <p class="chat-title">{{ chat.title || '未命名对话' }}</p>
+                <p class="chat-date">{{ formatDate(chat.createdAt) }}</p>
+              </div>
+              <button 
+                class="delete-btn" 
+                @click.stop="confirmDeleteChat(chat.id)" 
+                title="删除"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </template>
+      
+      <div class="history-footer">
+        <button class="new-chat-btn" @click="createNewChat">
+          <i class="fas fa-plus"></i> 新对话
+        </button>
+      </div>
+    </template>
     
     <!-- 删除确认对话框 -->
     <div v-if="showDeleteConfirm" class="delete-confirm-modal">
@@ -63,7 +102,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { useChatStore } from '@/stores/chatStore';
+import { storeToRefs } from 'pinia';
 
 export default {
   name: 'HistoryPanel',
@@ -75,29 +115,60 @@ export default {
   },
   data() {
     return {
-      chatHistory: [],
       loading: false,
       error: null,
       showDeleteConfirm: false,
-      chatToDeleteId: null
+      chatToDeleteId: null,
+      isCollapsed: false,
+      isLocal: false, // 是否为本地存储的对话
     };
   },
+  computed: {
+    // 从chatStore获取最近对话缓存
+    recentChats() {
+      const chatStore = useChatStore();
+      return chatStore.recentChats;
+    },
+    // 从chatStore获取服务器历史对话
+    serverChats() {
+      const chatStore = useChatStore();
+      return chatStore.serverChats || [];
+    }
+  },
   created() {
+    // 确保页面加载时获取历史记录
     this.fetchChatHistory();
+    
+    // 尝试从本地存储中恢复面板状态
+    const savedState = localStorage.getItem('historyPanelCollapsed');
+    if (savedState !== null) {
+      this.isCollapsed = JSON.parse(savedState);
+      // 通知父组件初始状态
+      this.$nextTick(() => {
+        this.$emit('panel-toggle', this.isCollapsed);
+      });
+    }
   },
   methods: {
+    togglePanel() {
+      this.isCollapsed = !this.isCollapsed;
+      // 保存状态到本地存储
+      localStorage.setItem('historyPanelCollapsed', JSON.stringify(this.isCollapsed));
+      // 通知父组件面板状态已更改
+      this.$emit('panel-toggle', this.isCollapsed);
+    },
+    
     async fetchChatHistory() {
+      // 在收起状态下不进行数据加载
+      if (this.isCollapsed) return;
+      
       this.loading = true;
       this.error = null;
 
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('/api/chats', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        this.chatHistory = response.data;
+        // 使用chatStore获取历史对话
+        const chatStore = useChatStore();
+        await chatStore.fetchServerChats();
       } catch (err) {
         console.error('Failed to fetch chat history:', err);
         this.error = '获取历史记录失败，请重试';
@@ -110,33 +181,52 @@ export default {
       this.$emit('select-chat', chatId);
     },
 
+    // 加载本地缓存的对话
+    loadRecentChat(chatId) {
+      const chatStore = useChatStore();
+      if (chatStore.loadRecentChat(chatId)) {
+        this.$emit('select-chat', chatId);
+      } else {
+        this.error = '加载对话失败';
+      }
+    },
+
     createNewChat() {
       this.$emit('create-new-chat');
     },
 
     confirmDeleteChat(chatId) {
       this.chatToDeleteId = chatId;
+      this.isLocal = false;
+      this.showDeleteConfirm = true;
+    },
+    
+    confirmDeleteRecentChat(chatId) {
+      this.chatToDeleteId = chatId;
+      this.isLocal = true;
       this.showDeleteConfirm = true;
     },
 
     cancelDelete() {
       this.showDeleteConfirm = false;
       this.chatToDeleteId = null;
+      this.isLocal = false;
     },
 
     async deleteChat() {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`/api/chats/${this.chatToDeleteId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const chatStore = useChatStore();
         
-        // 删除后从列表中移除
-        this.chatHistory = this.chatHistory.filter(
-          chat => chat.id !== this.chatToDeleteId
-        );
+        if (this.isLocal) {
+          // 删除本地缓存的对话
+          chatStore.removeRecentChat(this.chatToDeleteId);
+        } else {
+          // 删除服务器上的对话（实际上也是本地存储） 
+          await chatStore.deleteServerChat(this.chatToDeleteId);
+          
+          // 从最近对话缓存中也移除
+          chatStore.removeRecentChat(this.chatToDeleteId);
+        }
         
         // 如果删除的是当前选中的对话，则通知父组件
         if (this.selectedChatId === this.chatToDeleteId) {
@@ -145,9 +235,10 @@ export default {
         
         this.showDeleteConfirm = false;
         this.chatToDeleteId = null;
+        this.isLocal = false;
       } catch (err) {
         console.error('Failed to delete chat:', err);
-        alert('删除失败，请重试');
+        this.error = '删除失败，请重试';
       }
     },
 
@@ -174,6 +265,17 @@ export default {
   border-right: 1px solid var(--campus-neutral-300);
   width: 280px;
   box-shadow: var(--campus-shadow-md);
+  position: relative;
+  z-index: 10;
+  overflow: hidden;
+  transition: width 0.3s ease;
+}
+
+/* 添加收起状态的样式 */
+.history-panel.collapsed {
+  width: 50px;
+  min-width: 50px;
+  transition: width 0.3s ease;
 }
 
 .history-header {
@@ -186,14 +288,31 @@ export default {
   color: white;
 }
 
-.history-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+/* 当面板收起时，调整头部样式 */
+.history-panel.collapsed .history-header {
+  padding: 16px 0;
+  justify-content: center;
 }
 
-.refresh-btn {
+.history-panel.collapsed h3 {
+  display: none;
+}
+
+.history-panel.collapsed .header-buttons {
+  margin: 0;
+}
+
+/* 调整按钮在收起状态的位置 */
+.history-panel.collapsed .toggle-btn {
+  margin: 0;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -205,11 +324,87 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: 8px;
 }
 
-.refresh-btn:hover {
+.toggle-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
-  transform: rotate(180deg);
+}
+
+.section-title {
+  padding: 12px 16px 8px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--campus-neutral-600);
+  font-weight: 500;
+  border-bottom: 1px solid var(--campus-neutral-300);
+  background-color: var(--campus-neutral-200);
+}
+
+.recent-chats-section, .server-chats-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.recent-chats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.recent-chats-list::-webkit-scrollbar,
+.history-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.recent-chats-list::-webkit-scrollbar-track,
+.history-list::-webkit-scrollbar-track {
+  background: var(--campus-neutral-200);
+}
+
+.recent-chats-list::-webkit-scrollbar-thumb,
+.history-list::-webkit-scrollbar-thumb {
+  background: var(--campus-neutral-400);
+  border-radius: 4px;
+}
+
+.recent-chats-list li,
+.history-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--campus-neutral-300);
+  cursor: pointer;
+  transition: var(--campus-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.recent-chats-list li::before,
+.history-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background-color: var(--campus-primary-light);
+  opacity: 0.1;
+  transition: width 0.3s ease;
+}
+
+.recent-chats-list li:hover::before,
+.history-list li:hover::before {
+  width: 100%;
+}
+
+.recent-chats-list li.active,
+.history-list li.active {
+  background-color: rgba(var(--campus-primary), 0.1);
+  border-left: 3px solid var(--campus-primary);
 }
 
 .loading-state, .error-state, .empty-state {
@@ -261,52 +456,6 @@ export default {
   margin: 0;
   overflow-y: auto;
   flex-grow: 1;
-}
-
-.history-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.history-list::-webkit-scrollbar-track {
-  background: var(--campus-neutral-200);
-}
-
-.history-list::-webkit-scrollbar-thumb {
-  background: var(--campus-neutral-400);
-  border-radius: 4px;
-}
-
-.history-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--campus-neutral-300);
-  cursor: pointer;
-  transition: var(--campus-transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.history-list li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 0;
-  background-color: var(--campus-primary-light);
-  opacity: 0.1;
-  transition: width 0.3s ease;
-}
-
-.history-list li:hover::before {
-  width: 100%;
-}
-
-.history-list li.active {
-  background-color: rgba(var(--campus-primary), 0.1);
-  border-left: 3px solid var(--campus-primary);
 }
 
 .chat-info {
@@ -361,7 +510,8 @@ export default {
   justify-content: center;
 }
 
-.history-list li:hover .delete-btn {
+.history-list li:hover .delete-btn,
+.recent-chats-list li:hover .delete-btn {
   visibility: visible;
   opacity: 1;
 }
@@ -375,6 +525,7 @@ export default {
   padding: 16px;
   border-top: 1px solid var(--campus-neutral-300);
   background-color: var(--campus-neutral-200);
+  margin-top: auto;
 }
 
 .new-chat-btn {

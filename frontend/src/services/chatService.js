@@ -1,11 +1,61 @@
 import axios from 'axios';
 
+// 创建带超时配置的axios实例
+const api = axios.create({
+  timeout: 15000, // 设置所有请求的默认超时时间为15秒
+  retry: 3, // 最大重试次数
+  retryDelay: 1000 // 重试间隔时间
+});
+
+// 添加请求拦截器
+api.interceptors.request.use(function (config) {
+  return config;
+}, function (error) {
+  return Promise.reject(error);
+});
+
+// 添加响应拦截器，处理超时和其他错误
+api.interceptors.response.use(null, async function (error) {
+  const config = error.config;
+  
+  // 如果是超时错误
+  if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+    console.log('请求超时，准备重试...');
+  }
+  
+  // 如果请求没有重试配置或已达最大重试次数，则拒绝
+  if (!config || !config.retry || config._retryCount >= config.retry) {
+    return Promise.reject(error);
+  }
+  
+  // 增加重试计数
+  config._retryCount = config._retryCount || 0;
+  config._retryCount++;
+  
+  // 创建新的Promise来处理重试延迟
+  const delayRetry = new Promise(resolve => {
+    setTimeout(() => {
+      console.log(`正在进行第 ${config._retryCount} 次重试...`);
+      resolve();
+    }, config.retryDelay || 1000);
+  });
+  
+  // 等待延迟后重新发送请求
+  await delayRetry;
+  return api(config);
+});
+
 class ChatService {
+  constructor() {
+    // 初始化对话历史数组，用于存储最近的三轮对话
+    this.conversationHistory = [];
+  }
+
   async checkApiConnection() {
     try {
       console.log('正在检查API连接...');
       // 先尝试greeting端点
-      const response = await axios.get('/api/greeting', { timeout: 5000 });
+      const response = await api.get('/api/greeting');
       console.log('API连接成功:', response.status, response.data);
       return true;
     } catch (error) {
@@ -26,15 +76,15 @@ class ChatService {
       }
       
       // 尝试备用健康检查端点
-      // try {
-      //   console.log('尝试备用API健康检查...');
-      //   const healthResponse = await axios.get('/api/health', { timeout: 5000 });
-      //   console.log('备用API连接成功:', healthResponse.status);
-      //   return true;
-      // } catch (healthError) {
-      //   console.error('备用API连接也失败');
-      //   return false;
-      // }
+      try {
+        console.log('尝试备用API健康检查...');
+        const healthResponse = await api.get('/api/health');
+        console.log('备用API连接成功:', healthResponse.status);
+        return true;
+      } catch (healthError) {
+        console.error('备用API连接也失败');
+        return false;
+      }
     }
   }
 
@@ -45,7 +95,12 @@ class ChatService {
         payload.scene_id = sceneId;
       }
       
-      const response = await axios.post('/api/chat', payload);
+      // 如果有对话历史，将其添加到请求中
+      if (this.conversationHistory.length > 0) {
+        payload.history = this.conversationHistory;
+      }
+      
+      const response = await api.post('/api/chat', payload);
       
       // 处理响应，移除<深度思考>标签中的内容
       if (response.data && response.data.response) {
@@ -58,16 +113,46 @@ class ChatService {
           .trim(); // 去除首尾空白
       }
       
+      // 将当前对话添加到历史记录中
+      this.conversationHistory.push({
+        user: prompt,
+        assistant: response.data.response || ''
+      });
+      
+      // 保持历史记录最多只有3轮对话
+      if (this.conversationHistory.length > 3) {
+        this.conversationHistory.shift(); // 移除最早的一轮对话
+      }
+      
       return response.data;
     } catch (error) {
       console.error('发送聊天消息失败:', error);
-      throw error;
+      
+      // 针对不同类型的错误提供更具体的信息
+      if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+        throw new Error('无法连接到API服务器: 请求超时，服务器响应时间过长');
+      } else if (!error.response) {
+        throw new Error('无法连接到API服务器: 服务可能不可用或网络问题');
+      } else {
+        throw error;
+      }
     }
+  }
+
+  // 清除对话历史
+  clearConversationHistory() {
+    this.conversationHistory = [];
+    return true;
+  }
+
+  // 获取当前对话历史
+  getConversationHistory() {
+    return [...this.conversationHistory]; // 返回副本以防止外部修改
   }
 
   async getScenes() {
     try {
-      const response = await axios.get('/api/scenes');
+      const response = await api.get('/api/scenes');
       return response.data;
     } catch (error) {
       console.error('获取场景列表失败:', error);
@@ -77,11 +162,21 @@ class ChatService {
   
   async sendFeedback(feedbackData) {
     try {
-      const response = await axios.post('/api/feedback', feedbackData);
+      const response = await api.post('/api/feedback', feedbackData);
       return response.data;
     } catch (error) {
       console.error('发送反馈失败:', error);
       throw error;
+    }
+  }
+  
+  async getGreeting() {
+    try {
+      const response = await api.get('/api/greeting');
+      return response;
+    } catch (error) {
+      console.error('获取欢迎消息失败:', error);
+      return { data: { greeting: '你好！我是您的AI助手，请问有什么我可以帮您的？' } };
     }
   }
 }

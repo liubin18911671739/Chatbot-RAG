@@ -18,10 +18,11 @@ def chat():
     
     prompt = data['prompt']
     scene_id = data.get('scene_id')  # 支持可选的scene_id参数
+    history = data.get('history', [])  # 获取历史对话，如果没有则为空列表
     
     try:
         # 调用 DeepSeek API 获取回答
-        api_response = call_deepseek_api(prompt, scene_id)
+        api_response = call_deepseek_api(prompt, scene_id, history)
         
         # 构建响应
         response = {
@@ -37,7 +38,7 @@ def chat():
         print(f"处理聊天请求时出错: {str(e)}")
         return jsonify({"status": "error", "message": "处理请求时出错"}), 500
 
-def call_deepseek_api(prompt, scene_id=None):
+def call_deepseek_api(prompt, scene_id=None, history=None):
     """调用 DeepSeek API 获取回答"""
     api_key = "sk-8aee1f222a834f1290a7fa365d498bb2"
     api_url = "https://api.deepseek.com/v1/chat/completions"
@@ -56,13 +57,26 @@ def call_deepseek_api(prompt, scene_id=None):
         if scene_id in scene_prompts:
             system_message = scene_prompts[scene_id]
     
+    # 构建消息列表
+    messages = [
+        {"role": "system", "content": system_message}
+    ]
+    
+    # 添加历史消息（如果有）
+    if history and isinstance(history, list):
+        for msg in history:
+            if 'user' in msg and msg['user']:
+                messages.append({"role": "user", "content": msg['user']})
+            if 'assistant' in msg and msg['assistant']:
+                messages.append({"role": "assistant", "content": msg['assistant']})
+    
+    # 添加当前用户问题
+    messages.append({"role": "user", "content": prompt})
+    
     # 构建请求数据
     payload = {
         "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": prompt}
-        ],
+        "messages": messages,
         "temperature": 0.7,
         "max_tokens": 2000
     }

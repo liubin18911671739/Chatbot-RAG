@@ -1,9 +1,5 @@
 <template>
   <div class="main-container">
-    <!-- 历史对话面板 -->
-    <HistoryPanel v-if="showHistory" :selectedChatId="currentChatId" @select-chat="loadChat"
-      @create-new-chat="createNewChat" @chat-deleted="handleChatDeleted" class="history-panel" />
-
     <!-- 左侧边栏 -->
     <div class="sidebar">
       <!-- 学校Logo和系统名称 -->
@@ -16,9 +12,6 @@
       <div class="sidebar-actions">
         <button class="campus-btn sidebar-btn new-chat" @click="createNewChat">
           <i class="icon-plus"></i>新对话
-        </button>
-        <button @click="toggleHistory" class="campus-btn sidebar-btn history">
-          <i class="icon-history"></i>历史
         </button>
       </div>
 
@@ -93,7 +86,7 @@
       <!-- 聊天消息区域 -->
       <div class="chat-messages" ref="messagesContainer">
         <div v-if="!currentMessages.length && !loading" class="welcome-message">
-          <div class="campus-welcome-card">
+          <!-- <div class="campus-welcome-card">
             <div class="welcome-header">
               <img src="/haitang.png" alt="校徽" class="welcome-logo">
               <div class="welcome-title">欢迎使用北二外智慧校园助手</div>
@@ -111,7 +104,7 @@
                 <div class="tip-text">左侧可选择不同场景获取相关帮助</div>
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
         
         <div v-for="(message, index) in currentMessages" :key="index"
@@ -218,7 +211,6 @@
 <script>
 import { ref, onMounted, nextTick, watch, computed, reactive } from 'vue';
 import chatService from '@/services/chatService';
-import HistoryPanel from '@/components/HistoryPanel.vue';
 import TypewriterText from '@/components/TypewriterText.vue';
 import { ElMessage } from 'element-plus';
 import MarkdownIt from 'markdown-it';
@@ -226,7 +218,6 @@ import MarkdownIt from 'markdown-it';
 export default {
   name: 'ChatView',
   components: {
-    HistoryPanel,
     TypewriterText
   },
   setup() {
@@ -243,7 +234,6 @@ export default {
     const messagesHistory = ref({});
     const userInput = ref('');
     const loading = ref(false);
-    const showHistory = ref(false);
     const currentChatId = ref(null);
     const welcomeMessage = ref('你好！我是您的AI助手，请问有什么我可以帮您的？');
     const selectedFile = ref(null);
@@ -364,47 +354,6 @@ export default {
         messagesHistory.value[currentScene.value.id] = [];
       }
       currentChatId.value = null;
-      if (showHistory.value && window.innerWidth < 768) {
-        showHistory.value = false;
-      }
-    };
-
-    const toggleHistory = () => {
-      showHistory.value = !showHistory.value;
-    };
-
-    const loadChat = async (chatId) => {
-      try {
-        loading.value = true;
-        currentChatId.value = chatId;
-
-        const response = await fetch(`/api/chats/${chatId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        const chatData = await response.json();
-
-        const sceneId = chatData.sceneId || 'general';
-        currentScene.value = scenes.value.find(scene => scene.id === sceneId) || scenes.value[0];
-
-        messagesHistory.value[sceneId] = chatData.messages || [];
-
-        if (window.innerWidth < 768) {
-          showHistory.value = false;
-        }
-      } catch (error) {
-        console.error('加载对话失败:', error);
-        ElMessage.error('加载对话失败');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const handleChatDeleted = () => {
-      currentChatId.value = null;
-      createNewChat();
     };
 
     const usePrompt = (prompt) => {
@@ -635,7 +584,6 @@ export default {
       messagesHistory,
       userInput,
       loading,
-      showHistory,
       currentChatId,
       welcomeMessage,
       selectedFile,
@@ -648,9 +596,6 @@ export default {
       loadWelcomeMessage,
       selectScene,
       createNewChat,
-      toggleHistory,
-      loadChat,
-      handleChatDeleted,
       usePrompt,
       sendMessage,
       recallLastMessage,
@@ -687,26 +632,6 @@ export default {
   background-color: var(--campus-secondary);
   color: var(--campus-neutral-800);
   font-family: var(--campus-font-sans);
-}
-
-/* 历史面板样式 - 校园风格 */
-.history-panel {
-  position: absolute;
-  height: 100vh;
-  z-index: 10;
-  box-shadow: var(--campus-shadow-lg);
-  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  background-color: var(--campus-neutral-100);
-  border-right: 1px solid var(--campus-neutral-300);
-}
-
-@keyframes slide-in {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
 }
 
 /* 左侧边栏样式 - 校园风格 */
@@ -790,10 +715,6 @@ export default {
 
 .sidebar-btn.new-chat {
   background-color: var(--campus-primary-light);
-}
-
-.sidebar-btn.history {
-  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .scene-list-header {
