@@ -6,17 +6,28 @@
 
     <!-- 左侧边栏 -->
     <div class="sidebar">
+      <!-- 学校Logo和系统名称 -->
+      <div class="campus-logo-container">
+        <img src="/haitang.png" alt="北外" class="campus-logo">
+        <div class="campus-name">智慧校园</div>
+      </div>
+      
       <!-- 顶部按钮 -->
       <div class="sidebar-actions">
-        <button class="action-button new-chat" @click="createNewChat">
-          <i class="icon-plus"></i> 新建对话
+        <button class="campus-btn sidebar-btn new-chat" @click="createNewChat">
+          <i class="icon-plus"></i>新对话
         </button>
-        <button @click="logoutSystem" class="action-button logout">
-          <i class="icon-logout"></i> 退出系统
+        <button @click="toggleHistory" class="campus-btn sidebar-btn history">
+          <i class="icon-history"></i>历史
         </button>
       </div>
 
       <!-- 场景选择列表 -->
+      <div class="scene-list-header">
+        <span>服务分类</span>
+        <div class="campus-semester">2025年春季学期</div>
+      </div>
+      
       <div class="scene-list">
         <div v-for="(scene, index) in scenes" :key="index"
           :class="['scene-item', currentScene && currentScene.id === scene.id ? 'active' : '']" @click="selectScene(scene)">
@@ -26,6 +37,20 @@
           <div class="scene-name">{{ scene.name }}</div>
         </div>
       </div>
+      
+      <!-- 用户信息与退出 -->
+      <div class="user-section">
+        <div class="user-info">
+          <div class="user-avatar">{{ getUserInitial() }}</div>
+          <div class="user-detail">
+            <div class="user-name">{{ getUserId() }}</div>
+            <div class="user-role">{{ getUserRole() === 'admin' ? '管理员' : '学生' }}</div>
+          </div>
+        </div>
+        <button @click="logoutSystem" class="logout-btn">
+          <i class="icon-logout"></i>
+        </button>
+      </div>
     </div>
 
     <!-- 右侧内容区 -->
@@ -33,30 +58,31 @@
       <!-- 场景图片展示 -->
       <div v-if="currentScene" class="scene-banner">
         <img :src="currentScene.bannerUrl" :alt="currentScene.name" />
+        <div class="banner-overlay"></div>
         <h2>{{ currentScene.name }}</h2>
+        
+        <!-- 校园元素装饰 -->
+        <div class="campus-decoration">
+          <div class="campus-badge">北京第二外国语学院</div>
+        </div>
       </div>
 
       <!-- 增强的网络状态指示器 -->
       <div v-if="!isApiConnected" class="network-status-warning">
-        <el-alert
-          title="网络连接中断"
-          type="error"
-          description="无法连接到后端API服务，请检查网络或联系管理员"
-          show-icon
-          :closable="false"
-        >
-          <!-- <template #default>
-            <span>网络连接中断，部分功能可能不可用</span>
-            <el-button @click="checkApiConnection" type="danger" size="small" class="retry-button">
-              重试连接
-            </el-button>
-          </template> -->
-        </el-alert>
+        <div class="warning-icon">!</div>
+        <div class="warning-message">
+          <div class="warning-title">网络连接中断</div>
+          <div class="warning-desc">无法连接到校园服务器，请检查网络或联系信息中心</div>
+        </div>
+        <button @click="checkApiConnection" class="retry-button">重试</button>
       </div>
 
       <!-- 提示词区域 -->
-      <div v-if="currentScene" class="prompt-suggestions">
-        <h3>可能的提示词:</h3>
+      <div v-if="currentScene && currentScene.prompts && currentScene.prompts.length > 0" class="prompt-suggestions campus-card">
+        <!-- <div class="prompt-header">
+          <div class="prompt-title">常见问题:</div>
+          <div class="school-term">北外二学期</div>
+        </div> -->
         <div class="prompt-chips">
           <span v-for="(prompt, i) in currentScene.prompts" :key="i" class="prompt-chip" @click="usePrompt(prompt)">
             {{ prompt }}
@@ -67,30 +93,57 @@
       <!-- 聊天消息区域 -->
       <div class="chat-messages" ref="messagesContainer">
         <div v-if="!currentMessages.length && !loading" class="welcome-message">
-          <div class="message ai-message">
-            <div class="message-content">{{ welcomeMessage }}</div>
+          <div class="campus-welcome-card">
+            <div class="welcome-header">
+              <img src="/haitang.png" alt="校徽" class="welcome-logo">
+              <div class="welcome-title">欢迎使用北二外智慧校园助手</div>
+            </div>
+            <div class="welcome-body">
+              {{ welcomeMessage }}
+            </div>
+            <div class="campus-tips">
+              <div class="tip-item">
+                <div class="tip-icon">💡</div>
+                <div class="tip-text">可以向我询问校园生活、学习、政策等问题</div>
+              </div>
+              <div class="tip-item">
+                <div class="tip-icon">📝</div>
+                <div class="tip-text">左侧可选择不同场景获取相关帮助</div>
+              </div>
+            </div>
           </div>
         </div>
+        
         <div v-for="(message, index) in currentMessages" :key="index"
           :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
+          <div class="message-avatar">
+            <div v-if="message.sender === 'user'" class="user-avatar">{{ getUserInitial() }}</div>
+            <div v-else class="ai-avatar"><img src="/haitang.png" alt="校徽"></div>
+          </div>
           <div class="message-content">
-            <span v-if="message.sender === 'user'">{{ message.content }}</span>
-            <TypewriterText 
-              v-else 
-              :content="renderMarkdown(message.content)" 
-              :typing="enableTypewriter" 
-              :speed="typingSpeed"
-              :htmlContent="true"
-              @typing-finished="onTypingFinished(message)"
-            />
+            <div class="message-header">
+              <div class="message-sender">{{ message.sender === 'user' ? '你' : '北外小助手' }}</div>
+              <div class="message-time">{{ formatTime(message.timestamp || Date.now()) }}</div>
+            </div>
+            <div class="message-body">
+              <span v-if="message.sender === 'user'">{{ message.content }}</span>
+              <TypewriterText 
+                v-else 
+                :content="renderMarkdown(message.content)" 
+                :typing="enableTypewriter" 
+                :speed="typingSpeed"
+                :htmlContent="true"
+                @typing-finished="onTypingFinished(message)"
+              />
+            </div>
           </div>
 
           <!-- 附件展示区 -->
-          <div v-if="message.attachments && message.attachments.length">
+          <div v-if="message.attachments && message.attachments.length" class="attachment-area">
             <div v-for="(attachment, i) in message.attachments" :key="i" class="attachment">
               <img v-if="isImageAttachment(attachment.name)" :src="`data:image/png;base64,${attachment.data}`"
-                :alt="attachment.name" />
-              <a v-else @click="downloadAttachment(attachment)" href="javascript:void(0)">
+                :alt="attachment.name" class="attachment-image" />
+              <a v-else @click="downloadAttachment(attachment)" href="javascript:void(0)" class="attachment-file">
                 <span class="attachment-icon"></span>
                 {{ attachment.name }}
               </a>
@@ -100,7 +153,7 @@
           <!-- 来源信息展示区 -->
           <div v-if="message.sources && message.sources.length" class="sources">
             <div class="sources-title">参考来源：</div>
-            <ul>
+            <ul class="sources-list">
               <li v-for="(source, i) in message.sources" :key="i">
                 <a v-if="source.url" :href="source.url" target="_blank">
                   {{ source.title || source.document || '未知来源' }}
@@ -112,46 +165,51 @@
             </ul>
           </div>
         </div>
+        
         <div v-if="loading" class="loading-indicator">
-          <span>思考中...</span>
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="typing-text">正在思考中</div>
         </div>
       </div>
 
       <!-- 输入区域 -->
-      <div class="chat-input">
-        <input
-          v-model="userInput"
-          @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
-          @keydown.up="recallLastMessage"
-          placeholder="请输入您的问题..."
-          :disabled="loading"
-          ref="inputField"
-        />
+      <div class="chat-input-container">
+        <div class="chat-input">
+          <input
+            v-model="userInput"
+            @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
+            @keydown.up="recallLastMessage"
+            placeholder="请输入您的问题..."
+            :disabled="loading"
+            ref="inputField"
+            class="campus-input"
+          />
 
-        <!-- 附件按钮 -->
-        <!-- <div class="attachment-button">
-          <input type="file" id="file-upload" ref="fileInput" @change="handleFileSelected" style="display:none" />
-          <button class="attach-button" @click="triggerFileUpload" :disabled="loading">
-            <i class="icon-paperclip"></i>
-            <span>附件</span>
-          </button> -->
-          <!-- 文件预览 -->
-          <!-- <div v-if="selectedFile" class="selected-file">
-            <span>{{ selectedFile.name }}</span>
-            <button class="remove-file" @click="removeSelectedFile">✕</button>
+          <!-- 附件按钮 -->
+          <div v-if="false" class="attachment-button">
+            <input type="file" id="file-upload" ref="fileInput" @change="handleFileSelected" style="display:none" />
+            <button class="attach-button campus-btn" @click="triggerFileUpload" :disabled="loading">
+              <i class="icon-paperclip"></i>
+            </button>
           </div>
-        </div> -->
 
-        <button
-          @click="sendMessage"
-          :disabled="(loading || (!userInput.trim() && !selectedFile))"
-          class="send-button"
-          :title="loading ? '正在发送...' : '发送消息'"
-        >
-          <span v-if="!loading" class="button-text">发送</span>
-          <span v-else class="loading-dots"></span>
-          <i :class="loading ? 'icon-loading' : 'icon-send'"></i>
-        </button>
+          <button
+            @click="sendMessage"
+            :disabled="(loading || (!userInput.trim() && !selectedFile))"
+            class="campus-btn campus-btn-primary send-button"
+          >
+            <span v-if="!loading">发送</span>
+            <span v-else class="sending-spinner"></span>
+          </button>
+        </div>
+        
+        <div class="campus-footer">
+          <div class="campus-footer-text">© 2025 北京第二外国语学院 - 智慧校园平台</div>
+        </div>
       </div>
     </div>
   </div>
@@ -524,6 +582,42 @@ export default {
       }, 1000);
     };
 
+    // 格式化时间显示
+    const formatTime = (timestamp) => {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+    
+    // 获取用户名首字母作为头像
+    const getUserInitial = () => {
+      const userId = getUserId();
+      return userId ? userId.charAt(0).toUpperCase() : '用';
+    };
+    
+    // 获取用户ID
+    const getUserId = () => {
+      return localStorage.getItem('userId') || '用户';
+    };
+    
+    // 获取用户角色
+    const getUserRole = () => {
+      return localStorage.getItem('userRole') || 'user';
+    };
+    
+    // 打字机效果完成后的回调
+    const onTypingFinished = (message) => {
+      // 可以添加一些效果，比如滚动到底部
+      scrollToBottom();
+      
+      // 或者添加已读标记等
+      if (message && !message.read) {
+        message.read = true;
+      }
+    };
+
     // 生命周期钩子
     onMounted(() => {
       console.log('ChatView组件已挂载，正在初始化...');
@@ -572,335 +666,829 @@ export default {
       logoutSystem,
       renderMarkdown,
       enableTypewriter,
-      typingSpeed
+      typingSpeed,
+      formatTime,
+      getUserInitial,
+      getUserId,
+      getUserRole,
+      onTypingFinished
     };
   }
 }
 </script>
 
 <style scoped>
-/* 主容器 */
+/* 主容器 - 校园风格 */
 .main-container {
   display: flex;
   height: 100vh;
   overflow: hidden;
   position: relative;
+  background-color: var(--campus-secondary);
+  color: var(--campus-neutral-800);
+  font-family: var(--campus-font-sans);
 }
 
-/* 历史面板样式 */
+/* 历史面板样式 - 校园风格 */
 .history-panel {
   position: absolute;
   height: 100vh;
   z-index: 10;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  animation: slide-in 0.3s ease;
+  box-shadow: var(--campus-shadow-lg);
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: var(--campus-neutral-100);
+  border-right: 1px solid var(--campus-neutral-300);
 }
 
 @keyframes slide-in {
   from {
     transform: translateX(-100%);
   }
-
   to {
     transform: translateX(0);
   }
 }
 
-/* 左侧边栏样式 */
+/* 左侧边栏样式 - 校园风格 */
 .sidebar {
-  width: 250px;
-  background-color: #f5f5f5;
-  border-right: 1px solid #e0e0e0;
+  width: 260px;
+  background-color: var(--campus-primary-dark);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  padding: 15px;
+  padding: 20px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 校园装饰元素 */
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="%23ffffff" opacity="0.03" d="M30,10C10,25,10,75,30,90C50,75,50,25,30,10Z"/></svg>');
+  background-repeat: repeat;
+  background-size: 100px;
+  pointer-events: none;
+  opacity: 0.15;
+}
+
+.campus-logo-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: var(--campus-radius-lg);
+}
+
+.campus-logo {
+  width: 36px;
+  height: 36px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background-color: white;
+  padding: 3px;
+}
+
+.campus-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 1px;
 }
 
 .sidebar-actions {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   gap: 10px;
 }
 
-.action-button {
+.sidebar-btn {
   flex: 1;
   padding: 10px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  border-radius: var(--campus-radius);
   cursor: pointer;
   font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: var(--campus-transition);
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: none;
 }
 
-.action-button.history {
-  background-color: #2196f3;
+.sidebar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.sidebar-btn.new-chat {
+  background-color: var(--campus-primary-light);
+}
+
+.sidebar-btn.history {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.scene-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.scene-list-header .campus-semester {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 5px 10px;
+  border-radius: 12px;
 }
 
 .scene-list {
   flex: 1;
   overflow-y: auto;
+  margin-top: 10px;
+  padding-right: 5px;
+  margin-bottom: 20px;
+}
+
+.scene-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scene-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.scene-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .scene-item {
   display: flex;
   align-items: center;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: var(--campus-radius);
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: var(--campus-transition);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .scene-item:hover {
-  background-color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(3px);
 }
 
 .scene-item.active {
-  background-color: #dcedc8;
+  background-color: var(--campus-primary-light);
+  box-shadow: var(--campus-shadow-md);
 }
 
 .scene-icon {
   width: 40px;
   height: 40px;
-  margin-right: 10px;
+  min-width: 40px;
+  margin-right: 12px;
   border-radius: 50%;
   overflow: hidden;
+  box-shadow: var(--campus-shadow);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: var(--campus-transition);
+  background-color: white;
+}
+
+.scene-item.active .scene-icon {
+  border: 2px solid white;
+  transform: scale(1.1);
 }
 
 .scene-icon img {
   width: 100%;
   height: 100%;
-  flex: 1;
+  object-fit: cover;
 }
 
-/* 右侧内容区域样式 */
+.scene-name {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 用户信息区域样式 */
+.user-section {
+  margin-top: auto;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: var(--campus-radius);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--campus-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.user-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: white;
+}
+
+.user-role {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.logout-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: var(--campus-transition);
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* 右侧内容区域样式 - 校园风格 */
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 15px;
+  padding: 24px;
   overflow: hidden;
+  background-color: var(--campus-neutral-200);
+  position: relative;
 }
 
+/* 场景横幅 - 校园风格 */
 .scene-banner {
-  height: 150px;
+  height: 100px;
   position: relative;
-  margin-bottom: 15px;
-  border-radius: 8px;
+  margin-bottom: 24px;
+  border-radius: var(--campus-radius-lg);
   overflow: hidden;
+  box-shadow: var(--campus-shadow-md);
+  transition: var(--campus-transition);
+  border: 1px solid var(--campus-neutral-300);
+}
+
+.scene-banner:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--campus-shadow-lg);
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+  z-index: 1;
 }
 
 .scene-banner img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 5s ease;
+}
+
+.scene-banner:hover img {
+  transform: scale(1.05);
 }
 
 .scene-banner h2 {
   position: absolute;
-  bottom: 10px;
-  left: 15px;
+  bottom: 15px;
+  left: 20px;
   color: white;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   margin: 0;
+  font-size: 1.5rem;
+  z-index: 2;
+  font-family: var(--campus-font-serif);
 }
 
-/* 添加欢迎消息横幅样式 */
-.greeting-banner {
-  padding: 12px 15px;
-  background-color: #e8f5e9;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  border: 1px solid #c8e6c9;
+/* 校园装饰元素 */
+.campus-decoration {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
 }
 
-.greeting-content {
-  color: #2e7d32;
-  font-size: 15px;
-  text-align: center;
+.campus-badge {
+  display: inline-block;
+  padding: 8px 15px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--campus-primary-dark);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 20px;
+  box-shadow: var(--campus-shadow);
 }
 
+/* 网络状态警告 - 校园风格 */
+.network-status-warning {
+  display: flex;
+  align-items: center;
+  background-color: rgba(var(--campus-error), 0.1);
+  padding: 15px;
+  border-radius: var(--campus-radius);
+  margin-bottom: 20px;
+  border: 1px solid rgba(var(--campus-error), 0.3);
+}
+
+.warning-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--campus-error);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+.warning-message {
+  flex: 1;
+}
+
+.warning-title {
+  font-weight: 600;
+  color: var(--campus-error);
+  margin-bottom: 5px;
+}
+
+.warning-desc {
+  font-size: 14px;
+  color: var(--campus-neutral-700);
+}
+
+.retry-button {
+  padding: 8px 15px;
+  background-color: var(--campus-error);
+  color: white;
+  border: none;
+  border-radius: var(--campus-radius);
+  cursor: pointer;
+  transition: var(--campus-transition);
+  font-weight: 500;
+  margin-left: 15px;
+}
+
+.retry-button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* 提示词区域 - 校园风格 */
 .prompt-suggestions {
-  margin-bottom: 15px;
+  margin-bottom: 24px;
+  padding: 0;
+  border-radius: var(--campus-radius-lg);
+  overflow: hidden;
+  background-color: white;
+  box-shadow: var(--campus-shadow);
+  transition: var(--campus-transition);
 }
 
-.prompt-suggestions h3 {
-  margin: 0 0 10px 0;
+.prompt-suggestions:hover {
+  box-shadow: var(--campus-shadow-md);
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: var(--campus-primary);
+  color: white;
+}
+
+.prompt-title {
+  font-weight: 600;
   font-size: 16px;
-  color: #666;
+}
+
+.school-term {
+  font-size: 13px;
+  padding: 4px 12px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
 }
 
 .prompt-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
+  padding: 15px 20px;
 }
 
 .prompt-chip {
-  padding: 6px 12px;
-  background-color: #e8f5e9;
+  padding: 8px 15px;
+  background-color: var(--campus-neutral-200);
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
+  transition: var(--campus-transition);
+  border: 1px solid var(--campus-neutral-300);
+  color: var(--campus-neutral-800);
 }
 
 .prompt-chip:hover {
-  background-color: #c8e6c9;
+  background-color: var(--campus-primary-light);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow);
+  border-color: transparent;
 }
 
-/* 聊天区域样式 */
+/* 欢迎消息卡片 - 校园风格 */
+.campus-welcome-card {
+  background-color: white;
+  border-radius: var(--campus-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--campus-shadow);
+  margin: 20px 0;
+  transition: var(--campus-transition);
+  border: 1px solid var(--campus-neutral-300);
+}
+
+.campus-welcome-card:hover {
+  box-shadow: var(--campus-shadow-md);
+  transform: translateY(-3px);
+}
+
+.welcome-header {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background-color: var(--campus-primary);
+  color: white;
+}
+
+.welcome-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: white;
+  padding: 3px;
+  margin-right: 15px;
+}
+
+.welcome-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.welcome-body {
+  padding: 20px;
+  color: var(--campus-neutral-800);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.campus-tips {
+  background-color: var(--campus-neutral-200);
+  padding: 15px 20px;
+  border-top: 1px solid var(--campus-neutral-300);
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.tip-item:last-child {
+  margin-bottom: 0;
+}
+
+.tip-icon {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.tip-text {
+  flex: 1;
+  color: var(--campus-neutral-700);
+  font-size: 14px;
+}
+
+/* 聊天消息区域 - 校园风格 */
 .chat-messages {
   flex: 1;
-  padding: 10px;
+  padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
   margin-bottom: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
+  background-color: white;
+  border-radius: var(--campus-radius-lg);
+  box-shadow: var(--campus-shadow);
+  border: 1px solid var(--campus-neutral-300);
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--campus-neutral-200);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--campus-neutral-400);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--campus-neutral-500);
 }
 
 .message {
-  padding: 10px 15px;
-  border-radius: 18px;
-  max-width: 70%;
+  display: flex;
+  max-width: 85%;
+  animation: message-appear 0.3s ease;
+  position: relative;
+}
+
+.message-avatar {
+  margin-right: 12px;
+  align-self: flex-start;
+}
+
+.ai-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--campus-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-avatar img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.message-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.message-sender {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--campus-neutral-700);
+}
+
+.message-time {
+  font-size: 12px;
+  color: var(--campus-neutral-500);
+}
+
+.message-body {
+  padding: 12px 16px;
+  border-radius: var(--campus-radius);
   word-break: break-word;
+  box-shadow: var(--campus-shadow-sm);
+}
+
+.user-message .message-body {
+  background-color: var(--campus-accent);
+  color: white;
+  border-top-right-radius: 0;
+  margin-left: auto;
 }
 
 .user-message {
   align-self: flex-end;
-  background-color: #dcf8c6;
+  flex-direction: row-reverse;
 }
 
-.ai-message {
-  align-self: flex-start;
-  background-color: #f1f0f0;
-  max-height: none;
-  overflow-y: auto;
+.user-message .message-avatar {
+  margin-right: 0;
+  margin-left: 12px;
 }
 
+.user-message .message-header {
+  flex-direction: row-reverse;
+}
+
+.ai-message .message-body {
+  background-color: var(--campus-neutral-200);
+  color: var(--campus-neutral-900);
+  border-top-left-radius: 0;
+}
+
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 加载指示器 - 校园风格 */
 .loading-indicator {
   align-self: flex-start;
-  padding: 10px;
-  font-style: italic;
-  color: #888;
+  display: flex;
+  align-items: center;
+  background-color: var(--campus-neutral-200);
+  padding: 10px 20px;
+  border-radius: 20px;
+  animation: pulse 1.5s infinite;
+  margin-left: 50px;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.typing-dots span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--campus-primary);
+  border-radius: 50%;
+  margin-right: 5px;
+  animation: typing-dots 1.5s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.typing-text {
+  font-size: 14px;
+  color: var(--campus-neutral-700);
+}
+
+@keyframes typing-dots {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+    background-color: var(--campus-primary-light);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 输入区域 - 校园风格 */
+.chat-input-container {
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-input {
   display: flex;
-  gap: 10px;
-  height: 50px;
+  gap: 12px;
+  padding: 15px;
+  background-color: white;
+  border-radius: var(--campus-radius);
+  box-shadow: var(--campus-shadow);
+  border: 1px solid var(--campus-neutral-300);
 }
 
 .chat-input input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 12px 20px;
+  border: 1px solid var(--campus-neutral-400);
+  border-radius: var(--campus-radius);
   font-size: 16px;
+  background-color: white;
+  color: var(--campus-neutral-900);
+  transition: var(--campus-transition);
 }
 
-.chat-input button {
-  padding: 10px 20px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
+.chat-input input:focus {
+  outline: none;
+  border-color: var(--campus-primary);
+  box-shadow: 0 0 0 3px rgba(62, 128, 85, 0.2);
 }
 
-.chat-input button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.chat-input input::placeholder {
+  color: var(--campus-neutral-500);
 }
 
-/* 发送按钮样式增强 */
 .send-button {
-  padding: 10px 20px;
-  background-color: #4caf50;
+  padding: 12px 25px;
+  background-color: var(--campus-primary);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--campus-radius);
   cursor: pointer;
   font-size: 16px;
+  font-weight: 500;
+  transition: var(--campus-transition);
+  min-width: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  transition: all 0.2s ease;
-  min-width: 90px;
 }
 
-/* 按钮悬停效果 */
-.send-button:not(:disabled):hover {
-  background-color: #45a049;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.send-button:hover:not(:disabled) {
+  background-color: var(--campus-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow);
 }
 
-/* 按钮按下效果 */
-.send-button:not(:disabled):active {
-  transform: translateY(1px);
-  box-shadow: none;
-}
-
-/* 禁用状态 */
 .send-button:disabled {
-  background-color: #cccccc;
+  background-color: var(--campus-neutral-400);
+  color: var(--campus-neutral-100);
   cursor: not-allowed;
-  opacity: 0.7;
 }
 
-/* 发送过程中样式 */
-.send-button.sending {
-  background-color: #2196f3;
-  animation: pulse 1.5s infinite;
-}
-
-/* 图标样式 */
-.icon-send {
+.sending-spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-}
-
-.icon-loading {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: white;
   animation: spin 1s linear infinite;
-}
-
-/* 加载中动画 */
-.loading-dots:after {
-  content: '';
-  animation: loading-dots 1.5s infinite;
-}
-
-@keyframes loading-dots {
-  0% {
-    content: '.';
-  }
-
-  33% {
-    content: '..';
-  }
-
-  66% {
-    content: '...';
-  }
 }
 
 @keyframes spin {
@@ -909,224 +1497,225 @@ export default {
   }
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.7;
-  }
-
-  100% {
-    opacity: 1;
-  }
-}
-
-/* 添加欢迎消息样式 */
-.welcome-message {
-  margin-top: 20px;
-}
-
-.network-status-warning {
+/* 附件相关样式 - 校园风格 */
+.attachment-area {
+  margin-top: 10px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #ffeb3b;
-  color: #000;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.retry-button {
-  margin-left: 10px;
-  background-color: #c62828;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .attachment {
-  margin-top: 10px;
+  background-color: var(--campus-neutral-200);
+  padding: 8px 12px;
+  border-radius: var(--campus-radius);
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  border: 1px solid var(--campus-neutral-300);
 }
 
-.sources {
-  margin-top: 10px;
+.attachment-image {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: var(--campus-radius);
 }
 
-.sources-title {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.icon-paperclip {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M16.58 8.09l-5.66 5.66a2 2 0 01-2.83 0 2 2 0 010-2.83l5.66-5.66a1 1 0 011.42 1.42l-5.66 5.66a.002.002 0 000 .004l-.004.004a.75.75 0 101.06 1.06l5.66-5.66A2.998 2.998 0 0012 2a2.998 2.998 0 00-2.12.88l-5.66 5.66a4 4 0 005.66 5.66l5.66-5.66a3 3 0 00-4.24-4.24l-3.54 3.54a1 1 0 101.42 1.42l3.54-3.54c.39-.39 1.02-.39 1.41 0 .38.38.38 1.02 0 1.41l-5.66 5.66a2.5 2.5 0 01-3.53-3.53l5.66-5.66A4 4 0 0116.58 8.09z'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-}
-
-.action-button.admin {
-  background-color: #614caf;
-  margin-left: 10px;
-}
-
-.action-button.admin:hover {
-  background-color: #4a3b7d;
-}
-
-/* 退出系统按钮样式 */
-.action-button.logout {
-  background-color: #f44336;
-  margin-left: 10px;
-}
-
-.action-button.logout:hover {
-  background-color: #d32f2f;
-}
-
-.icon-logout {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 5px;
-}
-
-.icon-settings {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 5px;
-}
-
-/* 打字机效果相关样式 */
-.typewriter-char {
-  display: inline-block;
-  opacity: 0;
-  animation: typing-effect 0.05s forwards;
-  animation-delay: calc(var(--char-index, 0) * 0.05s);
-}
-
-@keyframes typing-effect {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Markdown样式 */
-.ai-message :deep(h1),
-.ai-message :deep(h2),
-.ai-message :deep(h3),
-.ai-message :deep(h4),
-.ai-message :deep(h5),
-.ai-message :deep(h6) {
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  font-weight: bold;
-}
-
-.ai-message :deep(h1) {
-  font-size: 1.6em;
-}
-
-.ai-message :deep(h2) {
-  font-size: 1.4em;
-}
-
-.ai-message :deep(h3) {
-  font-size: 1.2em;
-}
-
-.ai-message :deep(p) {
-  margin-bottom: 0.8em;
-}
-
-.ai-message :deep(ul),
-.ai-message :deep(ol) {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  padding-left: 1.5em;
-}
-
-.ai-message :deep(li) {
-  margin-bottom: 0.3em;
-}
-
-.ai-message :deep(code) {
-  background-color: #f0f0f0;
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: monospace;
-  font-size: 0.9em;
-}
-
-.ai-message :deep(pre) {
-  background-color: #f5f5f5;
-  padding: 1em;
-  border-radius: 5px;
-  overflow-x: auto;
-  margin: 0.8em 0;
-}
-
-.ai-message :deep(pre code) {
-  background-color: transparent;
-  padding: 0;
-  border-radius: 0;
-  font-family: monospace;
-  font-size: 0.9em;
-}
-
-.ai-message :deep(blockquote) {
-  border-left: 3px solid #cccccc;
-  padding-left: 1em;
-  color: #666666;
-  margin: 0.8em 0;
-}
-
-.ai-message :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1em 0;
-}
-
-.ai-message :deep(th),
-.ai-message :deep(td) {
-  border: 1px solid #ddd;
-  padding: 0.5em;
-  text-align: left;
-}
-
-.ai-message :deep(th) {
-  background-color: #f0f0f0;
-}
-
-.ai-message :deep(a) {
-  color: #2196f3;
+.attachment-file {
+  color: var(--campus-primary);
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: var(--campus-transition);
 }
 
-.ai-message :deep(a:hover) {
+.attachment-file:hover {
+  color: var(--campus-primary-dark);
   text-decoration: underline;
 }
 
-.ai-message :deep(img) {
-  max-width: 100%;
-  height: auto;
-  margin: 0.8em 0;
+.attachment-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%233e8055' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* 来源信息 - 校园风格 */
+.sources {
+  margin-top: 15px;
+  padding: 12px 15px;
+  background-color: var(--campus-neutral-200);
+  border-radius: var(--campus-radius);
+  font-size: 14px;
+  border: 1px solid var(--campus-neutral-300);
+}
+
+.sources-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--campus-neutral-800);
+  display: flex;
+  align-items: center;
+}
+
+.sources-title::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%233e8055' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.sources-list {
+  margin: 0;
+  padding-left: 24px;
+  color: var(--campus-neutral-700);
+}
+
+.sources li {
+  margin-bottom: 6px;
+}
+
+.sources a {
+  color: var(--campus-primary);
+  text-decoration: none;
+  transition: var(--campus-transition);
+}
+
+.sources a:hover {
+  color: var(--campus-primary-dark);
+  text-decoration: underline;
+}
+
+/* 校园页脚 */
+.campus-footer {
+  margin-top: 15px;
+  text-align: center;
+  color: var(--campus-neutral-600);
+  font-size: 12px;
+}
+
+/* 图标样式 */
+.icon-plus, .icon-history, .icon-logout {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.icon-plus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'/%3E%3C/svg%3E");
+}
+
+.icon-history {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z'/%3E%3C/svg%3E");
+}
+
+.icon-logout {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3E%3C/svg%3E");
+}
+
+/* 响应式设计增强 - 校园风格 */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+    padding: 15px 10px;
+  }
+
+  .campus-logo-container {
+    justify-content: center;
+    padding: 10px;
+  }
+  
+  .campus-logo {
+    margin-right: 0;
+  }
+  
+  .campus-name {
+    display: none;
+  }
+  
+  .scene-name {
+    display: none;
+  }
+  
+  .scene-icon {
+    margin-right: 0;
+  }
+  
+  .sidebar-btn {
+    padding: 10px;
+    justify-content: center;
+  }
+  
+  .sidebar-btn .icon-plus,
+  .sidebar-btn .icon-history {
+    margin-right: 0;
+  }
+  
+  .sidebar-btn span {
+    display: none;
+  }
+  
+  .scene-list-header {
+    justify-content: center;
+  }
+  
+  .scene-list-header span {
+    display: none;
+  }
+  
+  .campus-semester {
+    display: none;
+  }
+  
+  .user-detail {
+    display: none;
+  }
+  
+  .content {
+    padding: 15px;
+  }
+  
+  .message {
+    max-width: 90%;
+  }
+  
+  .chat-input {
+    padding: 10px;
+  }
+  
+  .send-button {
+    min-width: auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .send-button span {
+    display: none;
+  }
+  
+  .send-button::after {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
 }
 </style>

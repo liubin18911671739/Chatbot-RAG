@@ -1,38 +1,65 @@
 <template>
   <div class="login-container">
-    <div class="login-form">
+    <div class="campus-decor-leaves top-left"></div>
+    <div class="campus-decor-books bottom-right"></div>
+    
+    <div class="login-form campus-card">
       <div class="logo-container">
-        <img src="/haitang.png" alt="学校标志" class="school-logo" />
+        <img src="/haitang.png" alt="北京第二外国语学院" class="school-logo" />
+        <!-- <h2 class="school-name"></h2> -->
+
+        <div class="campus-badge">智慧校园 · 学习助手</div>
       </div>
+      
       <form @submit.prevent="login">
         <div class="form-group">
-          <label for="username">学号</label>
+          <label for="username" class="campus-label">学号/工号</label>
           <input 
             type="text" 
             id="username" 
             v-model="username" 
-            placeholder="请输入学号" 
+            placeholder="请输入学号或工号" 
             required
+            class="campus-input"
           />
         </div>
         <div class="form-group">
-          <label for="password">密码</label>
+          <label for="password" class="campus-label">密码</label>
           <input 
             type="password" 
             id="password" 
             v-model="password" 
             placeholder="请输入密码" 
             required
+            class="campus-input"
           />
         </div>
-        <div class="error" v-if="error">{{ error }}</div>
-        <button type="submit" :disabled="loading">
-          {{ loading ? '登录中...' : '登录' }}
+        
+        <div class="remember-me">
+          <input type="checkbox" id="remember" v-model="rememberMe" />
+          <label for="remember">记住账号</label>
+        </div>
+        
+        <div class="error-message" v-if="error">{{ error }}</div>
+        
+        <button type="submit" :disabled="loading" class="campus-btn login-btn">
+          <span v-if="!loading">登录系统</span>
+          <span v-else class="loading-spinner"></span>
         </button>
-        <div class="help-info">
-          如需帮助，请联系系统管理员
+        
+        <div class="campus-notice">
+          <span class="notice-icon">📢</span>
+          <span>首次使用请使用校园账号密码登录</span>
         </div>
       </form>
+      
+      <div class="campus-footer">
+        <div class="school-contact">
+          <p>联系电话：010-65778941</p>
+          <p>地址：北京市朝阳区定福庄南里1号</p>
+        </div>
+        <div class="copyright">© {{ currentYear }} 北京第二外国语学院 - 智慧校园平台</div>
+      </div>
     </div>
   </div>
 </template>
@@ -65,7 +92,8 @@ export default {
         }
       ],
       // 添加API连接状态标志
-      apiConnected: false
+      apiConnected: false,
+      currentYear: new Date().getFullYear() // 获取当前年份
     }
   },
   methods: {
@@ -233,140 +261,215 @@ export default {
 </script>
 
 <style scoped>
-/* 样式保持不变 */
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--campus-secondary);
+  background-image: linear-gradient(120deg, rgba(240, 240, 235, 0.8) 0%, rgba(245, 245, 240, 0.9) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 装饰元素定位 */
+.top-left {
+  top: 40px;
+  left: 40px;
+  transform: rotate(-15deg);
+}
+
+.bottom-right {
+  bottom: 40px;
+  right: 40px;
+  transform: rotate(15deg);
 }
 
 .login-form {
   width: 100%;
-  max-width: 400px;
-  padding: 30px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 420px;
+  padding: 2.5rem;
+  border-radius: var(--campus-radius-lg);
+  box-shadow: var(--campus-shadow-lg);
+  background-color: var(--campus-neutral-100);
+  position: relative;
+  z-index: 2;
+  border-top: 4px solid var(--campus-primary);
 }
 
 .logo-container {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
 }
 
 .school-logo {
   max-width: 400px;
   height: auto;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-h1 {
-  text-align: center;
-  margin-bottom: 24px;
-  color: #333;
+.school-name {
+  margin: 0.75rem 0;
+  font-size: 1.5rem;
+  color: var(--campus-neutral-900);
+  font-weight: 600;
 }
 
-.login-instructions {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #666;
+.campus-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.375rem 1rem;
+  font-size: 0.875rem;
+  color: white;
+  background-color: var(--campus-primary);
+  border-radius: 1.25rem;
+  box-shadow: var(--campus-shadow-sm);
+  letter-spacing: 0.05em;
 }
 
 .form-group {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-input[type="text"],
-input[type="password"] {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
 }
 
 .remember-me {
   display: flex;
   align-items: center;
+  margin-bottom: 1.25rem;
+  user-select: none;
 }
 
 .remember-me input {
-  margin-right: 8px;
+  margin-right: 0.5rem;
+  accent-color: var(--campus-primary);
 }
 
-button {
+.remember-me label {
+  font-size: 0.875rem;
+  color: var(--campus-neutral-700);
+  cursor: pointer;
+}
+
+.error-message {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--campus-error);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--campus-radius);
+  font-size: 0.875rem;
+  border-left: 3px solid var(--campus-error);
+}
+
+.login-btn {
   width: 100%;
-  padding: 12px;
-  background-color: #4CAF50;
+  padding: 0.875rem;
+  background-color: var(--campus-primary);
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
+  border-radius: var(--campus-radius);
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: var(--campus-shadow-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-button:hover {
-  background-color: #45a049;
+.login-btn:hover {
+  background-color: var(--campus-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow-md);
 }
 
-button:disabled {
-  background-color: #cccccc;
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--campus-shadow-sm);
+}
+
+.login-btn:disabled {
+  background-color: var(--campus-neutral-400);
+  color: var(--campus-neutral-600);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.error {
-  color: red;
-  margin-bottom: 20px;
+.loading-spinner {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
 }
 
-.help-info {
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.campus-notice {
+  margin-top: 1.5rem;
+  padding: 0.875rem;
+  background-color: var(--campus-neutral-200);
+  border-radius: var(--campus-radius);
+  font-size: 0.875rem;
+  color: var(--campus-neutral-800);
+  display: flex;
+  align-items: center;
+}
+
+.notice-icon {
+  margin-right: 0.625rem;
+  font-size: 1rem;
+}
+
+.campus-footer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--campus-neutral-300);
+  padding-top: 1.5rem;
   text-align: center;
-  margin-top: 20px;
-  color: #666;
 }
 
-.register-link {
-  text-align: center;
-  margin-top: 20px;
+.school-contact {
+  margin-bottom: 0.75rem;
 }
 
-a {
-  color: #4CAF50;
-  text-decoration: none;
+.school-contact p {
+  margin: 0.25rem 0;
+  font-size: 0.75rem;
+  color: var(--campus-neutral-600);
 }
 
-a:hover {
-  text-decoration: underline;
-}
-.login-instructions {
-  background-color: #f8f9fa;
-  border-left: 4px solid #4CAF50;
-  padding: 12px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #333;
+.copyright {
+  font-size: 0.75rem;
+  color: var(--campus-neutral-500);
 }
 
-.help-info {
-  text-align: center;
-  margin-top: 20px;
-  color: #666;
-  font-size: 14px;
+/* 添加校园风格的背景装饰 */
+.login-container::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(62, 128, 85, 0.1) 0%, rgba(62, 128, 85, 0) 70%);
+  z-index: 1;
+}
+
+.login-container::after {
+  content: "";
+  position: absolute;
+  bottom: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(29, 78, 137, 0.1) 0%, rgba(29, 78, 137, 0) 70%);
+  z-index: 1;
 }
 </style>

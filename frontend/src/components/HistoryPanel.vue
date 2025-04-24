@@ -170,9 +170,10 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #f5f5f5;
-  border-right: 1px solid #e0e0e0;
+  background-color: var(--campus-neutral-100);
+  border-right: 1px solid var(--campus-neutral-300);
   width: 280px;
+  box-shadow: var(--campus-shadow-md);
 }
 
 .history-header {
@@ -180,28 +181,35 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--campus-neutral-300);
+  background-color: var(--campus-primary);
+  color: white;
 }
 
 .history-header h3 {
   margin: 0;
   font-size: 18px;
-  color: #333;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .refresh-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #666;
+  color: white;
   font-size: 16px;
-  padding: 5px;
+  padding: 8px;
   border-radius: 50%;
+  transition: var(--campus-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .refresh-btn:hover {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: rotate(180deg);
 }
 
 .loading-state, .error-state, .empty-state {
@@ -210,8 +218,9 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100%;
-  padding: 20px;
+  padding: 30px;
   text-align: center;
+  color: var(--campus-neutral-600);
 }
 
 .spinner {
@@ -219,14 +228,31 @@ export default {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border-left-color: #4CAF50;
+  border-left-color: var(--campus-primary);
   animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.error-state button, .empty-state button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: var(--campus-primary);
+  color: white;
+  border: none;
+  border-radius: var(--campus-radius);
+  cursor: pointer;
+  transition: var(--campus-transition);
+}
+
+.error-state button:hover, .empty-state button:hover {
+  background-color: var(--campus-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow);
 }
 
 .history-list {
@@ -237,23 +263,50 @@ export default {
   flex-grow: 1;
 }
 
+.history-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: var(--campus-neutral-200);
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: var(--campus-neutral-400);
+  border-radius: 4px;
+}
+
 .history-list li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--campus-neutral-300);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: var(--campus-transition);
+  position: relative;
+  overflow: hidden;
 }
 
-.history-list li:hover {
-  background-color: #e8e8e8;
+.history-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background-color: var(--campus-primary-light);
+  opacity: 0.1;
+  transition: width 0.3s ease;
+}
+
+.history-list li:hover::before {
+  width: 100%;
 }
 
 .history-list li.active {
-  background-color: #e0f2e0;
-  border-left: 3px solid #4CAF50;
+  background-color: rgba(var(--campus-primary), 0.1);
+  border-left: 3px solid var(--campus-primary);
 }
 
 .chat-info {
@@ -262,30 +315,50 @@ export default {
 }
 
 .chat-title {
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--campus-neutral-800);
 }
 
 .chat-date {
   margin: 0;
   font-size: 12px;
-  color: #666;
+  color: var(--campus-neutral-600);
+  display: flex;
+  align-items: center;
+}
+
+.chat-date::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%236b7280' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 .delete-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--campus-neutral-500);
   cursor: pointer;
-  padding: 5px;
+  padding: 6px;
   font-size: 14px;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: var(--campus-transition);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .history-list li:hover .delete-btn {
@@ -294,26 +367,30 @@ export default {
 }
 
 .delete-btn:hover {
-  color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--campus-error);
 }
 
 .history-footer {
   padding: 16px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--campus-neutral-300);
+  background-color: var(--campus-neutral-200);
 }
 
 .new-chat-btn {
   width: 100%;
   padding: 10px;
-  background-color: #4CAF50;
+  background-color: var(--campus-primary);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--campus-radius);
   font-size: 15px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: var(--campus-transition);
+  box-shadow: var(--campus-shadow-sm);
 }
 
 .new-chat-btn i {
@@ -321,7 +398,9 @@ export default {
 }
 
 .new-chat-btn:hover {
-  background-color: #45a049;
+  background-color: var(--campus-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow);
 }
 
 .delete-confirm-modal {
@@ -335,15 +414,36 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
   background-color: white;
   padding: 24px;
-  border-radius: 8px;
+  border-radius: var(--campus-radius-lg);
   max-width: 400px;
   width: 100%;
   text-align: center;
+  box-shadow: var(--campus-shadow-lg);
+  animation: scale-in 0.2s ease-out;
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .modal-actions {
@@ -356,26 +456,59 @@ export default {
 .confirm-btn, .cancel-btn {
   padding: 10px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--campus-radius);
   font-size: 15px;
   cursor: pointer;
+  transition: var(--campus-transition);
 }
 
 .confirm-btn {
-  background-color: #f44336;
+  background-color: var(--campus-error);
   color: white;
 }
 
 .confirm-btn:hover {
   background-color: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow);
 }
 
 .cancel-btn {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: var(--campus-neutral-300);
+  color: var(--campus-neutral-800);
 }
 
 .cancel-btn:hover {
-  background-color: #ccc;
+  background-color: var(--campus-neutral-400);
+  transform: translateY(-2px);
+  box-shadow: var(--campus-shadow);
+}
+
+/* 校园元素装饰 */
+.empty-state::before {
+  content: "";
+  display: block;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%233e8055' opacity='0.2' x='25' y='15' width='50' height='70' rx='5' /%3E%3Cpath fill='%233e8055' opacity='0.2' d='M30,25 L70,25 L70,65 L30,65 Z' /%3E%3Cpath fill='%233e8055' opacity='0.3' d='M40,35 L60,35 L60,40 L40,40 Z' /%3E%3Cpath fill='%233e8055' opacity='0.3' d='M40,45 L60,45 L60,50 L40,50 Z' /%3E%3Cpath fill='%233e8055' opacity='0.3' d='M40,55 L50,55 L50,60 L40,60 Z' /%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.loading-state .spinner::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px dashed var(--campus-primary-light);
+  animation: spin-reverse 8s linear infinite;
+}
+
+@keyframes spin-reverse {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
 }
 </style>
