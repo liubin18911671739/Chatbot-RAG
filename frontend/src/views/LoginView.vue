@@ -13,26 +13,30 @@
       
       <form @submit.prevent="login">
         <div class="form-group">
-          <label for="username" class="campus-label">学号/工号</label>
-          <input 
-            type="text" 
-            id="username" 
-            v-model="username" 
-            placeholder="请输入学号或工号" 
-            required
-            class="campus-input"
-          />
+          <div class="input-row">
+            <label for="username" class="campus-label">学号/工号</label>
+            <input 
+              type="text" 
+              id="username" 
+              v-model="username" 
+              placeholder="请输入学号或工号" 
+              required
+              class="campus-input"
+            />
+          </div>
         </div>
         <div class="form-group">
-          <label for="password" class="campus-label">密码</label>
-          <input 
-            type="password" 
-            id="password" 
-            v-model="password" 
-            placeholder="请输入密码" 
-            required
-            class="campus-input"
-          />
+          <div class="input-row">
+            <label for="password" class="campus-label">密码</label>
+            <input 
+              type="password" 
+              id="password" 
+              v-model="password" 
+              placeholder="请输入密码" 
+              required
+              class="campus-input"
+            />
+          </div>
         </div>
         
         <div class="remember-me">
@@ -106,6 +110,26 @@ export default {
       this.loading = true;
       
       try {
+        // 首先检查是否是内置管理员账号
+        if (this.username === 'admin' && this.password === 'Admin@123') {
+          console.log('使用内置管理员账号登录成功');
+          
+          // 设置登录信息
+          localStorage.setItem('token', 'admin-token');
+          localStorage.setItem('userId', 'admin');
+          localStorage.setItem('userRole', 'admin');
+          
+          if (this.rememberMe) {
+            localStorage.setItem('rememberedUsername', this.username);
+          } else {
+            localStorage.removeItem('rememberedUsername');
+          }
+          
+          // 管理员直接进入管理界面
+          this.$router.push('/admin');
+          return;
+        }
+        
         // 开发模式且API未连接时，直接使用模拟方式登录
         if (this.isDevelopment && !this.apiConnected) {
           // 检查是否是合法用户名/密码
@@ -360,10 +384,17 @@ export default {
         this.rememberMe = true;
       }
       
-      // 如果已有token，则自动跳转到聊天页面
+      // 如果已有token，则根据用户角色自动跳转到相应页面
       const token = localStorage.getItem('token');
       if (token) {
-        this.$router.push('/chat');
+        const userRole = localStorage.getItem('userRole');
+        if (userRole === 'admin') {
+          // 管理员用户直接进入管理界面
+          this.$router.push('/admin');
+        } else {
+          // 普通用户进入聊天页面
+          this.$router.push('/chat');
+        }
       }
     }
   }
@@ -581,5 +612,20 @@ export default {
   height: 50%;
   background: radial-gradient(circle, rgba(29, 78, 137, 0.1) 0%, rgba(29, 78, 137, 0) 70%);
   z-index: 1;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+}
+
+.input-row .campus-label {
+  min-width: 80px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.input-row .campus-input {
+  flex: 1;
 }
 </style>
