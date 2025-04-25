@@ -1,15 +1,16 @@
 module.exports = {
-  publicPath: process.env.NODE_ENV === 'production' ? '/bisu-qa-system/' : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? '/ibisu/' : '/',
   outputDir: 'dist',
   lintOnSave: false,
   transpileDependencies: ['birpc', '@vue/devtools-kit'],
   devServer: {
     proxy: {
       '/api': {
-        // 根据环境变量选择后端服务器地址，默认为本地开发服务器
-        target: process.env.VUE_APP_API_BASE_URL || 'http://10.10.15.210:5000',
-        // 原先的远程服务器地址
+        // 使用生产服务器地址
         // target: 'http://10.10.15.210:5000',
+        // 使用开发服务器地址
+        target: 'http://localhost:5000',
+
         changeOrigin: true,
         // 正确设置超时
         proxyTimeout: 60000, // 60秒超时

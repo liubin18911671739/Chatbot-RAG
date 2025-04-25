@@ -40,6 +40,13 @@ def chat():
 
 def call_deepseek_api(prompt, scene_id=None, history=None):
     """调用 DeepSeek API 获取回答"""
+    # 调试模式：返回精简版回答，避免实际调用API
+    debug_mode = True  # 设置为True开启调试模式
+    
+    if debug_mode:
+        print(f"调试模式: 跳过API调用，返回精简回答")
+        return f"精简调试回答: 您问了关于'{prompt[:30]}...'的问题。场景ID: {scene_id or '默认'}"
+    
     api_key = "sk-8aee1f222a834f1290a7fa365d498bb2"
     api_url = "https://api.deepseek.com/v1/chat/completions"
     
