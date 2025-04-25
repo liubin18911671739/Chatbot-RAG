@@ -189,10 +189,30 @@ export default {
       try {
         this.loading = true;
         
-        // 导入 AuthService
+        // 1. 检查是否使用测试账号
+        if (this.username === '20090025' && this.password === '?Lb!816003') {
+          console.log('使用指定测试账号登录');
+          
+          // 设置认证信息
+          localStorage.setItem('token', 'test-account-token');
+          localStorage.setItem('userId', this.username);
+          localStorage.setItem('userRole', 'user');
+          
+          if (this.rememberMe) {
+            localStorage.setItem('rememberedUsername', this.username);
+          } else {
+            localStorage.removeItem('rememberedUsername');
+          }
+          
+          // 登录成功，导航到聊天页面
+          this.$router.push('/chat');
+          return;
+        }
+        
+        // 2. 导入 AuthService
         const AuthService = require('@/services/auth').default;
         
-        // 使用改进的CAS认证服务
+        // 3. 使用改进的CAS认证服务
         const result = await AuthService.loginWithCAS(this.username, this.password);
         
         if (result.success) {
@@ -225,12 +245,31 @@ export default {
         }
       } catch (error) {
         console.error('东软Webservice登录处理错误:', error);
-        this.error = '登录过程发生错误，请稍后重试';
         
-        // 在开发环境下提供更详细的错误信息
-        if (this.isDevelopment) {
-          this.error = `登录处理错误: ${error.message}`;
+        // 4. 处理连接失败的情况 - 使用测试账号
+        if (this.username === '20090025' && this.password === '?Lb!816003') {
+          console.log('服务连接失败，使用测试账号登录');
+          
+          // 设置认证信息
+          localStorage.setItem('token', 'test-account-token');
+          localStorage.setItem('userId', this.username);
+          localStorage.setItem('userRole', 'user');
+          
+          if (this.rememberMe) {
+            localStorage.setItem('rememberedUsername', this.username);
+          } else {
+            localStorage.removeItem('rememberedUsername');
+          }
+          
+          // 登录成功，导航到聊天页面
+          this.$router.push('/chat');
+          return;
         }
+        
+        // 5. 普通错误处理
+        this.error = this.isDevelopment 
+          ? `登录处理错误: ${error.message}` 
+          : '登录服务暂时不可用，请稍后重试';
       } finally {
         this.loading = false;
       }
