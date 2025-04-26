@@ -62,7 +62,7 @@
           <p>联系电话：010-65778941</p>
           <p>地址：北京市朝阳区定福庄南里1号</p>
         </div>
-        <div class="copyright">© {{ currentYear }} 北京第二外国语学院 - 智慧校园平台</div>
+        <div class="copyright">© {{ currentYear }} 北京第二外国语学院 - 棠心问答</div>
       </div>
     </div>
   </div>

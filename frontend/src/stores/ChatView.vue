@@ -421,8 +421,8 @@ export default {
         // 如果连接失败且未超过最大重试次数，则自动重试
         if (!isApiConnected.value && retryCount.value < maxRetries) {
           retryCount.value++;
-          console.log(`连接失败，5000ms后自动重试 (${retryCount.value}/${maxRetries})...`);
-          setTimeout(() => checkApiConnection(), 5000);
+          console.log(`连接失败，600000ms后自动重试 (${retryCount.value}/${maxRetries})...`);
+          setTimeout(() => checkApiConnection(), 600000);
         }
       } finally {
         apiCheckInProgress.value = false;

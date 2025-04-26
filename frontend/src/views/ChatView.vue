@@ -5,7 +5,7 @@
       <!-- 学校Logo和系统名称 -->
       <div class="campus-logo-container">
         <img src="/haitang.png" alt="北外" class="campus-logo">
-        <div class="campus-name">智慧校园</div>
+        <div class="campus-name">棠心问答</div>
       </div>
       
       <!-- 顶部按钮 -->
@@ -115,7 +115,7 @@
           </div>
           <div class="message-content">
             <div class="message-header">
-              <div class="message-sender">{{ message.sender === 'user' ? '你' : '北外小助手' }}</div>
+              <div class="message-sender">{{ message.sender === 'user' ? '你' : 'iBISU' }}</div>
               <div class="message-time">{{ formatTime(message.timestamp || Date.now()) }}</div>
             </div>
             <div class="message-body">
@@ -201,7 +201,7 @@
         </div>
         
         <div class="campus-footer">
-          <div class="campus-footer-text">© 2025 北京第二外国语学院 - 智慧校园平台</div>
+          <div class="campus-footer-text">© 2025 北京第二外国语学院 - 棠心问答</div>
         </div>
       </div>
     </div>
@@ -450,8 +450,8 @@ export default {
         // 如果连接失败且未超过最大重试次数，则自动重试
         if (!isApiConnected.value && retryCount.value < maxRetries) {
           retryCount.value++;
-          console.log(`连接失败，5000ms后自动重试 (${retryCount.value}/${maxRetries})...`);
-          setTimeout(() => checkApiConnection(), 5000);
+          console.log(`连接失败，600000ms后自动重试 (${retryCount.value}/${maxRetries})...`);
+          setTimeout(() => checkApiConnection(), 600000);
         }
       } finally {
         apiCheckInProgress.value = false;

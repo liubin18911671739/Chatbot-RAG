@@ -76,7 +76,7 @@ context('Cypress APIs', () => {
       expect(myConfig).to.have.property('animationDistanceThreshold', 5)
       expect(myConfig).to.have.property('baseUrl', null)
       expect(myConfig).to.have.property('defaultCommandTimeout', 4000)
-      expect(myConfig).to.have.property('requestTimeout', 5000)
+      expect(myConfig).to.have.property('requestTimeout', 6000)
       expect(myConfig).to.have.property('responseTimeout', 30000)
       expect(myConfig).to.have.property('viewportHeight', 660)
       expect(myConfig).to.have.property('viewportWidth', 1000)

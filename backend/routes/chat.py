@@ -41,7 +41,7 @@ def chat():
 def call_deepseek_api(prompt, scene_id=None, history=None):
     """调用 DeepSeek API 获取回答"""
     # 调试模式：返回精简版回答，避免实际调用API
-    debug_mode = True  # 设置为True开启调试模式
+    debug_mode = False  # 设置为True开启调试模式
     
     if debug_mode:
         print(f"调试模式: 跳过API调用，返回精简回答")

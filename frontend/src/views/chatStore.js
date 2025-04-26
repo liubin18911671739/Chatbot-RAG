@@ -297,8 +297,8 @@ export const useChatStore = defineStore('chat', {
         // 如果连接失败且未超过最大重试次数，则自动重试
         if (!this.isApiConnected && this.retryCount < maxRetries) {
           this.retryCount++;
-          console.log(`连接失败，5000ms后自动重试 (${this.retryCount}/${maxRetries})...`);
-          setTimeout(() => this.checkApiConnection(), 5000);
+          console.log(`连接失败，600000ms后自动重试 (${this.retryCount}/${maxRetries})...`);
+          setTimeout(() => this.checkApiConnection(), 600000);
         }
       } finally {
         this.apiCheckInProgress = false;

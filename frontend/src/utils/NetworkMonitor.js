@@ -64,7 +64,7 @@ class NetworkMonitor {
     const now = Date.now();
     
     // 避免短时间内多次检查
-    if (now - this.lastCheckTime < 5000) {
+    if (now - this.lastCheckTime < 600000) {
       return this.isConnected;
     }
     
@@ -79,7 +79,7 @@ class NetworkMonitor {
       // 尝试所有端点，任一成功即视为连接正常
       for (const endpoint of endpoints) {
         try {
-          const response = await axios.get(endpoint, { timeout: 5000 });
+          const response = await axios.get(endpoint, { timeout: 600000 });
           if (response.status >= 200 && response.status < 300) {
             this.updateConnectionState(true);
             return true;

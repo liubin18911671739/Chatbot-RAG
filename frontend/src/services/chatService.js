@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建带超时配置的axios实例
 const api = axios.create({
-  timeout: 15000, // 设置所有请求的默认超时时间为15秒
+  timeout: 30000, // 设置所有请求的默认超时时间为30秒
   retry: 3, // 最大重试次数
   retryDelay: 1000 // 重试间隔时间
 });
