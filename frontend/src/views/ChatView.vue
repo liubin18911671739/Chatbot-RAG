@@ -1506,7 +1506,7 @@ export default {
   flex: 1;
   padding: 12px 20px;
   border: 1px solid var(--campus-neutral-400);
-  width: 100%; /* 可以设置固定宽度或百分比 */
+  width: 95%; /* 可以设置固定宽度或百分比 */
   border-radius: var(--campus-radius);
   font-size: 16px;
   background-color: white;
