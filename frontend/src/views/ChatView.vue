@@ -172,15 +172,41 @@
       <!-- 输入区域 -->
       <div class="chat-input-container">
         <div class="chat-input">
-          <input
-            v-model="userInput"
-            @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
-            @keydown.up="recallLastMessage"
-            placeholder="请输入您的问题..."
-            :disabled="loading"
-            ref="inputField"
-            class="campus-input"
-          />
+          <div class="autocomplete-wrapper">
+            <input
+              v-model="userInput"
+              @keyup.enter="!loading && (userInput.trim() || selectedFile) && sendMessage()"
+              @keydown.up="navigateSuggestion('up')"
+              @input="handleInputChange"
+              @keydown.down="navigateSuggestion('down')"
+              @keydown.up.prevent="navigateSuggestion('up')"
+              @keydown.escape="closeSuggestions"
+              placeholder="请输入您的问题..."
+              :disabled="loading"
+              ref="inputField"
+              class="campus-input"
+            />
+            
+            <!-- 自动补全下拉菜单 - 显示在上方 -->
+            <div v-if="showSuggestions && filteredSuggestions.length > 0" class="autocomplete-dropdown autocomplete-above">
+              <div 
+                v-for="(suggestion, index) in filteredSuggestions" 
+                :key="index" 
+                @click="selectSuggestion(suggestion)"
+                :class="['autocomplete-item', {'active': index === selectedSuggestionIndex}]"
+              >
+                <div class="suggestion-content">
+                  <div v-if="suggestion.type === 'local'" class="suggestion-icon local">
+                    <i class="icon-local"></i>
+                  </div>
+                  <div v-else class="suggestion-icon api">
+                    <i class="icon-api"></i>
+                  </div>
+                  <div class="suggestion-text">{{ suggestion.text }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <!-- 附件按钮 -->
           <div v-if="false" class="attachment-button">
@@ -256,6 +282,12 @@ export default {
       return messagesHistory.value[currentScene.value.id] || [];
     });
 
+    // 过滤后的建议列表
+    const filteredSuggestions = computed(() => {
+      if (!userInput.value || userInput.value.trim().length < 2) return [];
+      return suggestions.value;
+    });
+
     // 方法
     const loadScenes = async () => {
       try {
@@ -286,7 +318,7 @@ export default {
               name: '8001',
               iconUrl: '/icons/digital-human.png',
               bannerUrl: '/banners/digital-human.jpg',
-              prompts: ['如何报修网络?', '如何充值饭卡?', '如何充值网费?']
+              prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '如何充值网费?']
             }
           ];
         }
@@ -325,7 +357,7 @@ export default {
               name: '8001',
               iconUrl: '/icons/digital-human.png',
               bannerUrl: '/banners/digital-human.jpg',
-              prompts: ['如何报修网络?', '如何充值饭卡?', '如何充值网费?']
+              prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '北京第二外国语学院如何充值网费?']
             }
         ];
         currentScene.value = scenes.value[0];
@@ -567,6 +599,115 @@ export default {
       }
     };
 
+    // 处理输入框变化
+    const handleInputChange = async (event) => {
+      userInput.value = event.target.value;
+      
+      // 如果输入为空或者太短，不显示建议
+      if (!userInput.value || userInput.value.trim().length < 2) {
+        showSuggestions.value = false;
+        return;
+      }
+      
+      // 重置选中建议的索引
+      selectedSuggestionIndex.value = 0;
+      
+      // 显示本地建议
+      showSuggestions.value = true;
+      
+      // 检查本地建议
+      const localMatches = localSuggestions.value.filter(
+        s => s.text.toLowerCase().includes(userInput.value.toLowerCase())
+      ).map(s => ({ ...s, type: 'local' }));
+      
+      // 根据输入更新建议
+      suggestions.value = [...localMatches];
+      
+      // 延迟调用API获取建议，减少不必要的请求
+      clearTimeout(apiRequestTimeout.value);
+      apiRequestTimeout.value = setTimeout(async () => {
+        try {
+          // 如果输入已更改，不继续请求
+          if (!userInput.value || userInput.value.trim().length < 2) return;
+          
+          // 获取API建议
+          const response = await chatService.getSuggestions(userInput.value);
+          
+          // 如果请求返回时输入已变化，不更新建议
+          if (response.data && Array.isArray(response.data) && userInput.value.trim().length >= 2) {
+            // 将API结果转换为建议格式并添加到建议列表
+            const apiSuggestions = response.data.map(item => ({
+              text: item,
+              type: 'api'
+            }));
+            
+            // 更新建议列表，保留本地匹配并添加API结果
+            suggestions.value = [...localMatches, ...apiSuggestions];
+          }
+        } catch (error) {
+          console.warn('获取API建议失败:', error);
+          // 保持本地匹配结果
+        }
+      }, 300); // 300ms延迟，减少频繁API调用
+    };
+
+    // 导航建议
+    const navigateSuggestion = (direction) => {
+      if (!showSuggestions.value || filteredSuggestions.value.length === 0) return;
+      
+      if (direction === 'down') {
+        selectedSuggestionIndex.value = (selectedSuggestionIndex.value + 1) % filteredSuggestions.value.length;
+      } else if (direction === 'up') {
+        if (selectedSuggestionIndex.value <= 0) {
+          selectedSuggestionIndex.value = filteredSuggestions.value.length - 1;
+        } else {
+          selectedSuggestionIndex.value -= 1;
+        }
+      }
+    };
+
+    // 选择建议
+    const selectSuggestion = (suggestion) => {
+      userInput.value = suggestion.text;
+      showSuggestions.value = false;
+      // 选择后聚焦回输入框
+      nextTick(() => {
+        if (inputField.value) {
+          inputField.value.focus();
+        }
+      });
+    };
+
+    // 关闭建议
+    const closeSuggestions = () => {
+      showSuggestions.value = false;
+    };
+
+    // 响应式变量：建议相关
+    const localSuggestions = ref([
+      { text: '北京第二外国语学院简介', type: 'local' },
+      { text: '北京第二外国语学院历史', type: 'local' },
+      { text: '北京第二外国语学院专业设置', type: 'local' },
+      { text: '北京第二外国语学院如何申请奖学金', type: 'local' },
+      { text: '北京第二外国语学院校园卡充值方法', type: 'local' },
+      { text: '北京第二外国语学院图书馆开放时间', type: 'local' },
+      { text: '北京第二外国语学院选课系统使用指南', type: 'local' },
+      { text: '北京第二外国语学院校内住宿申请流程', type: 'local' },
+      { text: '北京第二外国语学院校车时刻表', type: 'local' },
+      { text: '北京第二外国语学院网络故障报修', type: 'local' },
+      { text: '北京第二外国语学院网络充值', type: 'local' },
+      { text: '北京第二外国语学院网络', type: 'local' },
+      { text: '北京第二外国语学院校园卡', type: 'local' },
+      { text: '北京第二外国语学院图书馆', type: 'local' },
+      { text: '北京第二外国语学院选课系统', type: 'local' },
+      { text: '北京第二外国语学院住宿申请', type: 'local' },
+      { text: '北京第二外国语学院校车时刻表', type: 'local' }
+    ]);
+    const suggestions = ref([]);
+    const showSuggestions = ref(false);
+    const selectedSuggestionIndex = ref(0);
+    const apiRequestTimeout = ref(null);
+
     // 生命周期钩子
     onMounted(() => {
       console.log('ChatView组件已挂载，正在初始化...');
@@ -616,7 +757,15 @@ export default {
       getUserInitial,
       getUserId,
       getUserRole,
-      onTypingFinished
+      onTypingFinished,
+      handleInputChange,
+      navigateSuggestion,
+      selectSuggestion,
+      closeSuggestions,
+      filteredSuggestions,
+      suggestions,
+      showSuggestions,
+      selectedSuggestionIndex
     };
   }
 }
@@ -1349,7 +1498,7 @@ export default {
   padding: 15px;
   background-color: white;
   border-radius: var(--campus-radius);
-  box-shadow: var(--campus-shadow);
+  box-shadow: var(--campus-shadow); 
   border: 1px solid var(--campus-neutral-300);
 }
 
@@ -1357,6 +1506,7 @@ export default {
   flex: 1;
   padding: 12px 20px;
   border: 1px solid var(--campus-neutral-400);
+  width: 100%; /* 可以设置固定宽度或百分比 */
   border-radius: var(--campus-radius);
   font-size: 16px;
   background-color: white;
@@ -1489,7 +1639,7 @@ export default {
   width: 16px;
   height: 16px;
   margin-right: 8px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%233e8055' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%233e8055' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
 }
@@ -1543,6 +1693,93 @@ export default {
 
 .icon-logout {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z'/%3E%3C/svg%3E");
+}
+
+/* 自动补全样式 */
+.autocomplete-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid var(--campus-neutral-300);
+  border-top: none;
+  border-radius: 0 0 var(--campus-radius) var(--campus-radius);
+  box-shadow: var(--campus-shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autocomplete-above {
+  bottom: 100%;
+  top: auto;
+  border-radius: var(--campus-radius) var(--campus-radius) 0 0;
+  border-bottom: none;
+  border-top: 1px solid var(--campus-neutral-300);
+  box-shadow: var(--campus-shadow-md);
+  margin-bottom: 5px;
+}
+
+.autocomplete-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: var(--campus-transition);
+}
+
+.autocomplete-item:hover, .autocomplete-item.active {
+  background-color: var(--campus-neutral-200);
+}
+
+.suggestion-content {
+  display: flex;
+  align-items: center;
+}
+
+.suggestion-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.suggestion-icon.local {
+  background-color: var(--campus-neutral-300);
+}
+
+.suggestion-icon.api {
+  background-color: var(--campus-primary-light);
+  color: white;
+}
+
+.suggestion-icon .icon-local,
+.suggestion-icon .icon-api {
+  width: 14px;
+  height: 14px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  display: inline-block;
+}
+
+.suggestion-icon .icon-local {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z'/%3E%3C/svg%3E");
+}
+
+.suggestion-icon .icon-api {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z'/%3E%3C/svg%3E");
+}
+
+.suggestion-text {
+  font-size: 14px;
+  color: var(--campus-neutral-800);
 }
 
 /* 响应式设计增强 - 校园风格 */

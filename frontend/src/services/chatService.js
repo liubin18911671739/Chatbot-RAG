@@ -179,6 +179,25 @@ class ChatService {
       return { data: { greeting: '你好！我是您的AI助手，请问有什么我可以帮您的？' } };
     }
   }
+
+  // 获取自动完成建议
+  async getSuggestions(query) {
+    try {
+      if (!query || query.trim().length < 2) {
+        return { data: [] };
+      }
+      
+      const response = await api.get(`/api/suggestions?query=${encodeURIComponent(query)}`, {
+        timeout: 3000 // 较短的超时时间，确保响应迅速
+      });
+      
+      return response;
+    } catch (error) {
+      console.warn('获取建议失败:', error);
+      // 失败时返回空数组，不影响用户体验
+      return { data: [] };
+    }
+  }
 }
 
 export default new ChatService();
