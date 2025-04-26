@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建带超时配置的axios实例
 const api = axios.create({
-  timeout: 60000, // 设置所有请求的默认超时时间为60秒
+  timeout: 600000, // 设置所有请求的默认超时时间为600秒
   // retry: 1, // 最大重试次数
   // retryDelay: 1000 // 重试间隔时间
 });
@@ -95,7 +95,7 @@ class ChatService {
         payload.scene_id = sceneId;
       }
       
-      // 如果有对话历史，将其添加到请求中
+      // 不再添加对话历史到请求中
       // if (this.conversationHistory.length > 0) {
       //   payload.history = this.conversationHistory;
       // }
@@ -113,13 +113,13 @@ class ChatService {
           .trim(); // 去除首尾空白
       }
       
-      // 将当前对话添加到历史记录中
+      // 不再将当前对话添加到历史记录中
       // this.conversationHistory.push({
       //   user: prompt,
       //   assistant: response.data.response || ''
       // });
       
-      // 保持历史记录最多只有3轮对话
+      // 不再维护历史记录
       // if (this.conversationHistory.length > 3) {
       //   this.conversationHistory.shift(); // 移除最早的一轮对话
       // }

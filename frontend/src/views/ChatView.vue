@@ -240,6 +240,7 @@ import chatService from '@/services/chatService';
 import TypewriterText from '@/components/TypewriterText.vue';
 import { ElMessage } from 'element-plus';
 import MarkdownIt from 'markdown-it';
+import { useChatStore } from '@/stores/chatStore'; // 导入chatStore
 
 export default {
   name: 'ChatView',
@@ -398,36 +399,67 @@ export default {
       const sceneId = currentScene.value.id;
       messagesHistory.value[sceneId] = messagesHistory.value[sceneId] || [];
       
+      // 获取用户问题内容
+      const userQuestion = userInput.value.trim();
+      
       // 添加用户消息到历史
       messagesHistory.value[sceneId].push({
-        content: userInput.value,
-        sender: 'user'
+        content: userQuestion,
+        sender: 'user',
+        timestamp: Date.now()
       });
 
-      const userQuestion = userInput.value;
       userInput.value = '';
       loading.value = true;
 
       try {
-        // 调用API发送消息
-        const response = await chatService.sendChatMessage(
-          userQuestion, 
-          sceneId 
-        );
-
-        const data = response;
+        // 引入chatStore获取缓存功能
+        const chatStore = useChatStore();
         
-        // 添加AI回复到历史
-        messagesHistory.value[sceneId].push({
-          content: data.response || data.answer || '没有回答',
-          sender: 'ai',
-          attachments: data.attachment_data || [],
-          sources: data.sources || []
-        });
+        // 1. 首先检查缓存中是否有相同问题的答案
+        const cachedAnswer = chatStore.findCachedAnswer(userQuestion);
+        
+        if (cachedAnswer) {
+          console.log('使用缓存的回答');
+          
+          // 如果有缓存的答案，直接使用缓存的答案
+          messagesHistory.value[sceneId].push({
+            content: cachedAnswer,
+            sender: 'ai',
+            timestamp: Date.now(),
+            fromCache: true // 标记是来自缓存的答案
+          });
+          
+        } else {
+          console.log('没有缓存，调用API');
+          
+          // 没有缓存，调用API获取回答
+          const response = await chatService.sendChatMessage(
+            userQuestion, 
+            sceneId 
+          );
 
-        // 如果是新的对话，保存对话ID
-        if (!currentChatId.value && data.chat_id) {
-          currentChatId.value = data.chat_id;
+          const data = response;
+          
+          // 获取AI回复内容
+          const aiResponse = data.response || data.answer || '没有回答';
+          
+          // 添加到缓存
+          chatStore.addToQACache(userQuestion, aiResponse);
+          
+          // 添加AI回复到历史
+          messagesHistory.value[sceneId].push({
+            content: aiResponse,
+            sender: 'ai',
+            timestamp: Date.now(),
+            attachments: data.attachment_data || [],
+            sources: data.sources || []
+          });
+
+          // 如果是新的对话，保存对话ID
+          if (!currentChatId.value && data.chat_id) {
+            currentChatId.value = data.chat_id;
+          }
         }
       } catch (error) {
         console.error('获取回答时出错:', error);
@@ -436,7 +468,8 @@ export default {
         // 添加错误消息到历史
         messagesHistory.value[sceneId].push({
           content: errorMessage,
-          sender: 'ai'
+          sender: 'ai',
+          timestamp: Date.now()
         });
         
         ElMessage.error(errorMessage);
