@@ -41,7 +41,7 @@ export default {
       default: false
     }
   },
-  emits: ['typing-finished'],
+  emits: ['typing-finished', 'typing-progress'],
   setup(props, { emit }) {
     const displayedText = ref('');
     const processedHtml = ref('');
@@ -49,6 +49,34 @@ export default {
     const currentIndex = ref(0);
     const isFinished = ref(false);
     const cursorVisible = ref(true);
+    const lastLineBreakIndex = ref(-1);
+    
+    // 检测换行符并触发滚动事件
+    const checkForLineBreak = (text, index) => {
+      // 计算当前文本中的换行符数量
+      const newLineMatch = text.slice(lastLineBreakIndex.value + 1, index + 1).match(/\n/);
+      
+      // 如果找到了新的换行符，触发进度事件
+      if (newLineMatch) {
+        lastLineBreakIndex.value = index;
+        // 触发进度事件，告知父组件文本有了新的一行
+        emit('typing-progress', {
+          progress: index / props.content.length,
+          hasNewLine: true
+        });
+        return true;
+      }
+      
+      // 每隔30个字符也触发一次滚动
+      if (index > 0 && index % 30 === 0) {
+        emit('typing-progress', {
+          progress: index / props.content.length,
+          hasNewLine: false
+        });
+      }
+      
+      return false;
+    };
 
     // 开始打字效果
     const startTyping = () => {
@@ -59,6 +87,7 @@ export default {
       displayedText.value = '';
       processedHtml.value = '';
       isFinished.value = false;
+      lastLineBreakIndex.value = -1;
 
       // 开始打字动画的延迟
       setTimeout(() => {
@@ -70,6 +99,10 @@ export default {
           typingInterval.value = setInterval(() => {
             if (currentIndex.value < props.content.length) {
               displayedText.value += props.content[currentIndex.value];
+              
+              // 检查是否有新的换行
+              checkForLineBreak(props.content, currentIndex.value);
+              
               currentIndex.value++;
             } else {
               clearInterval(typingInterval.value);
@@ -110,9 +143,18 @@ export default {
           htmlIndex = tagEndIndex + 1;
         } else {
           // 添加一个普通字符
-          processedHtml.value += content.charAt(htmlIndex);
+          const char = content.charAt(htmlIndex);
+          processedHtml.value += char;
           htmlIndex++;
           plainTextIndex++;
+          
+          // 检查是否有新的换行
+          if (char === '\n' || plainTextIndex % 30 === 0) {
+            emit('typing-progress', {
+              progress: plainTextIndex / totalChars,
+              hasNewLine: char === '\n'
+            });
+          }
         }
 
         // 继续处理下一个字符

@@ -127,6 +127,7 @@
                 :speed="typingSpeed"
                 :htmlContent="true"
                 @typing-finished="onTypingFinished(message)"
+                @typing-progress="handleTypingProgress"
               />
             </div>
           </div>
@@ -271,6 +272,9 @@ export default {
     // 添加打字机效果状态
     const enableTypewriter = ref(true); // 是否启用打字机效果
     const typingSpeed = ref(30); // 打字速度(ms)
+
+    // 平滑滚动设置
+    const enableSmoothScroll = ref(true); // 默认启用平滑滚动
     
     // DOM 引用
     const messagesContainer = ref(null);
@@ -558,20 +562,74 @@ export default {
       });
     };
 
-    // 自动滚动到底部方法
+    // 一行一行平滑滚动到底部 - ChatGPT风格
+    const smoothScrollToBottom = () => {
+      if (!messagesContainer.value) return;
+      
+      const container = messagesContainer.value;
+      const targetPosition = container.scrollHeight;
+      const startPosition = container.scrollTop;
+      const distance = targetPosition - startPosition;
+      
+      // 如果距离很小，直接滚动到底部
+      if (distance < 20) {
+        container.scrollTop = targetPosition;
+        return;
+      }
+
+      // 使用更平滑的动画
+      const duration = 300; // 滚动的总持续时间(ms)
+      const startTime = performance.now();
+      
+      // 使用requestAnimationFrame来创建平滑的滚动动画
+      const scrollAnimation = (currentTime) => {
+        const elapsedTime = currentTime - startTime;
+        
+        if (elapsedTime >= duration) {
+          container.scrollTop = targetPosition;
+          return;
+        }
+        
+        // 使用缓动函数使滚动更自然
+        const progress = elapsedTime / duration;
+        const easeInOutCubic = progress < 0.5 
+          ? 4 * progress * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+        
+        container.scrollTop = startPosition + distance * easeInOutCubic;
+        requestAnimationFrame(scrollAnimation);
+      };
+      
+      requestAnimationFrame(scrollAnimation);
+    };
+
+    // 监听打字机效果的进度，实现实时滚动
+    const handleTypingProgress = (progress) => {
+      if (messagesContainer.value) {
+        // 只有在接近底部时才自动滚动
+        const container = messagesContainer.value;
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        
+        if (isNearBottom) {
+          // 轻微滚动让出现的新内容可见
+          container.scrollTop = container.scrollHeight;
+        }
+      }
+    };
+
+    // 替换原来的scrollToBottom方法
     const scrollToBottom = () => {
       nextTick(() => {
         if (messagesContainer.value) {
-          messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+          // 根据用户配置决定是否使用平滑滚动
+          if (enableSmoothScroll.value) {
+            smoothScrollToBottom();
+          } else {
+            // 传统的直接跳转
+            messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+          }
         }
       });
-    };
-
-    // 触发文件上传
-    const triggerFileUpload = () => {
-      if (fileInput.value) {
-        fileInput.value.click();
-      }
     };
 
     // 监听消息变化，自动滚动到底部
@@ -580,6 +638,43 @@ export default {
         scrollToBottom();
       });
     }, { deep: true });
+    
+    // 监听loading状态变化，当加载结束后滚动到底部
+    watch(() => loading.value, (newVal, oldVal) => {
+      if (oldVal === true && newVal === false) {
+        scrollToBottom();
+      }
+    });
+
+    // 监听当前场景变化，切换场景后滚动到底部
+    watch(() => currentScene.value, () => {
+      nextTick(() => {
+        scrollToBottom();
+      });
+    });
+
+    // 设置自动检测内容高度变化并滚动到底部
+    const observeContentChanges = () => {
+      if (messagesContainer.value && window.ResizeObserver) {
+        const resizeObserver = new ResizeObserver(() => {
+          scrollToBottom();
+        });
+        resizeObserver.observe(messagesContainer.value);
+        
+        // 返回清理函数用于组件卸载时停止监听
+        return () => {
+          resizeObserver.disconnect();
+        };
+      }
+      return null;
+    };
+
+    // 触发文件上传
+    const triggerFileUpload = () => {
+      if (fileInput.value) {
+        fileInput.value.click();
+      }
+    };
 
     // 退出系统功能
     const logoutSystem = () => {
@@ -835,6 +930,21 @@ export default {
       console.log('ChatView组件已挂载，正在初始化...');
       // 初始化
       initialize();
+      
+      // 初始化内容变化观察器
+      const cleanup = observeContentChanges();
+      
+      // 组件挂载后自动滚动到底部
+      nextTick(() => {
+        scrollToBottom();
+      });
+      
+      // 返回清理函数
+      return () => {
+        if (cleanup) cleanup();
+        window.removeEventListener('online', checkApiConnection);
+        window.removeEventListener('offline', () => { isApiConnected.value = false; });
+      };
     });
 
     const renderMarkdown = (content) => {
@@ -887,7 +997,8 @@ export default {
       filteredSuggestions,
       suggestions,
       showSuggestions,
-      selectedSuggestionIndex
+      selectedSuggestionIndex,
+      handleTypingProgress
     };
   }
 }
@@ -1647,20 +1758,14 @@ export default {
 }
 
 .send-button {
-  padding: 12px 25px;
-  background-color: var(--campus-primary);
-  color: white;
-  border: none;
-  border-radius: var(--campus-radius);
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: var(--campus-transition);
-  min-width: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    min-width: auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+  }
 
 .send-button:hover:not(:disabled) {
   background-color: var(--campus-primary-dark);
@@ -1732,7 +1837,7 @@ export default {
   width: 16px;
   height: 16px;
   margin-right: 6px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%233e8055' viewBox='0 0 24 24'%3E%3Cpath d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%233e8055' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L10 14.17l-2.59-2.58L6 13l4 4 8-8z'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
 }
@@ -1983,7 +2088,7 @@ export default {
     justify-content: center;
     align-items: center;
   }
-  
+
   .send-button span {
     display: none;
   }
