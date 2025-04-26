@@ -2,9 +2,9 @@ import axios from 'axios';
 
 // 创建带超时配置的axios实例
 const api = axios.create({
-  timeout: 30000, // 设置所有请求的默认超时时间为30秒
-  retry: 3, // 最大重试次数
-  retryDelay: 1000 // 重试间隔时间
+  timeout: 60000, // 设置所有请求的默认超时时间为60秒
+  // retry: 1, // 最大重试次数
+  // retryDelay: 1000 // 重试间隔时间
 });
 
 // 添加请求拦截器
@@ -76,15 +76,15 @@ class ChatService {
       }
       
       // 尝试备用健康检查端点
-      try {
-        console.log('尝试备用API健康检查...');
-        const healthResponse = await api.get('/api/health');
-        console.log('备用API连接成功:', healthResponse.status);
-        return true;
-      } catch (healthError) {
-        console.error('备用API连接也失败');
-        return false;
-      }
+      // try {
+      //   console.log('尝试备用API健康检查...');
+      //   const healthResponse = await api.get('/api/health');
+      //   console.log('备用API连接成功:', healthResponse.status);
+      //   return true;
+      // } catch (healthError) {
+      //   console.error('备用API连接也失败');
+      //   return false;
+      // }
     }
   }
 
@@ -96,9 +96,9 @@ class ChatService {
       }
       
       // 如果有对话历史，将其添加到请求中
-      if (this.conversationHistory.length > 0) {
-        payload.history = this.conversationHistory;
-      }
+      // if (this.conversationHistory.length > 0) {
+      //   payload.history = this.conversationHistory;
+      // }
       
       const response = await api.post('/api/chat', payload);
       
@@ -114,15 +114,15 @@ class ChatService {
       }
       
       // 将当前对话添加到历史记录中
-      this.conversationHistory.push({
-        user: prompt,
-        assistant: response.data.response || ''
-      });
+      // this.conversationHistory.push({
+      //   user: prompt,
+      //   assistant: response.data.response || ''
+      // });
       
       // 保持历史记录最多只有3轮对话
-      if (this.conversationHistory.length > 3) {
-        this.conversationHistory.shift(); // 移除最早的一轮对话
-      }
+      // if (this.conversationHistory.length > 3) {
+      //   this.conversationHistory.shift(); // 移除最早的一轮对话
+      // }
       
       return response.data;
     } catch (error) {
