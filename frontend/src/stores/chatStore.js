@@ -100,7 +100,7 @@ export const useChatStore = defineStore('chat', () => {
             });
             
             // 如果超过100条记录，删除最旧的
-            if (qaCache.value.length > 100) {
+            if (qaCache.value.length > 20) {
                 qaCache.value.pop();
             }
         }
