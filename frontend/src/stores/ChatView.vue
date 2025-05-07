@@ -167,7 +167,7 @@ export default {
     const loading = ref(false);
     const showHistory = ref(false);
     const currentChatId = ref(null);
-    const welcomeMessage = ref('你好！我是您的AI助手，请问有什么我可以帮您的？');
+    const welcomeMessage = ref('你好！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨');
     const selectedFile = ref(null);
     const isApiConnected = ref(false);
     const apiCheckInProgress = ref(false);

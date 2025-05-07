@@ -11,7 +11,7 @@ export const useChatStore = defineStore('chat', {
     loading: false, // 是否正在加载中
     showHistory: false, // 是否显示历史面板
     currentChatId: null, // 当前聊天ID
-    welcomeMessage: '你好！我是您的AI助手，请问有什么我可以帮您的？', // 默认欢迎消息
+    welcomeMessage: '你好！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨', // 默认欢迎消息
     selectedFile: null, // 用户选择的文件
     isApiConnected: false, // API连接状态
     apiCheckInProgress: false, // API连接检查状态

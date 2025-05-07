@@ -5,7 +5,7 @@
     
     <div class="login-form campus-card">
       <div class="logo-container">
-        <img src="/haitang.png" alt="北京第二外国语学院" class="school-logo" />
+        <img src="/robot.png" alt="北京第二外国语学院" class="school-logo" />
         <!-- <h2 class="school-name"></h2> -->
 
         <div class="campus-badge">智慧校园 · 学习助手</div>
