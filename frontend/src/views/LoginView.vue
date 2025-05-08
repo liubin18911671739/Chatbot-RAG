@@ -12,14 +12,26 @@
       </div>
       
       <form @submit.prevent="login">
+        <!-- 登录方式选择 -->
+        <div class="auth-type-selector">
+          <div 
+            v-for="type in authTypes" 
+            :key="type.value" 
+            :class="['auth-type-option', { active: authType === type.value }]" 
+            @click="selectAuthType(type.value)"
+          >
+            {{ type.label }}
+          </div>
+        </div>
+        
         <div class="form-group">
           <div class="input-row">
-            <label for="username" class="campus-label">学号/工号</label>
+            <label for="username" class="campus-label">{{ authType === 'radius' ? '账号' : '学号/工号' }}</label>
             <input 
               type="text" 
               id="username" 
               v-model="username" 
-              placeholder="请输入学号或工号" 
+              :placeholder="authType === 'radius' ? '请输入RADIUS账号' : '请输入学号或工号'" 
               required
               class="campus-input"
             />
@@ -53,7 +65,7 @@
         
         <div class="campus-notice">
           <span class="notice-icon">📢</span>
-          <span>首次使用请使用校园账号密码登录</span>
+          <span>首次使用请使用{{ authType === 'radius' ? 'RADIUS' : '校园' }}账号密码登录</span>
         </div>
       </form>
       
@@ -72,6 +84,7 @@
 import axios from 'axios';
 import { encrypt } from '../utils/encryption'; // 现有的加密工具函数
 import CryptoJS from 'crypto-js'; // 直接导入CryptoJS用于SHA3加密
+import AuthService from '@/services/auth';
 
 export default {
   name: 'LoginView',
@@ -101,10 +114,23 @@ export default {
       currentYear: new Date().getFullYear(), // 获取当前年份
       // 添加东软Webservice配置
       webserviceEnabled: true, // 控制是否启用东软Webservice验证
-      webserviceUrl: 'http://cas.bisu.edu.cn/tpass/service/LoginService?wsdl'
+      webserviceUrl: 'http://cas.bisu.edu.cn/tpass/service/LoginService?wsdl',
+      // 认证方式配置
+      authType: 'cas', // 默认使用CAS认证
+      authTypes: [
+        { value: 'cas', label: '校园账号' },
+        { value: 'radius', label: 'RADIUS' }
+      ]
     }
   },
   methods: {
+    // 选择认证方式
+    selectAuthType(type) {
+      this.authType = type;
+      // 清空错误信息
+      this.error = null;
+    },
+  
     async login() {
       this.error = null;
       this.loading = true;
@@ -183,14 +209,23 @@ export default {
           return;
         }
         
-        // 非模拟用户，继续正常登录流程
-        // 根据配置选择使用东软Webservice或后端API
-        if (this.webserviceEnabled) {
-          // 使用东软Webservice进行身份验证
-          await this.loginWithWebservice();
-        } else {
-          // 使用原有的后端API验证
-          await this.loginWithBackendApi();
+        // 根据选择的认证方式进行登录
+        switch(this.authType) {
+          case 'radius':
+            await this.loginWithRADIUS();
+            break;
+          case 'cas':
+          default:
+            // 非模拟用户，继续正常登录流程
+            // 根据配置选择使用东软Webservice或后端API
+            if (this.webserviceEnabled) {
+              // 使用东软Webservice进行身份验证
+              await this.loginWithWebservice();
+            } else {
+              // 使用原有的后端API验证
+              await this.loginWithBackendApi();
+            }
+            break;
         }
       } catch (err) {
         console.error('Login error:', err);
@@ -203,6 +238,59 @@ export default {
         } else {
           this.error = '网络错误，请检查网络连接';
         }
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // RADIUS认证方法
+    async loginWithRADIUS() {
+      try {
+        this.loading = true;
+        
+        // 开发模式下支持测试账号
+        if (this.isDevelopment && this.username === 'testing' && this.password === 'password') {
+          console.log('开发模式：使用RADIUS测试账号登录');
+          localStorage.setItem('token', 'radius-test-token');
+          localStorage.setItem('userId', this.username);
+          localStorage.setItem('userRole', 'user');
+          
+          if (this.rememberMe) {
+            localStorage.setItem('rememberedUsername', this.username);
+          }
+          
+          this.$router.push('/chat');
+          return;
+        }
+        
+        // 使用AuthService的RADIUS认证方法
+        const result = await AuthService.loginWithRADIUS(this.username, this.password);
+        
+        if (result.success) {
+          console.log('RADIUS登录成功');
+          
+          // 设置登录信息
+          localStorage.setItem('token', result.token || 'radius-token');
+          localStorage.setItem('userId', this.username);
+          localStorage.setItem('userRole', 'user'); // RADIUS默认为普通用户角色
+          
+          if (this.rememberMe) {
+            localStorage.setItem('rememberedUsername', this.username);
+          } else {
+            localStorage.removeItem('rememberedUsername');
+          }
+          
+          // 登录成功，导航到聊天页面
+          this.$router.push('/chat');
+        } else {
+          this.error = result.message || 'RADIUS认证失败，请检查用户名和密码';
+          console.error('RADIUS认证失败:', result);
+        }
+      } catch (error) {
+        console.error('RADIUS登录处理错误:', error);
+        this.error = this.isDevelopment 
+          ? `RADIUS登录错误: ${error.message}` 
+          : 'RADIUS登录服务暂时不可用，请稍后重试';
       } finally {
         this.loading = false;
       }
@@ -232,9 +320,6 @@ export default {
           this.$router.push('/chat');
           return;
         }
-        
-        // 2. 导入 AuthService
-        const AuthService = require('@/services/auth').default;
         
         // 3. 使用改进的CAS认证服务
         const result = await AuthService.loginWithCAS(this.username, this.password);
@@ -467,6 +552,36 @@ export default {
   border-radius: 1.25rem;
   box-shadow: var(--campus-shadow-sm);
   letter-spacing: 0.05em;
+}
+
+/* 认证方式选择器样式 */
+.auth-type-selector {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--campus-neutral-300);
+}
+
+.auth-type-option {
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  color: var(--campus-neutral-700);
+  background-color: var(--campus-neutral-200);
+}
+
+.auth-type-option.active {
+  background-color: var(--campus-primary);
+  color: white;
+  box-shadow: var(--campus-shadow-sm);
+}
+
+.auth-type-option:hover:not(.active) {
+  background-color: var(--campus-neutral-300);
 }
 
 .form-group {
