@@ -84,7 +84,6 @@
 import axios from 'axios';
 import { encrypt } from '../utils/encryption'; // 现有的加密工具函数
 import CryptoJS from 'crypto-js'; // 直接导入CryptoJS用于SHA3加密
-import AuthService from '@/services/auth';
 
 export default {
   name: 'LoginView',
@@ -110,15 +109,10 @@ export default {
         }
       ],
       // 添加API连接状态标志
-      apiConnected: false,
-      currentYear: new Date().getFullYear(), // 获取当前年份
-      // 添加东软Webservice配置
-      webserviceEnabled: true, // 控制是否启用东软Webservice验证
-      webserviceUrl: 'http://cas.bisu.edu.cn/tpass/service/LoginService?wsdl',
+      apiConnected: false,      currentYear: new Date().getFullYear(), // 获取当前年份
       // 认证方式配置
-      authType: 'cas', // 默认使用CAS认证
+      authType: 'radius', // 默认使用RADIUS认证
       authTypes: [
-        { value: 'cas', label: '校园账号' },
         { value: 'radius', label: 'RADIUS' }
       ]
     }
@@ -208,25 +202,8 @@ export default {
           }
           return;
         }
-        
-        // 根据选择的认证方式进行登录
-        switch(this.authType) {
-          case 'radius':
-            await this.loginWithRADIUS();
-            break;
-          case 'cas':
-          default:
-            // 非模拟用户，继续正常登录流程
-            // 根据配置选择使用东软Webservice或后端API
-            if (this.webserviceEnabled) {
-              // 使用东软Webservice进行身份验证
-              await this.loginWithWebservice();
-            } else {
-              // 使用原有的后端API验证
-              await this.loginWithBackendApi();
-            }
-            break;
-        }
+          // 使用RADIUS认证方式登录
+        await this.loginWithRADIUS();
       } catch (err) {
         console.error('Login error:', err);
         // 在开发模式下，如果遇到网络错误，提示使用模拟登录
@@ -293,129 +270,6 @@ export default {
           : 'RADIUS登录服务暂时不可用，请稍后重试';
       } finally {
         this.loading = false;
-      }
-    },
-
-    // 使用东软Webservice进行身份验证
-    async loginWithWebservice() {
-      try {
-        this.loading = true;
-        
-        // 1. 检查是否使用测试账号
-        if (this.username === '20090025' && this.password === '?Lb!816003') {
-          console.log('使用指定测试账号登录');
-          
-          // 设置认证信息
-          localStorage.setItem('token', 'test-account-token');
-          localStorage.setItem('userId', this.username);
-          localStorage.setItem('userRole', 'user');
-          
-          if (this.rememberMe) {
-            localStorage.setItem('rememberedUsername', this.username);
-          } else {
-            localStorage.removeItem('rememberedUsername');
-          }
-          
-          // 登录成功，导航到聊天页面
-          this.$router.push('/chat');
-          return;
-        }
-        
-        // 3. 使用改进的CAS认证服务
-        const result = await AuthService.loginWithCAS(this.username, this.password);
-        
-        if (result.success) {
-          console.log('东软Webservice登录成功');
-          
-          // 获取存储在localStorage中的用户信息
-          const userData = AuthService.getCurrentUser();
-          
-          // 设置本地存储，与之前兼容
-          localStorage.setItem('token', 'webservice-token');
-          localStorage.setItem('userId', this.username);
-          localStorage.setItem('userRole', 'user'); // 默认角色
-          
-          if (this.rememberMe) {
-            localStorage.setItem('rememberedUsername', this.username);
-          } else {
-            localStorage.removeItem('rememberedUsername');
-          }
-          
-          // 显示登录方式信息（仅在开发环境）
-          if (this.isDevelopment && userData && userData.authType) {
-            console.log(`认证方式: ${userData.authType}`);
-          }
-          
-          // 登录成功，导航到聊天页面
-          this.$router.push('/chat');
-        } else {
-          this.error = result.message || '用户名或密码错误，请重新输入';
-          console.error('认证失败:', result);
-        }
-      } catch (error) {
-        console.error('东软Webservice登录处理错误:', error);
-        
-        // 4. 处理连接失败的情况 - 使用测试账号
-        if (this.username === '20090025' && this.password === '?Lb!816003') {
-          console.log('服务连接失败，使用测试账号登录');
-          
-          // 设置认证信息
-          localStorage.setItem('token', 'test-account-token');
-          localStorage.setItem('userId', this.username);
-          localStorage.setItem('userRole', 'user');
-          
-          if (this.rememberMe) {
-            localStorage.setItem('rememberedUsername', this.username);
-          } else {
-            localStorage.removeItem('rememberedUsername');
-          }
-          
-          // 登录成功，导航到聊天页面
-          this.$router.push('/chat');
-          return;
-        }
-        
-        // 5. 普通错误处理
-        this.error = this.isDevelopment 
-          ? `登录处理错误: ${error.message}` 
-          : '登录服务暂时不可用，请稍后重试';
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    // 原有的后端API身份验证方法
-    async loginWithBackendApi() {
-      // 加密用户名和密码
-      const encryptedUsername = encrypt(this.username);
-      const encryptedPassword = encrypt(this.password);
-      
-      // 调用后端API
-      const response = await axios.post('/api/auth/login', {
-        username: encryptedUsername,
-        password: encryptedPassword
-      });
-      
-      if (response.data.success) {
-        // 登录成功，保存token和用户角色到localStorage
-        localStorage.setItem('token', response.data.token || 'default-token');
-        localStorage.setItem('userId', this.username);
-        localStorage.setItem('userRole', response.data.role || 'user');
-        
-        if (this.rememberMe) {
-          localStorage.setItem('rememberedUsername', this.username);
-        } else {
-          localStorage.removeItem('rememberedUsername');
-        }
-        
-        // 根据角色重定向到不同页面
-        if (response.data.role === 'admin') {
-          this.$router.push('/admin');
-        } else {
-          this.$router.push('/chat');
-        }
-      } else {
-        this.error = '登录失败，请检查用户名和密码';
       }
     },
     
