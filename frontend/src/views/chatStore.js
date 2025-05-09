@@ -45,7 +45,7 @@ export const useChatStore = defineStore('chat', {
               name: 'AI助手',
               iconUrl: '/icons/general.png',
               bannerUrl: '/banners/general.jpg',
-              prompts: ['请介绍下北京第二外国语学院http://10.10.15.210:5000', '北京第二外国语学院的专业有哪些?', '北京第二外国语学院如何申请奖学金?']
+              prompts: ['请介绍下北京第二外国语学院', '北京第二外国语学院的专业有哪些?', '北京第二外国语学院如何申请奖学金?']
             },
             {
               id: 'ideological',
@@ -84,7 +84,7 @@ export const useChatStore = defineStore('chat', {
             name: 'AI助手',
             iconUrl: '/icons/general.png',
             bannerUrl: '/banners/general.jpg',
-            prompts: ['请介绍下北京第二外国语学院http://10.10.15.210:5000', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
+            prompts: ['请介绍下北京第二外国语学院', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
           },
           {
             id: 'ideological',

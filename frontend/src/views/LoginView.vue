@@ -5,33 +5,20 @@
     
     <div class="login-form campus-card">
       <div class="logo-container">
-        <img src="/robot.png" alt="北京第二外国语学院" class="school-logo" />
+        <img src="/haitang.png" alt="北京第二外国语学院" class="school-logo" />
         <!-- <h2 class="school-name"></h2> -->
 
         <div class="campus-badge">智慧校园 · 学习助手</div>
       </div>
-      
-      <form @submit.prevent="login">
-        <!-- 登录方式选择 -->
-        <div class="auth-type-selector">
-          <div 
-            v-for="type in authTypes" 
-            :key="type.value" 
-            :class="['auth-type-option', { active: authType === type.value }]" 
-            @click="selectAuthType(type.value)"
-          >
-            {{ type.label }}
-          </div>
-        </div>
-        
+        <form @submit.prevent="login">
         <div class="form-group">
           <div class="input-row">
-            <label for="username" class="campus-label">{{ authType === 'radius' ? '账号' : '学号/工号' }}</label>
+            <label for="username" class="campus-label">账号</label>
             <input 
               type="text" 
               id="username" 
               v-model="username" 
-              :placeholder="authType === 'radius' ? '请输入RADIUS账号' : '请输入学号或工号'" 
+              placeholder="请输入校园网账号" 
               required
               class="campus-input"
             />
@@ -62,10 +49,9 @@
           <span v-if="!loading">登录系统</span>
           <span v-else class="loading-spinner"></span>
         </button>
-        
-        <div class="campus-notice">
+          <div class="campus-notice">
           <span class="notice-icon">📢</span>
-          <span>首次使用请使用{{ authType === 'radius' ? 'RADIUS' : '校园' }}账号密码登录</span>
+          <span>请使用校园网账号密码登录</span>
         </div>
       </form>
       
@@ -84,6 +70,7 @@
 import axios from 'axios';
 import { encrypt } from '../utils/encryption'; // 现有的加密工具函数
 import CryptoJS from 'crypto-js'; // 直接导入CryptoJS用于SHA3加密
+import AuthService from '@/services/auth';
 
 export default {
   name: 'LoginView',
@@ -107,24 +94,11 @@ export default {
           password: 'User@123',
           role: 'user' // 普通用户角色
         }
-      ],
-      // 添加API连接状态标志
-      apiConnected: false,      currentYear: new Date().getFullYear(), // 获取当前年份
-      // 认证方式配置
-      authType: 'radius', // 默认使用RADIUS认证
-      authTypes: [
-        { value: 'radius', label: 'RADIUS' }
-      ]
+      ],      // 添加API连接状态标志
+      apiConnected: false,
+      currentYear: new Date().getFullYear() // 获取当前年份
     }
-  },
-  methods: {
-    // 选择认证方式
-    selectAuthType(type) {
-      this.authType = type;
-      // 清空错误信息
-      this.error = null;
-    },
-  
+  },  methods: {
     async login() {
       this.error = null;
       this.loading = true;
@@ -200,9 +174,9 @@ export default {
           } else {
             this.$router.push('/chat');
           }
-          return;
-        }
-          // 使用RADIUS认证方式登录
+          return;        }
+        
+        // 直接使用RADIUS认证登录
         await this.loginWithRADIUS();
       } catch (err) {
         console.error('Login error:', err);
@@ -406,36 +380,6 @@ export default {
   border-radius: 1.25rem;
   box-shadow: var(--campus-shadow-sm);
   letter-spacing: 0.05em;
-}
-
-/* 认证方式选择器样式 */
-.auth-type-selector {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--campus-neutral-300);
-}
-
-.auth-type-option {
-  padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  color: var(--campus-neutral-700);
-  background-color: var(--campus-neutral-200);
-}
-
-.auth-type-option.active {
-  background-color: var(--campus-primary);
-  color: white;
-  box-shadow: var(--campus-shadow-sm);
-}
-
-.auth-type-option:hover:not(.active) {
-  background-color: var(--campus-neutral-300);
 }
 
 .form-group {

@@ -2,7 +2,8 @@
 
 import axios from 'axios';
 
-const API_URL = process.env.VUE_APP_API_URL || 'http://10.10.15.210:5000/api/auth/';
+// const API_URL = process.env.VUE_APP_API_URL || 'http://10.10.15.210:5000/api/auth/';
+const API_URL = 'http://localhost:5000/api/auth/';
 // RADIUS认证的API端点
 const RADIUS_LOGIN_URL = '/api/auth/radius-login';
 
@@ -57,12 +58,11 @@ class AuthService {
                 return { 
                     success: true,
                     token: response.data.token 
-                };
-            } else {
+                };            } else {
                 console.log('RADIUS认证失败:', response.data);
                 return { 
                     success: false, 
-                    message: response.data?.message || 'RADIUS认证失败'
+                    message: response.data && response.data.message ? response.data.message : 'RADIUS认证失败'
                 };
             }
         } catch (error) {
