@@ -5,7 +5,7 @@ import axios from 'axios';
 // const API_URL = process.env.VUE_APP_API_URL || 'http://10.10.15.210:5000/api/auth/';
 const API_URL = 'http://localhost:5000/api/auth/';
 // RADIUS认证的API端点
-const RADIUS_LOGIN_URL = '/api/auth/radius-login';
+const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
 
 class AuthService {
     login(username, password) {
