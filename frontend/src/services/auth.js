@@ -59,12 +59,10 @@ class AuthService {
                     authenticated: true,
                     authType: 'RADIUS',
                     timestamp: new Date().getTime()
-                };
-                localStorage.setItem('user', JSON.stringify(userData));
+                };                localStorage.setItem('user', JSON.stringify(userData));
                 
-                // 跳转到主页面
-                router.push('/'); // 或者你的主页路由，例如 '/dashboard'
-
+                // 认证服务不再处理路由跳转，由组件自行处理
+                
                 return { 
                     success: true,
                     // 注意: 后端 /radius-login 响应中目前没有 token，所以 response.data.token 会是 undefined
