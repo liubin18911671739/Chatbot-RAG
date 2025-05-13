@@ -180,8 +180,12 @@ export default {
         await this.loginWithRADIUS();
       } catch (err) {
         console.error('Login error:', err);
+        // 检查是否为401错误（未授权，通常表示用户名或密码错误）
+        if (err.response && err.response.status === 401) {
+          this.error = '用户名或密码错误';
+        }
         // 在开发模式下，如果遇到网络错误，提示使用模拟登录
-        if (this.isDevelopment) {
+        else if (this.isDevelopment) {
           this.error = '后端API连接失败，可使用任意合法用户名/密码进行开发模式登录';
           this.apiConnected = false;
         } else if (err.response && err.response.data) {
@@ -239,9 +243,14 @@ export default {
         }
       } catch (error) {
         console.error('RADIUS登录处理错误:', error);
-        this.error = this.isDevelopment 
-          ? `RADIUS登录错误: ${error.message}` 
-          : 'RADIUS登录服务暂时不可用，请稍后重试';
+        if (error.response && error.response.status === 401) {
+          this.error = '用户名或密码错误'; // 始终为401显示此消息
+        } else {
+          // 针对其他错误 (网络错误, 服务器500错误等)
+          this.error = this.isDevelopment
+            ? `RADIUS登录错误: ${error.message}`
+            : 'RADIUS登录服务暂时不可用，请稍后重试';
+        }
       } finally {
         this.loading = false;
       }

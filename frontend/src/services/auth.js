@@ -7,6 +7,9 @@ const API_URL = 'http://localhost:5000/api/auth/';
 // RADIUS认证的API端点
 const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
 
+// const API_URL = 'http://10.10.15.210:5000/api/auth/';
+// const RADIUS_LOGIN_URL = 'http://10.10.15.210:5000/api/auth/radius-login';
+
 class AuthService {
     login(username, password) {
         return axios

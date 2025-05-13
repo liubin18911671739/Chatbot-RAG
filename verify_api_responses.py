@@ -18,7 +18,7 @@ with open("test_qa_pairs.json", "r", encoding="utf-8") as f:
 print(f"加载了 {len(qa_pairs)} 个问答对")
 
 # 随机抽样10个问题进行测试
-samples = random.sample(qa_pairs, min(100, len(qa_pairs)))
+samples = random.sample(qa_pairs, min(500, len(qa_pairs)))
 print(f"随机抽取了 {len(samples)} 个问题进行测试")
 
 results = []

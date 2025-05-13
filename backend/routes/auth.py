@@ -20,18 +20,18 @@ RADIUS_SERVERS = [
     {
         'SERVER': '10.10.15.95',
         'PORT': 1812,
-        'SECRET': os.environ.get('RADIUS_SECRET', 'testing123')
+        'SECRET': '123456'
     },
-    {
-        'SERVER': 'localhost',
-        'PORT': 1812,
-        'SECRET': os.environ.get('RADIUS_KEY', 'testing123')
-    }
+    # {
+    #     'SERVER': 'localhost',
+    #     'PORT': 1812,
+    #     'SECRET': '123456'
+    # }
 ]
 
 # 测试用户凭据
-TEST_RADIUS_USER = "testing"
-TEST_RADIUS_PASSWORD = "password"
+TEST_RADIUS_USER = "20090025"
+TEST_RADIUS_PASSWORD = "?Lb!816003"
 
 
 
