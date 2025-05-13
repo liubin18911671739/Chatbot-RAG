@@ -182,6 +182,90 @@
             }
           }
         }
+      },      "/api/auth/radius-login": {
+        "post": {
+          "summary": "RADIUS认证登录",
+          "description": "使用RADIUS服务器进行身份验证",
+          "operationId": "radiusLogin",
+          "tags": ["用户认证"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["username", "password"],
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "用户名",
+                      "example": "testuser"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "密码",
+                      "example": "password"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "认证成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Login successful"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "认证失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Invalid username or password"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "服务器错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "/api/health": {
         "get": {
@@ -353,8 +437,7 @@
           }
         }
       }
-    },
-    "tags": [
+    },    "tags": [
       {
         "name": "聊天功能",
         "description": "问答交互相关的API"
@@ -374,6 +457,10 @@
       {
         "name": "系统状态",
         "description": "检查系统运行状态"
+      },
+      {
+        "name": "用户认证",
+        "description": "用户登录与认证相关功能"
       }
     ]
   }

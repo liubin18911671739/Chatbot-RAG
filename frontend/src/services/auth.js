@@ -1,10 +1,12 @@
 // frontend/src/services/auth.js
 
 import axios from 'axios';
+import router from '../router'; // 导入路由实例用于认证后跳转
 
 // const API_URL = process.env.VUE_APP_API_URL || 'http://10.10.15.210:5000/api/auth/';
-const API_URL = 'http://localhost:5000/api/auth/';
 // RADIUS认证的API端点
+const API_URL = 'http://localhost:5000/api/auth/';
+
 const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
 
 // const API_URL = 'http://10.10.15.210:5000/api/auth/';
@@ -48,7 +50,8 @@ class AuthService {
                 password
             });
             
-            if (response.data && response.data.success) {
+            // 检查后端返回的状态码和消息
+            if (response.status === 200 && response.data && response.data.message === "Login successful") {
                 console.log('RADIUS认证成功');
                 // 存储用户信息
                 const userData = {
@@ -58,10 +61,17 @@ class AuthService {
                     timestamp: new Date().getTime()
                 };
                 localStorage.setItem('user', JSON.stringify(userData));
+                
+                // 跳转到主页面
+                router.push('/'); // 或者你的主页路由，例如 '/dashboard'
+
                 return { 
                     success: true,
+                    // 注意: 后端 /radius-login 响应中目前没有 token，所以 response.data.token 会是 undefined
+                    // 如果后端将来会返回 token，这里的代码是兼容的
                     token: response.data.token 
-                };            } else {
+                };
+            } else {
                 console.log('RADIUS认证失败:', response.data);
                 return { 
                     success: false, 
