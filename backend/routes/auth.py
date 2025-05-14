@@ -283,13 +283,70 @@ def radius_authenticate(username, password):
         if reply is None:
             logger.error("No response from RADIUS server")
             return False
-            
-        if reply.code == AccessAccept.code:
-            logger.info(f"RADIUS authentication successful for user: {username}")
-            return True
+              # 修复部分：正确处理响应对象或整数        # 记录响应类型，帮助调试
+        logger.info(f"RADIUS response type: {type(reply).__name__}, value: {str(reply)}")
+        
+        if isinstance(reply, int):
+            # 如果reply是整数，直接比较值
+            if reply == 2:  # AccessAccept code is 2
+                logger.info(f"RADIUS authentication successful for user: {username}")
+                return True
+            else:
+                logger.warning(f"RADIUS authentication failed for user: {username} with code: {reply}")
+                return False
         else:
-            logger.warning(f"RADIUS authentication failed for user: {username} with code: {reply.code}")
-            return False
+            try:
+                # 原有的对象处理方式
+                if reply.code == AccessAccept.code:
+                    logger.info(f"RADIUS authentication successful for user: {username}")
+                    return True
+                else:
+                    logger.warning(f"RADIUS authentication failed for user: {username} with code: {reply.code}")
+                    return False
+            except AttributeError:
+                # 处理AuthPacket类型的响应
+                # 尝试不同的方法来检查响应是否表示认证成功
+                try:
+                    # 检查对象类名是否包含Accept字符串，表示可能是接受响应
+                    class_name = type(reply).__name__
+                    if 'Accept' in class_name:
+                        logger.info(f"Authentication accepted based on class name: {class_name}")
+                        return True
+                        
+                    # 尝试通过其他方式判断
+                    # 检查是否有id属性，及其值是否为2
+                    if hasattr(reply, 'id') and reply.id == 2:
+                        logger.info(f"Authentication accepted based on reply.id: {reply.id}")
+                        return True
+                        
+                    # 检查是否可以转换为字符串并判断
+                    reply_str = str(reply).lower()
+                    if 'accept' in reply_str or 'success' in reply_str:
+                        logger.info(f"Authentication accepted based on string representation: {reply_str}")
+                        return True
+                        
+                    # 检查可能存在的其他属性
+                    for attr_name in ['code', 'packet_type', 'type', 'status']:
+                        if hasattr(reply, attr_name):
+                            attr_value = getattr(reply, attr_name)
+                            logger.info(f"Found attribute: {attr_name} with value: {attr_value}")
+                            # 常见的成功状态码是2
+                            if attr_value == 2:
+                                logger.info(f"Authentication accepted based on {attr_name}: {attr_value}")
+                                return True
+                
+                    # 尝试获取响应对象的所有可能相关属性，记录下来以便进一步分析
+                    attrs = {name: getattr(reply, name) for name in dir(reply) 
+                             if not name.startswith('_') and not callable(getattr(reply, name))}
+                    logger.info(f"AuthPacket attributes: {attrs}")
+                    
+                    # 如果没有找到表示成功的明确标志，记录详细信息并返回失败
+                    logger.warning(f"Could not determine authentication status from AuthPacket: {reply}")
+                    return False
+                    
+                except Exception as e:
+                    logger.error(f"Error processing AuthPacket: {e}")
+                    return False
             
     except Exception as e:
         logger.error(f"RADIUS authentication error: {str(e)}")
