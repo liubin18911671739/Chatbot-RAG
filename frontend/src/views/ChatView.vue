@@ -30,14 +30,23 @@
           <div class="scene-name">{{ scene.name }}</div>
         </div>
       </div>
+        <!-- 校园共建按钮 -->
+      <div class="campus-contribution-section">
+        <button 
+          :class="['campus-contribution-btn', {'active': isContributionFormVisible}]" 
+          @click="showContributionForm"
+        >
+          <i class="icon-build"></i>校园共建
+        </button>
+      </div>
       
       <!-- 用户信息与退出 -->
       <div class="user-section">
         <div class="user-info">
-          <div class="user-avatar">{{ getUserInitial() }}</div>
+          <div class="user-avatar">{{ "用户" }}</div>
           <div class="user-detail">
             <div class="user-name">{{ getUserId() }}</div>
-            <div class="user-role">{{ getUserRole() === 'admin' ? '管理员' : '学生' }}</div>
+            <!-- <div class="user-role">{{ getUserRole() === 'admin' ? '管理员' : '学生' }}</div> -->
           </div>
         </div>
         <button @click="logoutSystem" class="logout-btn">
@@ -71,20 +80,24 @@
       </div>
 
       <!-- 提示词区域 -->
-      <div v-if="currentScene && currentScene.prompts && currentScene.prompts.length > 0" class="prompt-suggestions campus-card">
-        <!-- <div class="prompt-header">
+      <!-- <div v-if="currentScene && currentScene.prompts && currentScene.prompts.length > 0" class="prompt-suggestions campus-card">
+        <div class="prompt-header">
           <div class="prompt-title">常见问题:</div>
           <div class="school-term">北外二学期</div>
-        </div> -->
+        </div> 
         <div class="prompt-chips">
           <span v-for="(prompt, i) in currentScene.prompts" :key="i" class="prompt-chip" @click="usePrompt(prompt)">
             {{ prompt }}
           </span>
         </div>
-      </div>
+      </div> -->      <!-- 校园共建表单 -->
+      <CampusContribution 
+        v-if="isContributionFormVisible" 
+        @contribution-submitted="toggleContributionForm" 
+      />
 
       <!-- 聊天消息区域 -->
-      <div class="chat-messages" ref="messagesContainer">
+      <div class="chat-messages" ref="messagesContainer" v-show="!isContributionFormVisible">
         <div v-if="!currentMessages.length && !loading" class="welcome-message">
           <!-- <div class="campus-welcome-card">
             <div class="welcome-header">
@@ -168,10 +181,8 @@
           </div>
           <div class="typing-text">正在思考中</div>
         </div>
-      </div>
-
-      <!-- 输入区域 -->
-      <div class="chat-input-container">
+      </div>      <!-- 输入区域 -->
+      <div class="chat-input-container" v-show="!isContributionFormVisible">
         <div class="chat-input">
           <div class="autocomplete-wrapper">
             <input
@@ -239,6 +250,7 @@
 import { ref, onMounted, nextTick, watch, computed, reactive } from 'vue';
 import chatService from '@/services/chatService';
 import TypewriterText from '@/components/TypewriterText.vue';
+import CampusContribution from '@/components/CampusContribution.vue'; // 导入校园共建组件
 import { ElMessage } from 'element-plus';
 import MarkdownIt from 'markdown-it';
 import { useChatStore } from '@/stores/chatStore'; // 导入chatStore
@@ -246,7 +258,8 @@ import { useChatStore } from '@/stores/chatStore'; // 导入chatStore
 export default {
   name: 'ChatView',
   components: {
-    TypewriterText
+    TypewriterText,
+    CampusContribution
   },
   setup() {
     // 创建markdown解析器实例
@@ -268,6 +281,30 @@ export default {
     const isApiConnected = ref(false);
     const apiCheckInProgress = ref(false);
     const retryCount = ref(0);
+      // 校园共建表单控制
+    const isContributionFormVisible = ref(false);
+
+    // 显示或隐藏校园共建表单
+    const toggleContributionForm = () => {
+      isContributionFormVisible.value = !isContributionFormVisible.value;
+      // 如果显示表单，则可能需要重置消息输入框
+      if (isContributionFormVisible.value) {
+        userInput.value = '';
+      }
+      // 表单显示后滚动到顶部
+      if (isContributionFormVisible.value) {
+        nextTick(() => {
+          if (messagesContainer.value) {
+            messagesContainer.value.scrollTop = 0;
+          }
+        });
+      }
+    };
+    
+    // 校园共建表单显示方法
+    const showContributionForm = () => {
+      toggleContributionForm();
+    };
     
     // 添加打字机效果状态
     const enableTypewriter = ref(true); // 是否启用打字机效果
@@ -306,7 +343,7 @@ export default {
           scenes.value = [
             {
               id: 'general',
-              name: 'AI助手',
+              name: 'AI辅导员',
               iconUrl: '/icons/general.png',
               bannerUrl: '/banners/general.jpg',
               prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
@@ -320,7 +357,7 @@ export default {
             },
             {
               id: 'digital-human',
-              name: '8001',
+              name: '8001-接诉即办',
               iconUrl: '/icons/digital-human.png',
               bannerUrl: '/banners/digital-human.jpg',
               prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '如何充值网费?']
@@ -8510,8 +8547,7 @@ export default {
       getUserInitial,
       getUserId,
       getUserRole,
-      onTypingFinished,
-      handleInputChange,
+      onTypingFinished,      handleInputChange,
       navigateSuggestion,
       selectSuggestion,
       closeSuggestions,
@@ -8519,7 +8555,11 @@ export default {
       suggestions,
       showSuggestions,
       selectedSuggestionIndex,
-      handleTypingProgress
+      handleTypingProgress,
+      // 校园共建相关
+      isContributionFormVisible,
+      toggleContributionForm,
+      showContributionForm
     };
   }
 }
@@ -8539,7 +8579,7 @@ export default {
 
 /* 左侧边栏样式 - 校园风格 */
 .sidebar {
-  width: 260px;
+  width: 180px;
   background-color: var(--campus-primary-dark);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -8620,6 +8660,46 @@ export default {
   background-color: var(--campus-primary-light);
 }
 
+/* 校园共建按钮样式 */
+.campus-contribution-section {
+  margin-bottom: 40px;
+}
+
+.campus-contribution-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--campus-radius);
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: none;
+  transition: var(--campus-transition);
+}
+
+.campus-contribution-btn:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.campus-contribution-btn.active {
+  background-color: var(--campus-accent);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.campus-contribution-btn .icon-build {
+  margin-right: 8px;
+  width: 40px;
+  height: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  display: inline-block;
+}
+
 .scene-list-header {
   display: flex;
   justify-content: space-between;
@@ -8683,9 +8763,9 @@ export default {
 }
 
 .scene-icon {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
   margin-right: 12px;
   border-radius: 50%;
   overflow: hidden;
@@ -8707,7 +8787,7 @@ export default {
 }
 
 .scene-name {
-  font-weight: 500;
+  font-weight: 100;
   letter-spacing: 0.5px;
   color: white;
   white-space: nowrap;
@@ -8793,7 +8873,7 @@ export default {
 
 /* 场景横幅 - 校园风格 */
 .scene-banner {
-  height: 100px;
+  height: 300px;
   position: relative;
   margin-bottom: 24px;
   border-radius: var(--campus-radius-lg);

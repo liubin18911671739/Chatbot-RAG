@@ -5,12 +5,12 @@ import router from '../router'; // 导入路由实例用于认证后跳转
 
 // const API_URL = process.env.VUE_APP_API_URL || 'http://10.10.15.210:5000/api/auth/';
 // RADIUS认证的API端点
-const API_URL = 'http://localhost:5000/api/auth/';
+// const API_URL = 'http://localhost:5000/api/auth/';
 
-const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
+// const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
 
-// const API_URL = 'http://10.10.15.210:5000/api/auth/';
-// const RADIUS_LOGIN_URL = 'http://10.10.15.210:5000/api/auth/radius-login';
+const API_URL = 'http://10.10.15.211:5000/api/auth/';
+const RADIUS_LOGIN_URL = 'http://10.10.15.211:5000/api/auth/radius-login';
 
 class AuthService {
     login(username, password) {
@@ -48,6 +48,12 @@ class AuthService {
             const response = await axios.post(RADIUS_LOGIN_URL, {
                 username,
                 password
+            }, {
+                timeout: 10000, // 添加10秒超时
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
             });
             
             // 检查后端返回的状态码和消息
