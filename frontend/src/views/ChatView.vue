@@ -58,7 +58,7 @@
     <!-- 右侧内容区 -->
     <div class="content">      <!-- 场景图片展示 -->
       <div v-if="currentScene" class="scene-banner">
-        <div class="banner-text">世界语者 人文化成</div>
+        <div class="banner-text" style="white-space: normal; overflow-wrap: break-word; max-width: 100%;">世界语者 人文化成</div>
         <!-- <h2>{{ currentScene.name }}</h2> -->
         
         <!-- 校园元素装饰 -->
@@ -78,17 +78,16 @@
       </div>
 
       <!-- 提示词区域 -->
-      <!-- <div v-if="currentScene && currentScene.prompts && currentScene.prompts.length > 0" class="prompt-suggestions campus-card">
         <div class="prompt-header">
-          <div class="prompt-title">常见问题:</div>
-          <div class="school-term">北外二学期</div>
+          <div class="prompt-title">{{ currentScene.name }}</div>
+          <!-- <div class="school-term">北外二学期</div> -->
         </div> 
-            </div> --> 
-        <div class="prompt-chips">
+
+        <!-- <div class="prompt-chips">
           <span v-for="(prompt, i) in currentScene.prompts" :key="i" class="prompt-chip" @click="usePrompt(prompt)">
             {{ prompt }}
           </span>
-        </div>
+        </div> -->
      <!-- 校园共建表单 -->
       <CampusContribution 
         v-if="isContributionFormVisible" 
@@ -8973,7 +8972,7 @@ export default {
   font-weight: bold;
   text-align: center;  line-height: 1.5;
   padding: 12px 20px; /* 减少上下内边距 */
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.4);
   border-radius: 10px;
   z-index: 2;
 }
