@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 fetchStudentQuestions 功能</title>
+    <!-- 使用本地文件，避免网络问题 -->
+    <script src="./axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>测试 fetchStudentQuestions 功能</h1>
+    <button id="testButton">测试 API 调用</button>
+    <div class="results">
+        <h2>返回结果:</h2>
+        <pre id="output">等待测试...</pre>
+    </div>
+    <script>
+        // 确保页面加载完成后再添加事件监听器
+        window.onload = function () {
+            // 检查axios是否正确加载
+            if (typeof axios === 'undefined') {
+                document.getElementById('output').textContent = "错误: Axios库未能正确加载，请检查网络连接或尝试刷新页面";
+                console.error("Axios库未能正确加载");
+                return;
+            }
+
+            document.getElementById('testButton').addEventListener('click', async () => {
+                const outputEl = document.getElementById('output');
+                outputEl.textContent = "正在发送请求...";
+
+                try {
+                    console.log("开始发送API请求...");
+                    const response = await axios.get('http://10.10.15.210:5001/api/questions', {
+                        timeout: 8000,
+                        headers: {
+                            'Access-Control-Allow-Origin': '*',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Cache-Control': 'no-cache'
+                        },
+                        withCredentials: false,
+                        crossDomain: true,
+                    });
+
+                    outputEl.textContent = "API 响应成功:\n" + JSON.stringify(response.data, null, 2);
+
+                    if (response.data && response.data.questions && Array.isArray(response.data.questions)) {
+                        const processedData = response.data.questions.map((item, index) => {
+                            let decodedContent = '';
+                            try {
+                                if (item.key) {
+                                    try {
+                                        // 方法1: 使用TextDecoder进行解码
+                                        const base64 = atob(item.key);
+                                        const bytes = new Uint8Array(base64.length);
+                                        for (let i = 0; i < base64.length; i++) {
+                                            bytes[i] = base64.charCodeAt(i);
+                                        }
+                                        decodedContent = new TextDecoder('utf-8').decode(bytes);
+                                    } catch (innerError) {
+                                        console.warn('TextDecoder解码失败，尝试备用方法:', innerError);
+
+                                        // 方法2: 使用传统的base64解码方法
+                                        decodedContent = decodeURIComponent(escape(window.atob(item.key)));
+                                    }
+                                } else {
+                                    decodedContent = '内容不可用';
+                                }
+                            } catch (e) {
+                                console.error('Base64解码失败:', e);
+                                decodedContent = '解码失败的内容';
+                            }
+
+                            return {
+                                id: item.id || index + 1,
+                                studentId: item.upload_userid || `202501${(index + 1).toString().padStart(2, '0')}`,
+                                content: decodedContent,
+                                createdAt: new Date(),
+                                answered: item.mode === 2
+                            };
+                        });
+
+                        outputEl.textContent += "\n\n解码后的数据:\n" + JSON.stringify(processedData, null, 2);
+                    }
+                } catch (error) {
+                    outputEl.textContent = `请求失败: ${error.message || '未知错误'}`;
+                    console.error('API调用失败:', error);
+                }
+            });
+        }; // Close the window.onload function
+    </script>
+</body>
+
+</html>

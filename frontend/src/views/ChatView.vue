@@ -27,7 +27,7 @@
           <div class="scene-icon">
             <img :src="scene.iconUrl" :alt="scene.name" />
           </div>
-          <div class="scene-name">{{ scene.name }}</div>
+          <!-- <div class="scene-name">{{ scene.name }}</div> -->
         </div>
       </div>
         <!-- 校园共建按钮 -->
@@ -36,14 +36,15 @@
           :class="['campus-contribution-btn', {'active': isContributionFormVisible}]" 
           @click="showContributionForm"
         >
-          <i class="icon-build"></i>校园共建
+          <!-- <i class="icon-build"></i> -->
+          <img src="/logo_construction.png" alt="校园共建" class="contribution-logo">
         </button>
       </div>
       
       <!-- 用户信息与退出 -->
       <div class="user-section">
         <div class="user-info">
-          <div class="user-avatar">{{ "用户" }}</div>
+          <!-- <div class="user-avatar">{{ "用户" }}</div> -->
           <div class="user-detail">
             <div class="user-name">{{ getUserId() }}</div>
             <!-- <div class="user-role">{{ getUserRole() === 'admin' ? '管理员' : '学生' }}</div> -->
@@ -56,12 +57,10 @@
     </div>
 
     <!-- 右侧内容区 -->
-    <div class="content">
-      <!-- 场景图片展示 -->
+    <div class="content">      <!-- 场景图片展示 -->
       <div v-if="currentScene" class="scene-banner">
-        <img :src="currentScene.bannerUrl" :alt="currentScene.name" />
-        <div class="banner-overlay"></div>
-        <h2>{{ currentScene.name }}</h2>
+        <div class="banner-text">世界语者 人文化成</div>
+        <!-- <h2>{{ currentScene.name }}</h2> -->
         
         <!-- 校园元素装饰 -->
         <!-- <div class="campus-decoration">
@@ -85,12 +84,13 @@
           <div class="prompt-title">常见问题:</div>
           <div class="school-term">北外二学期</div>
         </div> 
+            </div> --> 
         <div class="prompt-chips">
           <span v-for="(prompt, i) in currentScene.prompts" :key="i" class="prompt-chip" @click="usePrompt(prompt)">
             {{ prompt }}
           </span>
         </div>
-      </div> -->      <!-- 校园共建表单 -->
+     <!-- 校园共建表单 -->
       <CampusContribution 
         v-if="isContributionFormVisible" 
         @contribution-submitted="toggleContributionForm" 
@@ -122,15 +122,15 @@
         
         <div v-for="(message, index) in currentMessages" :key="index"
           :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
-          <div class="message-avatar">
+          <!-- <div class="message-avatar">
             <div v-if="message.sender === 'user'" class="user-avatar">{{ getUserInitial() }}</div>
             <div v-else class="ai-avatar"><img src="/robot.png" alt="校徽"></div>
-          </div>
+          </div> -->
           <div class="message-content">
-            <div class="message-header">
+            <!-- <div class="message-header">
               <div class="message-sender">{{ message.sender === 'user' ? '你' : 'iBISU' }}</div>
               <div class="message-time">{{ formatTime(message.timestamp || Date.now()) }}</div>
-            </div>
+            </div> -->
             <div class="message-body">
               <span v-if="message.sender === 'user'">{{ message.content }}</span>
               <TypewriterText 
@@ -345,23 +345,23 @@ export default {
               id: 'general',
               name: 'AI辅导员',
               iconUrl: '/icons/general.png',
-              bannerUrl: '/banners/general.jpg',
-              prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业设置有哪些?', '如何申请北京第二外国语学院奖学金?']
+              bannerUrl: '/banners/banner.png',
+              prompts: ['怎么给一卡通充值?']
             },
             {
               id: 'ideological',
               name: '智慧思政',
               iconUrl: '/icons/ideological.png',
-              bannerUrl: '/banners/ideological.jpg',
-              prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
+              bannerUrl: '/banners/banner.png',
+              prompts: ['北京第二外国语学院的校训?']
             },
-            {
-              id: 'digital-human',
-              name: '8001-接诉即办',
-              iconUrl: '/icons/digital-human.png',
-              bannerUrl: '/banners/digital-human.jpg',
-              prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '如何充值网费?']
-            }
+            // {
+            //   id: 'digital-human',
+            //   name: '8001-接诉即办',
+            //   iconUrl: '/icons/digital-human.png',
+            //   bannerUrl: '/banners/digital-human.jpg',
+            //   prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '如何充值网费?']
+            // }
           ];
         }
 
@@ -847,16 +847,8 @@ export default {
     const closeSuggestions = () => {
       showSuggestions.value = false;
     };
-
-    // 响应式变量：建议相关
-    const localSuggestions = ref([
-    { text: '北京第二外国语学院简介', type: 'local' },
-    { text: '北京第二外国语学院历史', type: 'local' },
-    { text: '北京第二外国语学院专业设置', type: 'local' },
-    { text: '北京第二外国语学院如何申请奖学金', type: 'local' },
-    { text: '北京第二外国语学院校园卡充值方法', type: 'local' },
-    { text: '北京第二外国语学院图书馆开放时间', type: 'local' },
-    { text: '密集书库的图书可以外借吗', type: 'local' },
+    const suggestion = [
+    { text: '问题密集书库的图书可以外借吗', type: 'local' },
     { text: '期刊能外借吗', type: 'local' },
     { text: '我校图书馆有馆际互借服务吗', type: 'local' },
     { text: '图书馆可以自助借还吗？', type: 'local' },
@@ -8474,11 +8466,38 @@ export default {
     { text: '外文分管136开放时间', type: 'local' },
     { text: '六号楼底下自习室开放时间', type: 'local' },
     { text: '学校浴室开放时间', type: 'local' },
-    { text: '浴室几点关门', type: 'local' }
+    { text: '浴室几点关门', type: 'local' },
 
+   ]
 
-    ]);
+    // 响应式变量：建议相关
+    // 创建建议列表
+    const localSuggestions = ref(suggestion);
     const suggestions = ref([]);
+    
+    // 函数：从API获取建议，如果失败则使用本地建议
+    const fetchSuggestions = async () => {
+      try {
+      const response = await fetch('http://10.10.15.210:5001/api/questions');
+      if (response.ok) {
+        const data = await response.json();
+        suggestions.value = data;
+        console.log('Successfully fetched suggestions from API');
+      } else {
+        console.warn('Failed to fetch suggestions from API, using local suggestions');
+        suggestions.value = localSuggestions.value;
+      }
+      } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      suggestions.value = localSuggestions.value;
+      console.log('Using local suggestions due to API error');
+      }
+    };
+    
+    // 初始化时获取建议
+    onMounted(() => {
+      fetchSuggestions();
+    });
     const showSuggestions = ref(false);
     const selectedSuggestionIndex = ref(0);
     const apiRequestTimeout = ref(null);
@@ -8579,7 +8598,7 @@ export default {
 
 /* 左侧边栏样式 - 校园风格 */
 .sidebar {
-  width: 180px;
+  width: 120px;
   background-color: var(--campus-primary-dark);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -8662,42 +8681,84 @@ export default {
 
 /* 校园共建按钮样式 */
 .campus-contribution-section {
-  margin-bottom: 40px;
+  margin-bottom: 20px;
+  padding: 0 10px;
 }
 
 .campus-contribution-btn {
   width: 100%;
-  padding: 12px;
-  border-radius: var(--campus-radius);
+  padding: 12px 15px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
   border: none;
-  transition: var(--campus-transition);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .campus-contribution-btn:hover {
   background-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .campus-contribution-btn.active {
-  background-color: var(--campus-accent);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  background-color: var(--campus-accent, #4e8cff);
+  box-shadow: 0 0 12px rgba(78, 140, 255, 0.4);
 }
 
 .campus-contribution-btn .icon-build {
-  margin-right: 8px;
-  width: 40px;
-  height: 40px;
+  margin-right: 5px;
+  width: 80px;
+  height: 80px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
   display: inline-block;
+  flex-shrink: 0;
+}
+
+.campus-contribution-btn .contribution-text {
+  font-size: 14px;
+  font-weight: 500;
+  flex-grow: 1;
+  text-align: center;
+  margin: 0 5px;
+}
+
+.campus-contribution-btn .contribution-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 2px;
+}
+
+@media (max-width: 768px) {
+  .campus-contribution-section {
+    margin-bottom: 15px;
+  }
+  
+  .campus-contribution-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .campus-contribution-btn .icon-build {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .campus-contribution-btn .contribution-logo {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .scene-list-header {
@@ -8724,7 +8785,7 @@ export default {
   flex: 1;
   overflow-y: auto;
   margin-top: 10px;
-  padding-right: 5px;
+  /* padding-right: 5px; */
   margin-bottom: 20px;
 }
 
@@ -8763,8 +8824,8 @@ export default {
 }
 
 .scene-icon {
-  width: 20px;
-  height: 20px;
+  width: 60px;
+  height: 60px;
   min-width: 20px;
   margin-right: 12px;
   border-radius: 50%;
@@ -8873,14 +8934,20 @@ export default {
 
 /* 场景横幅 - 校园风格 */
 .scene-banner {
-  height: 300px;
+  height: 80px; /* 从150px降低到100px */
   position: relative;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
   border-radius: var(--campus-radius-lg);
   overflow: hidden;
   box-shadow: var(--campus-shadow-md);
   transition: var(--campus-transition);
   border: 1px solid var(--campus-neutral-300);
+  background-image: url('/banners/banner.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .scene-banner:hover {
@@ -8899,15 +8966,17 @@ export default {
   z-index: 1;
 }
 
-.scene-banner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 5s ease;
-}
-
-.scene-banner:hover img {
-  transform: scale(1.05);
+.scene-banner .banner-text {
+  color: #000;
+  font-family: 'KaiTi', '楷体', STKaiti, serif;
+  font-size: 2rem; /* 从3rem缩小到2rem */
+  letter-spacing: 5px;
+  font-weight: bold;
+  text-align: center;  line-height: 1.5;
+  padding: 12px 20px; /* 减少上下内边距 */
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  z-index: 2;
 }
 
 .scene-banner h2 {

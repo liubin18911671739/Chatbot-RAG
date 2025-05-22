@@ -90,6 +90,11 @@ export default {
           role: 'admin' // 管理员角色
         },
         {
+          username: 'dhy',
+          password: 'Dhy@123',
+          role: 'admin' // 管理员角色
+        },
+        {
           username: 'user',
           password: 'User@123',
           role: 'user' // 普通用户角色

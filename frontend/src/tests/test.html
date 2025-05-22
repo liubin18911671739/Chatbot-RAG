@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Base64 解码测试</title>
+</head>
+<body>
+    <h1>Base64 解码测试</h1>
+    <div id="result"></div>
+    
+    <script type="module">
+        import { testBase64Decode } from './base64decode.js';
+        
+        const result = testBase64Decode();
+        document.getElementById('result').textContent = '解码结果: ' + result;
+    </script>
+</body>
+</html>

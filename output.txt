@@ -1,4 +1,4 @@
-    { text: '密集书库的图书可以外借吗', type: 'local' },
+    { text: '问题密集书库的图书可以外借吗', type: 'local' },
     { text: '期刊能外借吗', type: 'local' },
     { text: '我校图书馆有馆际互借服务吗', type: 'local' },
     { text: '图书馆可以自助借还吗？', type: 'local' },

@@ -47,14 +47,14 @@ describe('Chat Service API Testing', () => {
               "status": "developing"
           }
         },
-        {
-          "8001": {
-              "description": "8001服务平台",
-              "icon": "🏢",
-              "id": "db_wangshangbanshiting",
-              "status": "developing"
-          }
-        },
+        // {
+        //   "8001": {
+        //       "description": "8001服务平台",
+        //       "icon": "🏢",
+        //       "id": "db_wangshangbanshiting",
+        //       "status": "developing"
+        //   }
+        // },
         {
           "AI助手": {
               "description": "棠心问答通用助手",

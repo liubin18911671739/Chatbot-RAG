@@ -11,22 +11,22 @@
     <div class="admin-container">
       <aside class="admin-sidebar">
         <nav class="nav-menu">
-          <div class="nav-item" :class="{ active: activeTab === 'documents' }" @click="activeTab = 'documents'">
+          <!-- <div class="nav-item" :class="{ active: activeTab === 'documents' }" @click="activeTab = 'documents'">
             <i class="icon-document"></i>
             <span>文档管理</span>
-          </div>
+          </div> -->
           <div class="nav-item" :class="{ active: activeTab === 'students' }" @click="activeTab = 'students'">
             <i class="icon-student"></i>
             <span>学生常见问题</span>
           </div>
-          <div class="nav-item" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
+          <!-- <div class="nav-item" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
             <i class="icon-users"></i>
             <span>用户管理</span>
-          </div>
-          <div class="nav-item" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">
+          </div> -->
+          <!-- <div class="nav-item" :class="{ active: activeTab === 'settings' }" @click="activeTab = 'settings'">
             <i class="icon-settings"></i>
             <span>系统设置</span>
-          </div>
+          </div> -->
         </nav>
       </aside>
 
@@ -350,7 +350,7 @@ export default {
     const username = ref('');
     
     // 活动标签页
-    const activeTab = ref('documents');
+    const activeTab = ref('students');
     
     // 文档列表
     const documents = ref([]);
