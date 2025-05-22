@@ -31,15 +31,14 @@
         </div>
       </div>
         <!-- 校园共建按钮 -->
-      <div class="campus-contribution-section">
+      <!-- <div class="campus-contribution-section">
         <button 
           :class="['campus-contribution-btn', {'active': isContributionFormVisible}]" 
           @click="showContributionForm"
         >
-          <!-- <i class="icon-build"></i> -->
           <img src="/logo_construction.png" alt="校园共建" class="contribution-logo">
         </button>
-      </div>
+      </div> -->
       
       <!-- 用户信息与退出 -->
       <div class="user-section">
@@ -355,13 +354,13 @@ export default {
               bannerUrl: '/banners/banner.png',
               prompts: ['北京第二外国语学院的校训?']
             },
-            // {
-            //   id: 'digital-human',
-            //   name: '8001-接诉即办',
-            //   iconUrl: '/icons/digital-human.png',
-            //   bannerUrl: '/banners/digital-human.jpg',
-            //   prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '如何充值网费?']
-            // }
+            {
+              id: 'construction',
+              name: '校园共建',
+              iconUrl: '/icons/logo_construction.png',
+              bannerUrl: '/banners/digital-human.jpg',
+              prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '北京第二外国语学院如何充值网费?']
+            }
           ];
         }
 
@@ -395,9 +394,9 @@ export default {
             prompts: ['如何理解中国特色社会主义?', '什么是民族复兴的中国梦?', '如何培养爱国情怀?']
           },
             {
-              id: 'digital-human',
-              name: '8001',
-              iconUrl: '/icons/digital-human.png',
+              id: 'construction',
+              name: '校园共建',
+              iconUrl: '/icons/logo_construction.png',
               bannerUrl: '/banners/digital-human.jpg',
               prompts: ['北京第二外国语学院如何报修网络?', '北京第二外国语学院如何充值饭卡?', '北京第二外国语学院如何充值网费?']
             }

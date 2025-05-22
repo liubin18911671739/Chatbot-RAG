@@ -51,15 +51,17 @@
         </button>
       </div>
     </form>
-    
-    <!-- 成功提示 -->
+      <!-- 成功提示 -->
     <div v-if="showSuccess" class="success-message">
       <div class="success-icon">✓</div>
       <div class="success-text">
         <h3>提交成功！</h3>
         <p>感谢您的贡献，我们将尽快审核。</p>
       </div>
-      <button @click="resetForm" class="campus-btn">继续提交</button>
+      <div class="success-actions">
+        <button @click="resetForm" class="campus-btn continue-btn">继续提交</button>
+        <button @click="closeForm" class="campus-btn close-btn">返回聊天</button>
+      </div>
     </div>
   </div>
 </template>
@@ -101,12 +103,11 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         console.log('提交的贡献:', this.formData);
-        this.showSuccess = true;
-        
-        // 两秒后自动关闭并通知父组件
+        this.showSuccess = true;        
+        // 两秒后自动显示成功信息
         setTimeout(() => {
-          this.$emit('contribution-submitted');
-        }, 2000);
+          this.showSuccess = true;
+        }, 1000);
       } catch (error) {
         console.error('提交贡献时出错:', error);
         alert('提交失败，请稍后再试');
@@ -121,6 +122,9 @@ export default {
         category: ''
       };
       this.showSuccess = false;
+    },
+    closeForm() {
+      this.$emit('contribution-submitted');
     }
   }
 };
@@ -267,14 +271,31 @@ textarea.campus-input {
   color: #495057;
 }
 
-.success-message .campus-btn {
+.success-actions {
+  display: flex;
+  width: 100%;
   margin-top: 16px;
+  justify-content: center;
+  gap: 12px;
+}
+
+.success-message .campus-btn {
   background-color: #28a745;
   color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.success-message .close-btn {
+  background-color: #6c757d;
+}
+
+.success-message .campus-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
