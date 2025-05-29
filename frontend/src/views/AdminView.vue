@@ -79,16 +79,14 @@
           <div class="panel-header">
             <h2>学生问题管理</h2>
             <div class="panel-actions">
-              <button class="download-btn" @click="downloadStudentQuestions">
+              <button class="download-btn" @click="downloadQuestions">
                 <i class="icon-download"></i> 下载问题
               </button>
               <button class="upload-btn" @click="openFeedbackUploadModal">
                 <i class="icon-upload"></i> 上传反馈
               </button>
             </div>
-          </div>
-
-          <!-- 学生问题列表 -->
+          </div>          <!-- 学生问题列表 -->
           <div class="student-questions-list">
             <table v-if="studentQuestions.length > 0">
               <thead>
@@ -96,17 +94,24 @@
                   <th>学生ID</th>
                   <th>问题内容</th>
                   <th>提问时间</th>
+                  <th>审核状态</th>
                   <th>是否已回答</th>
                   <th>操作</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="question in studentQuestions" :key="question.id">
+                <tr v-for="question in studentQuestions" :key="question.id" 
+                    :class="{ 'unreviewed-row': !question.isReviewed }">
                   <td>{{ question.studentId }}</td>
                   <td class="question-content">
                     <i class="icon-question"></i>  {{ question.content }}
                   </td>
                   <td>{{ formatDate(question.createdAt) }}</td>
+                  <td>
+                    <span :class="['status-badge', question.isReviewed ? 'reviewed' : 'unreviewed']">
+                      {{ question.isReviewed ? '已审核' : '未审核' }}
+                    </span>
+                  </td>
                   <td>
                     <span :class="['status-badge', question.answered ? 'answered' : 'unanswered']">
                       {{ question.answered ? '已回答' : '未回答' }}
@@ -115,6 +120,7 @@
                   <td class="actions">
                     <button class="action-btn view" @click="viewQuestion(question.id)">查看</button>
                     <button class="action-btn answer" @click="answerQuestion(question.id)">回答</button>
+                    <button v-if="!question.isReviewed" class="action-btn approve" @click="approveQuestionAction(question.id)">审核</button>
                   </td>
                 </tr>
               </tbody>
@@ -145,9 +151,8 @@
                   <td>{{ user.username }}</td>
                   <td>{{ user.role === 'admin' ? '管理员' : '普通用户' }}</td>
                   <td>{{ formatDate(user.lastLogin) }}</td>
-                  <td class="actions">
-                    <button class="action-btn" :class="user.status === 'active' ? 'block' : 'unblock'"
-                      @click="toggleUserStatus(user.id)">
+                  <td class="actions">                    <button class="action-btn" :class="user.status === 'active' ? 'block' : 'unblock'"
+                      @click="toggleUserStatusAction(user.id)">
                       {{ user.status === 'active' ? '禁用' : '启用' }}
                     </button>
                   </td>
@@ -175,7 +180,7 @@
               <textarea id="welcomeMessage" v-model="settings.welcomeMessage" rows="3"></textarea>
             </div>
             <div class="form-group">
-              <button class="save-btn" @click="saveSettings">保存设置</button>
+              <button class="save-btn" @click="saveSystemSettings">保存设置</button>
             </div>
           </div>
         </div>
@@ -276,7 +281,7 @@
         </div>
         <div class="modal-footer">
           <button class="cancel-btn" @click="showDeleteConfirm = false">取消</button>
-          <button class="delete-btn" @click="deleteDocument">删除</button>
+          <button class="delete-btn" @click="deleteDoc">删除</button>
         </div>
       </div>
     </div>
@@ -327,7 +332,7 @@
         </div>
         <div class="modal-footer">
           <button class="cancel-btn" @click="showFeedbackUploadModal = false" :disabled="feedbackUploading">取消</button>
-          <button class="upload-btn" @click="uploadFeedback" :disabled="!feedbackFile || feedbackUploading">
+          <button class="upload-btn" @click="uploadFeedbackFile" :disabled="!feedbackFile || feedbackUploading">
             {{ feedbackUploading ? '上传中...' : '上传' }}
           </button>
         </div>
@@ -340,6 +345,24 @@
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import {
+  fetchDocuments,
+  fetchUsers,
+  fetchSettings,
+  saveSettings,
+  fetchStudentQuestions,
+  approveQuestion,
+  uploadDocuments,
+  deleteDocument as deleteDocumentAPI,
+  uploadFeedback,
+  downloadStudentQuestions as downloadStudentQuestionsAPI,
+  toggleUserStatus as toggleUserStatusAPI,
+  decodeBase64,
+  getFileTypeName,
+  getAgentTypeName,
+  formatFileSize,
+  formatDate
+} from '@/services/admin';
 
 export default {
   name: 'AdminView',
@@ -394,17 +417,15 @@ export default {
     // 计算属性
     const isAdmin = computed(() => {
       return localStorage.getItem('userRole') === 'admin';
-    });
-
-    // 加载初始数据
+    });    // 加载初始数据
     onMounted(async () => {
       checkAdminAccess();
       loadUsername();
       await Promise.all([
-        fetchDocuments(),
-        fetchUsers(),
-        fetchSettings(),
-        fetchStudentQuestions()
+        loadDocuments(),
+        loadUsers(),
+        loadSettings(),
+        loadStudentQuestions()
       ]);
     });
 
@@ -418,341 +439,54 @@ export default {
     // 加载用户名
     const loadUsername = () => {
       username.value = localStorage.getItem('userId') || 'admin';
-    };
-
-    // 获取文档列表
-    const fetchDocuments = async () => {
+    };    // 获取文档列表
+    const loadDocuments = async () => {
       try {
-        // 模拟文档数据，包含文件名、类型、大小、上传时间、属于的Agent场景和基本操作
-        documents.value = [
-          {
-            id: 1, 
-            filename: '学校介绍.pdf', 
-            fileType: 'policy', 
-            type: 'pdf', 
-            size: 2548760, 
-            uploadDate: new Date(2025, 3, 15),
-            agentType: 'general'
-          },
-          {
-            id: 2, 
-            filename: '教师手册.docx', 
-            fileType: 'manual', 
-            type: 'docx', 
-            size: 1345600, 
-            uploadDate: new Date(2025, 3, 10),
-            agentType: 'general'
-          },
-          {
-            id: 3, 
-            filename: '学生信息.xlsx', 
-            fileType: 'regulation', 
-            type: 'xlsx', 
-            size: 872341, 
-            uploadDate: new Date(2025, 3, 5),
-            agentType: 'general'
-          },
-          {
-            id: 4, 
-            filename: '思政教育案例.pdf', 
-            fileType: 'policy', 
-            type: 'pdf', 
-            size: 1458720, 
-            uploadDate: new Date(2025, 3, 20),
-            agentType: 'ideological'
-          },
-          {
-            id: 5, 
-            filename: '阿拉伯语言文化.docx', 
-            fileType: 'manual', 
-            type: 'docx', 
-            size: 1756432, 
-            uploadDate: new Date(2025, 3, 22),
-            agentType: 'china-arab'
-          },
-          {
-            id: 6, 
-            filename: '东南亚地区研究.pdf', 
-            fileType: 'report', 
-            type: 'pdf', 
-            size: 3245678, 
-            uploadDate: new Date(2025, 3, 18),
-            agentType: 'regional'
-          },
-          {
-            id: 7, 
-            filename: '常见问题解答.txt', 
-            fileType: 'faq', 
-            type: 'txt', 
-            size: 546789, 
-            uploadDate: new Date(2025, 3, 25),
-            agentType: 'general'
-          },
-          {
-            id: 8, 
-            filename: '数字人文文献集.pdf', 
-            fileType: 'report', 
-            type: 'pdf', 
-            size: 4567890, 
-            uploadDate: new Date(2025, 3, 23),
-            agentType: 'digital-human'
-          }
-        ];
-        
-        // 实际API调用（取消注释使用）
-        /*
-        const response = await axios.get('/api/documents', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        documents.value = response.data;
-        */
+        documents.value = await fetchDocuments();
       } catch (error) {
         console.error('获取文档列表失败:', error);
       }
     };
 
     // 获取用户列表
-    const fetchUsers = async () => {
+    const loadUsers = async () => {
       try {
-        // 模拟用户数据
-        users.value = [
-          {
-            id: 1, 
-            username: 'admin', 
-            role: 'admin', 
-            status: 'active', 
-            lastLogin: new Date(2024, 3, 17)
-          },
-          {
-            id: 2, 
-            username: 'user', 
-            role: 'user', 
-            status: 'active', 
-            lastLogin: new Date(2024, 3, 16)
-          }
-        ];
-        
-        // 实际API调用（取消注释使用）
-        /*
-        const response = await axios.get('/api/users', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        users.value = response.data;
-        */
+        users.value = await fetchUsers();
       } catch (error) {
         console.error('获取用户列表失败:', error);
       }
     };
 
     // 获取系统设置
-    const fetchSettings = async () => {
+    const loadSettings = async () => {
       try {
-        // 实际API调用（取消注释使用）
-        /*
-        const response = await axios.get('/api/settings', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        settings.value = response.data;
-        */
+        const settingsData = await fetchSettings();
+        settings.value = settingsData;
       } catch (error) {
         console.error('获取系统设置失败:', error);
       }
     };
 
-    // 保存系统设置
-    const saveSettings = async () => {
+    // 获取学生问题
+    const loadStudentQuestions = async () => {
       try {
-        // 实际API调用（取消注释使用）
-        /*
-        await axios.post('/api/settings', settings.value, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        */
+        studentQuestions.value = await fetchStudentQuestions();
+      } catch (error) {
+        console.error('获取学生问题失败:', error);
+      }
+    };    // 保存系统设置
+    const saveSystemSettings = async () => {
+      try {
+        await saveSettings(settings.value);
         alert('设置保存成功');
       } catch (error) {
         console.error('保存设置失败:', error);
         alert('保存设置失败');
       }
-    };
-
-    // 获取学生问题
-    const fetchStudentQuestions = async () => {
+    };    // 下载学生常见问题
+    const downloadQuestions = async () => {
       try {
-        // 移除条件判断，确保始终加载模拟数据
-        // 模拟学生问题数据
-        const questionsData = [
-          {
-            id: 1,
-            studentId: '20250101',
-            content: '如何申请奖学金？需要准备哪些材料？',
-            createdAt: new Date(2025, 3, 20, 10, 15),
-            answered: true
-          },
-          {
-            id: 2,
-            studentId: '20250102',
-            content: '学校图书馆开放时间是什么时候？寒暑假期间是否开放？',
-            createdAt: new Date(2025, 3, 21, 14, 30),
-            answered: false
-          },
-          {
-            id: 3,
-            studentId: '20250103',
-            content: '如何预约心理咨询？是否需要提前多久预约？',
-            createdAt: new Date(2025, 3, 22, 9, 45),
-            answered: false
-          },
-          {
-            id: 4,
-            studentId: '20250104',
-            content: '校区间班车时刻表在哪里查询？周末是否有班车？',
-            createdAt: new Date(2025, 3, 23, 16, 20),
-            answered: true
-          },
-          {
-            id: 5,
-            studentId: '20250105',
-            content: '学校食堂的营业时间是什么？有哪些特色菜品推荐？',
-            createdAt: new Date(2025, 3, 24, 11, 50),
-            answered: false
-          },
-          {
-            id: 6,
-            studentId: '20250106',
-            content: '如何申请校内住宿调换？有什么条件限制吗？',
-            createdAt: new Date(2025, 3, 24, 13, 25),
-            answered: true
-          },
-          {
-            id: 7,
-            studentId: '20250107',
-            content: '学校有哪些社团组织？如何加入？',
-            createdAt: new Date(2025, 3, 24, 15, 40),
-            answered: false
-          },
-          {
-            id: 8,
-            studentId: '20250108',
-            content: '考研自习室的开放时间和预约方式是什么？',
-            createdAt: new Date(2025, 3, 24, 17, 10),
-            answered: true
-          },
-          {
-            id: 9,
-            studentId: '20250109',
-            content: '如何办理学生证补办手续？需要多长时间？',
-            createdAt: new Date(2025, 3, 25, 8, 30),
-            answered: false
-          },
-          {
-            id: 10,
-            studentId: '20250110',
-            content: '学校附近有哪些实习机会？如何申请校企合作项目？',
-            createdAt: new Date(2025, 3, 25, 10, 45),
-            answered: false
-          },
-          {
-            id: 11,
-            studentId: '20250111',
-            content: '国际交换生项目有哪些？申请条件是什么？',
-            createdAt: new Date(2025, 3, 25, 13, 20),
-            answered: true
-          },
-          {
-            id: 12,
-            studentId: '20250112',
-            content: '如何申请学分减免？特殊情况下可以延期毕业吗？',
-            createdAt: new Date(2025, 3, 25, 16, 15),
-            answered: false
-          },
-          {
-            id: 13,
-            studentId: '20250113',
-            content: '学校网络如何连接？忘记密码怎么办？',
-            createdAt: new Date(2025, 3, 26, 9, 5),
-            answered: true
-          },
-          {
-            id: 14,
-            studentId: '20250114',
-            content: '校医院的就诊流程是怎样的？需要提前预约吗？',
-            createdAt: new Date(2025, 3, 26, 11, 25),
-            answered: false
-          },
-          {
-            id: 15,
-            studentId: '20250115',
-            content: '学校的体育场地如何预约使用？有哪些免费开放的场地？',
-            createdAt: new Date(2025, 3, 26, 14, 40),
-            answered: true
-          }
-        ];
-
-        // 确保过滤掉无效数据，并保证每个问题对象都有必要的属性
-        studentQuestions.value = questionsData.filter(q => 
-          q && typeof q === 'object' && 
-          q.id && 
-          q.content && 
-          q.studentId
-        );
-
-        // 实际API调用（取消注释使用）
-        /*
-        try {
-          const response = await axios.get('/api/questions', {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-          });
-          // 过滤掉后端返回的可能的无效数据
-          studentQuestions.value = (response.data || []).filter(q => 
-            q && typeof q === 'object' && 
-            q.id && 
-            q.content && 
-            q.studentId
-          );
-        } catch (apiError) {
-          console.error('API调用失败:', apiError);
-          studentQuestions.value = [];
-        }
-        */
-      } catch (error) {
-        console.error('获取学生问题失败:', error);
-        studentQuestions.value = []; // 错误时设置为空数组
-      }
-    };
-
-    // 下载学生常见问题
-    const downloadStudentQuestions = async () => {
-      try {
-        // 实际API调用（取消注释使用）
-        /*
-        const response = await axios.get('/api/download_questions', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          },
-          responseType: 'blob'
-        });
-        
-        // 创建下载链接
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `学生常见问题_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        */
-
-        // 模拟下载成功
+        await downloadStudentQuestionsAPI();
         alert('学生常见问题已下载成功');
       } catch (error) {
         console.error('下载学生问题失败:', error);
@@ -801,10 +535,8 @@ export default {
       } else {
         feedbackUploadError.value = '请上传CSV格式的文件';
       }
-    };
-
-    // 上传反馈文件
-    const uploadFeedback = async () => {
+    };    // 上传反馈文件
+    const uploadFeedbackFile = async () => {
       if (!feedbackFile.value) {
         feedbackUploadError.value = '请选择要上传的反馈文件';
         return;
@@ -815,45 +547,15 @@ export default {
       feedbackUploadError.value = '';
 
       try {
-        // 创建FormData对象
-        const formData = new FormData();
-        formData.append('feedback', feedbackFile.value);
-
-        // 实际API调用（取消注释使用）
-        /*
-        const response = await axios.post('/api/upload_feedback', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          onUploadProgress: (progressEvent) => {
-            feedbackUploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          }
+        await uploadFeedback(feedbackFile.value, (progress) => {
+          feedbackUploadProgress.value = progress;
         });
 
-        if (response.status === 200) {
-          alert('反馈上传成功');
-          showFeedbackUploadModal.value = false;
-          fetchStudentQuestions(); // 刷新问题列表
-        } else {
-          feedbackUploadError.value = '上传失败: ' + response.data.message;
-        }
-        */
-
-        // 模拟上传进度
-        const uploadInterval = setInterval(() => {
-          feedbackUploadProgress.value += 10;
-          if (feedbackUploadProgress.value >= 100) {
-            clearInterval(uploadInterval);
-            setTimeout(() => {
-              alert('反馈上传成功');
-              showFeedbackUploadModal.value = false;
-              // 更新已回答状态
-              studentQuestions.value.forEach(q => q.answered = true);
-              feedbackUploading.value = false;
-            }, 500);
-          }
-        }, 300);
+        alert('反馈上传成功');
+        showFeedbackUploadModal.value = false;
+        // 更新已回答状态
+        studentQuestions.value.forEach(q => q.answered = true);
+        feedbackUploading.value = false;
       } catch (error) {
         console.error('上传反馈失败:', error);
         feedbackUploadError.value = '上传过程中发生错误，请重试';
@@ -869,52 +571,13 @@ export default {
       selectedFiles.value = [];
       uploadOptions.value = { fileType: '', agentType: '' };
       uploadError.value = '';
-    };
+    };    // 获取文件类型名称 - 从admin.js导入，这里不需要重复定义
 
-    // 获取文件类型名称
-    const getFileTypeName = (fileType) => {
-      const typeMap = {
-        'policy': '政策文件',
-        'regulation': '规章制度',
-        'manual': '操作手册',
-        'faq': '常见问题',
-        'report': '报告文档',
-        'other': '其他'
-      };
-      return typeMap[fileType] || '未知类型';
-    };
+    // 获取Agent类型名称 - 从admin.js导入，这里不需要重复定义
 
-    // 获取Agent类型名称
-    const getAgentTypeName = (agentType) => {
-      const typeMap = {
-        'general': '通用助手',
-        'ideological': '思政助手',
-        'regional': '区域研究助手',
-        'china-arab': '中阿助手',
-        'digital-human': '数字人文助手'
-      };
-      return typeMap[agentType] || '未知助手';
-    };
+    // 格式化文件大小 - 从admin.js导入，这里不需要重复定义
 
-    // 格式化文件大小
-    const formatFileSize = (size) => {
-      if (size < 1024) {
-        return size + ' B';
-      } else if (size < 1024 * 1024) {
-        return (size / 1024).toFixed(2) + ' KB';
-      } else if (size < 1024 * 1024 * 1024) {
-        return (size / (1024 * 1024)).toFixed(2) + ' MB';
-      } else {
-        return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-      }
-    };
-
-    // 格式化日期
-    const formatDate = (date) => {
-      if (!date) return '';
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    };
+    // 格式化日期 - 从admin.js导入，这里不需要重复定义
 
     // 查看文档
     const viewDocument = (id) => {
@@ -932,19 +595,10 @@ export default {
     const confirmDelete = (id) => {
       docToDeleteId.value = id;
       showDeleteConfirm.value = true;
-    };
-
-    // 删除文档
-    const deleteDocument = async () => {
+    };    // 删除文档
+    const deleteDoc = async () => {
       try {
-        // 实际API调用（取消注释使用）
-        /*
-        await axios.delete(`/api/documents/${docToDeleteId.value}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        */
+        await deleteDocumentAPI(docToDeleteId.value);
         // 从本地数组中移除已删除的文档
         documents.value = documents.value.filter(doc => doc.id !== docToDeleteId.value);
         showDeleteConfirm.value = false;
@@ -958,9 +612,7 @@ export default {
     // 移除选中的文件
     const removeFile = (index) => {
       selectedFiles.value.splice(index, 1);
-    };
-
-    // 上传文件
+    };    // 上传文件
     const uploadFiles = async () => {
       if (!selectedFiles.value.length) {
         uploadError.value = '请选择要上传的文件';
@@ -982,58 +634,15 @@ export default {
       uploadError.value = '';
 
       try {
-        // 创建FormData对象
-        const formData = new FormData();
-        selectedFiles.value.forEach(file => {
-          formData.append('files', file);
-        });
-        formData.append('fileType', uploadOptions.value.fileType);
-        formData.append('agentType', uploadOptions.value.agentType);
-
-        // 实际API调用（取消注释使用）
-        /*
-        const response = await axios.post('/api/documents/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          onUploadProgress: (progressEvent) => {
-            uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          }
+        await uploadDocuments(selectedFiles.value, uploadOptions.value, (progress) => {
+          uploadProgress.value = progress;
         });
 
-        if (response.status === 200) {
-          alert('文件上传成功');
-          showUploadModal.value = false;
-          fetchDocuments(); // 刷新文档列表
-        } else {
-          uploadError.value = '上传失败: ' + response.data.message;
-        }
-        */
-
-        // 模拟上传进度
-        const uploadInterval = setInterval(() => {
-          uploadProgress.value += 5;
-          if (uploadProgress.value >= 100) {
-            clearInterval(uploadInterval);
-            setTimeout(() => {
-              alert('文件上传成功');
-              showUploadModal.value = false;
-              // 添加上传的文件到文档列表（实际应用中应该从服务器获取最新列表）
-              const newDocs = selectedFiles.value.map((file, index) => ({
-                id: documents.value.length + index + 1,
-                filename: file.name,
-                fileType: uploadOptions.value.fileType,
-                type: file.name.split('.').pop(),
-                size: file.size,
-                uploadDate: new Date(),
-                agentType: uploadOptions.value.agentType
-              }));
-              documents.value = [...documents.value, ...newDocs];
-              uploading.value = false;
-            }, 500);
-          }
-        }, 200);
+        alert('文件上传成功');
+        showUploadModal.value = false;
+        // 重新加载文档列表
+        await loadDocuments();
+        uploading.value = false;
       } catch (error) {
         console.error('上传文件失败:', error);
         uploadError.value = '上传过程中发生错误，请重试';
@@ -1085,18 +694,33 @@ export default {
         alert(`查看问题ID: ${id}`);
         // 实际项目中可能会打开问题详情页
       }
-    };
-
-    // 回答问题
+    };    // 回答问题
     const answerQuestion = (id) => {
       if (id) {
         alert(`回答问题ID: ${id}`);
         // 实际项目中可能会打开回答界面
       }
+    };    // 审核问题
+    const approveQuestionAction = async (id) => {
+      try {
+        await approveQuestion(id);
+        
+        // 更新本地问题状态
+        const question = studentQuestions.value.find(q => q.id === id);
+        if (question) {
+          question.isReviewed = true;
+          question.answered = true;
+        }
+
+        alert('问题审核成功');
+      } catch (error) {
+        console.error('审核问题失败:', error);
+        alert('审核失败，请重试');
+      }
     };
 
     // 切换用户状态（启用/禁用）
-    const toggleUserStatus = async (id) => {
+    const toggleUserStatusAction = async (id) => {
       try {
         // 找到用户
         const user = users.value.find(u => u.id === id);
@@ -1105,20 +729,11 @@ export default {
         // 切换状态
         const newStatus = user.status === 'active' ? 'blocked' : 'active';
 
-        // 实际API调用（取消注释使用）
-        /*
-        await axios.patch(`/api/users/${id}/status`, {
-          status: newStatus
-        }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        */
+        await toggleUserStatusAPI(id, newStatus);
 
         // 更新本地状态
         user.status = newStatus;
-        alert(`用户 ${user.username} 已${newStatus === 'active' ? '启用' : '禁用'}`);
+                alert(`用户 ${user.username} 已${newStatus === 'active' ? '启用' : '禁用'}`);
       } catch (error) {
         console.error('切换用户状态失败:', error);
         alert('操作失败，请重试');
@@ -1149,9 +764,9 @@ export default {
       removeFile,
       uploadFiles,
       confirmDelete,
-      deleteDocument,
-      toggleUserStatus,
-      saveSettings,
+      deleteDoc,
+      toggleUserStatusAction,
+      saveSystemSettings,
       getAgentTypeName,
       getFileTypeName,
       viewDocument,
@@ -1161,13 +776,14 @@ export default {
       logout,
       uploadOptions,
       studentQuestions,
-      downloadStudentQuestions,
+      downloadQuestions,
       openFeedbackUploadModal,
       triggerFeedbackFileInput,
       handleFeedbackFileSelected,
-      uploadFeedback,
+      uploadFeedbackFile,
       viewQuestion,
       answerQuestion,
+      approveQuestionAction,
       isFeedbackDragging,
       feedbackUploading,
       feedbackUploadProgress,
@@ -1693,5 +1309,78 @@ tbody td {
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 0.9rem;
+}
+
+/* 学生问题管理相关样式 */
+.students-panel .question-content {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.students-panel .question-content .icon-question {
+  margin-right: 8px;
+  color: #4CAF50;
+}
+
+/* 未审核问题行高亮 */
+.unreviewed-row {
+  background-color: #fff3e0 !important;
+}
+
+.unreviewed-row:hover {
+  background-color: #ffe0b2 !important;
+}
+
+/* 状态徽章样式 */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+}
+
+.status-badge.reviewed {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-badge.unreviewed {
+  background-color: #fff3e0;
+  color: #f57c00;
+  border: 1px solid #ffcc02;
+}
+
+.status-badge.answered {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
+.status-badge.unanswered {
+  background-color: #fce4ec;
+  color: #c2185b;
+  border: 1px solid #f8bbd9;
+}
+
+/* 操作按钮样式优化 */
+.action-btn.approve {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn.approve:hover {
+  background-color: #f57c00;
 }
 </style>

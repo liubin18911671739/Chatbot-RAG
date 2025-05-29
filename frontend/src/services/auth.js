@@ -9,7 +9,8 @@ import router from '../router'; // 导入路由实例用于认证后跳转
 
 // const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
 
-const API_URL = 'http://10.10.15.211:5000/api/auth/';
+// const API_URL = 'http://aiqa.bisu.edu.cn:5000/api/auth/';
+// const RADIUS_LOGIN_URL = 'http://aiqa.bisu.edu.cn:5000/api/auth/radius-login';
 const RADIUS_LOGIN_URL = 'http://10.10.15.211:5000/api/auth/radius-login';
 
 class AuthService {
@@ -92,11 +93,11 @@ class AuthService {
             if (error.response) {
                 // 服务器返回了响应，但状态码不在2xx范围
                 errorMessage = `服务器错误 (${error.response.status})`;
-                devDetails = error.response.data ? error.response.data.toString().substring(0, 200) : '无响应数据';
-            } else if (error.request) {
+                devDetails = error.response.data ? error.response.data.toString().substring(0, 200) : '无响应数据';            } else if (error.request) {
                 // 请求已发送但没有收到响应
-                errorMessage = '无法连接到RADIUS认证服务器';
-                devDetails = error.message || 'Network Error';
+                errorMessage = '认证服务连接异常';
+                // devDetails = error.message || 'Network Error';
+                devDetails = '网络连接问题';
                 
                 // 开发环境下的测试账号处理
                 if (process.env.NODE_ENV === 'development') {

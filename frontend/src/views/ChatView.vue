@@ -120,10 +120,10 @@
         
         <div v-for="(message, index) in currentMessages" :key="index"
           :class="['message', message.sender === 'user' ? 'user-message' : 'ai-message']">
-          <!-- <div class="message-avatar">
-            <div v-if="message.sender === 'user'" class="user-avatar">{{ getUserInitial() }}</div>
-            <div v-else class="ai-avatar"><img src="/robot.png" alt="校徽"></div>
-          </div> -->
+          <div class="message-avatar">
+            <!-- <div v-if="message.sender === 'user'" class="user-avatar">{{ getUserInitial() }}</div> -->
+            <!-- <div v-else class="ai-avatar"><img src="/robot.png" alt="校徽"></div> -->
+          </div> 
           <div class="message-content">
             <!-- <div class="message-header">
               <div class="message-sender">{{ message.sender === 'user' ? '你' : 'iBISU' }}</div>
@@ -336,13 +336,12 @@ export default {
 
         if (response.data && Array.isArray(response.data)) {
           scenes.value = response.data;
-        } else {
-          // 加载失败时使用默认场景
+        } else {          // 加载失败时使用默认场景
           scenes.value = [
             {
               id: 'general',
               name: 'AI辅导员',
-              iconUrl: '/icons/general.png',
+              iconUrl: iconUrl(),
               bannerUrl: '/banners/banner.png',
               prompts: ['怎么给一卡通充值?']
             },
@@ -375,14 +374,13 @@ export default {
           });
         }
       } catch (error) {
-        console.error('加载场景数据失败:', error);
-        // 加载失败时使用默认场景
+        console.error('加载场景数据失败:', error);        // 加载失败时使用默认场景
         scenes.value = [
           {
             id: 'general',
             name: 'AI助手',
-            iconUrl: '/icons/general.png',
-            bannerUrl: '/banners/general.jpg',
+            iconUrl: iconUrl(),
+            bannerUrl:'/banners/banner.png',
             prompts: ['请介绍下北京第二外国语学院的历史', '北京第二外国语学院的专业有哪些?', '如何申请北京第二外国语学院奖学金?']
           },
           {
@@ -415,10 +413,14 @@ export default {
       } catch (error) {
         console.error('获取欢迎消息失败:', error);
       }
-    };
-
-    const selectScene = (scene) => {
+    };    const selectScene = (scene) => {
       currentScene.value = scene;
+      // 如果选择的场景是校园共建，则显示校园共建表单
+      if (scene.id === 'construction') {
+        isContributionFormVisible.value = true;
+      } else {
+        isContributionFormVisible.value = false;
+      }
     };
 
     const createNewChat = () => {
@@ -738,8 +740,17 @@ export default {
     // 获取用户名首字母作为头像
     const getUserInitial = () => {
       const userId = getUserId();
-      return userId ? userId.charAt(0).toUpperCase() : '用';
+      // return userId ? userId.charAt(0).toUpperCase() : '用户';
+      return userId && /^\d{8}$/.test(userId) ? '教师' : '用户';
+
     };
+
+    // 获取general 地址URL
+    const iconUrl = () => {
+      const userId = getUserId();
+      return userId && /^\d{8}$/.test(userId) ? '/icons/general-teacher.png' : '/icons/general.png';
+    };
+
     
     // 获取用户ID
     const getUserId = () => {
@@ -8472,23 +8483,17 @@ export default {
     // 创建建议列表
     const localSuggestions = ref(suggestion);
     const suggestions = ref([]);
-    
-    // 函数：从API获取建议，如果失败则使用本地建议
+      // 函数：从API获取建议，如果失败则使用本地建议
     const fetchSuggestions = async () => {
       try {
-      const response = await fetch('http://10.10.15.210:5001/api/questions');
-      if (response.ok) {
-        const data = await response.json();
-        suggestions.value = data;
-        console.log('Successfully fetched suggestions from API');
-      } else {
-        console.warn('Failed to fetch suggestions from API, using local suggestions');
-        suggestions.value = localSuggestions.value;
-      }
+        // 使用 chatService 中的 fetchSuggestions 方法
+        const fetchedSuggestions = await chatService.fetchSuggestions(localSuggestions.value);
+        suggestions.value = fetchedSuggestions;
+        console.log('Successfully updated suggestions:', fetchedSuggestions);
       } catch (error) {
-      console.error('Error fetching suggestions:', error);
-      suggestions.value = localSuggestions.value;
-      console.log('Using local suggestions due to API error');
+        console.error('Error in fetchSuggestions:', error);
+        suggestions.value = localSuggestions.value;
+        console.log('Using local suggestions due to error');
       }
     };
     
@@ -8563,12 +8568,15 @@ export default {
       formatTime,
       getUserInitial,
       getUserId,
+      iconUrl,
       getUserRole,
-      onTypingFinished,      handleInputChange,
+      onTypingFinished,      
+      handleInputChange,
       navigateSuggestion,
       selectSuggestion,
       closeSuggestions,
       filteredSuggestions,
+      fetchSuggestions,
       suggestions,
       showSuggestions,
       selectedSuggestionIndex,

@@ -214,13 +214,12 @@ export default {
         // 请求已发出但没有收到响应
         if (err.code === 'ECONNABORTED') {
           errorTitle.value = '请求超时';
-          error.value = '服务器响应时间过长，请检查网络连接后重试';
-        } else if (err.message.includes('Network Error')) {
+          error.value = '服务器响应时间过长，请检查网络连接后重试';        } else if (err.message.includes('Network Error')) {
           errorTitle.value = '网络错误';
-          error.value = '无法连接到服务器，请检查网络连接是否正常';
+          error.value = '网络连接异常';
         } else {
           errorTitle.value = '连接问题';
-          error.value = '无法与服务器建立连接，请稍后重试';
+          error.value = '连接异常，请稍后重试';
         }
       } else {
         // 请求设置触发的错误

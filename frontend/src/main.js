@@ -64,21 +64,24 @@ axios.interceptors.response.use(
           break;
         default:
           errorMessage = `服务器返回错误(${status}): ${error.response.data.message || '未知错误'}`;
-      }
-    } else if (error.request) {
+      }    } else if (error.request) {
       // 请求已发送但没有收到响应
-      errorMessage = `无法连接到API服务器(${error.config.url}): ${error.message}`;
-      console.error(errorMessage);
+      // errorMessage = `无法连接到API服务器(${error.config.url}): ${error.message}`;
+      // console.error(errorMessage);
       // 尝试检查Flask API是否运行
-      console.log('请检查Flask API是否已启动,并且运行在正确的端口(默认5000)上');
+      // console.log('请检查Flask API是否已启动,并且运行在正确的端口(默认5000)上');
+      console.error('网络连接问题');
+      return; // 不显示错误消息
     } else {
       // 请求配置有误
       errorMessage = `请求配置错误: ${error.message}`;
-      console.error(errorMessage);
-    }
+      console.error(errorMessage);    }
     
-    // 使用Element Plus显示错误消息
-    ElMessage.error(errorMessage);
+    // 只有在errorMessage有值时才显示错误消息
+    if (errorMessage) {
+      // 使用Element Plus显示错误消息
+      ElMessage.error(errorMessage);
+    }
     
     return Promise.reject(error);
   }

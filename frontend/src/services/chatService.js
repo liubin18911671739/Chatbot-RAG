@@ -127,12 +127,13 @@ class ChatService {
       return response.data;
     } catch (error) {
       console.error('发送聊天消息失败:', error);
-      
-      // 针对不同类型的错误提供更具体的信息
+        // 针对不同类型的错误提供更具体的信息
       if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
-        throw new Error('无法连接到API服务器: 请求超时，服务器响应时间过长');
+        // throw new Error('无法连接到API服务器: 请求超时，服务器响应时间过长');
+        throw new Error('请求超时');
       } else if (!error.response) {
-        throw new Error('无法连接到API服务器: 服务可能不可用或网络问题');
+        // throw new Error('无法连接到API服务器: 服务可能不可用或网络问题');
+        throw new Error('网络连接问题');
       } else {
         throw error;
       }
@@ -179,7 +180,6 @@ class ChatService {
       return { data: { greeting: '你好！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨' } };
     }
   }
-
   // 获取自动完成建议
   async getSuggestions(query) {
     try {
@@ -196,6 +196,37 @@ class ChatService {
       console.warn('获取建议失败:', error);
       // 失败时返回空数组，不影响用户体验
       return { data: [] };
+    }
+  }
+
+  // 从API获取建议数据，支持回退到本地建议
+  async fetchSuggestions(localSuggestions = []) {
+    try {
+      const response = await api.get('/api/suggestions', {
+        timeout: 5000 // 5秒超时
+      });
+      
+      if (response.data) {
+        // 检查响应格式并提取建议数据
+        if (response.data.status === 'success' && response.data.data) {
+          console.log('Successfully fetched suggestions from API:', response.data.data);
+          return response.data.data;
+        } else if (Array.isArray(response.data)) {
+          // 如果直接返回数组格式
+          console.log('Successfully fetched suggestions from API (array format):', response.data);
+          return response.data;
+        } else {
+          console.warn('API response format unexpected, using local suggestions');
+          return localSuggestions;
+        }
+      } else {
+        console.warn('Failed to fetch suggestions from API, using local suggestions');
+        return localSuggestions;
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      console.log('Using local suggestions due to API error');
+      return localSuggestions;
     }
   }
 }

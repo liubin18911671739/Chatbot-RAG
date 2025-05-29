@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 fetchSuggestions 集成</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .test-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 50px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .data-display {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .test-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-comparison > div {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .test-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>fetchSuggestions 集成测试</h1>
+        
+        <div class="test-section">
+            <h3>🔧 功能测试</h3>
+            <p>测试从 ChatView.vue 移动到 chatService.js 的 fetchSuggestions 功能</p>
+            
+            <button class="test-button" onclick="testChatServiceIntegration()" id="integrationBtn">
+                🚀 测试 chatService 集成
+            </button>
+            <button class="test-button" onclick="testOriginalMethod()" id="originalBtn">
+                📋 测试原始方法（作为对比）
+            </button>
+            <button class="test-button" onclick="testBothMethods()" id="comparisonBtn">
+                🔄 对比测试
+            </button>
+            <button class="test-button" onclick="clearResults()">
+                🗑️ 清除结果
+            </button>
+            
+            <div id="testResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 测试结果对比</h3>
+            <div id="comparisonResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📈 性能指标</h3>
+            <div id="metricsResult"></div>
+        </div>
+    </div>
+
+    <!-- 引入 axios -->
+    <script src="axios.min.js"></script>
+    
+    <script type="module">
+        // 配置基础 URL
+        window.API_BASE_URL = 'http://10.10.15.210:5000';
+
+        // 模拟本地建议数据
+        window.localSuggestions = [
+            { text: '图书馆开放时间', type: 'local' },
+            { text: '如何预约座位', type: 'local' },
+            { text: '校园卡充值', type: 'local' },
+            { text: '宿舍报修', type: 'local' },
+            { text: '选课指导', type: 'local' }
+        ];
+
+        // 创建模拟的 chatService
+        class ChatService {
+            constructor() {
+                this.api = axios.create({
+                    timeout: 5000,
+                    baseURL: window.API_BASE_URL
+                });
+            }
+
+            // 新的 fetchSuggestions 方法（从 chatService.js 复制）
+            async fetchSuggestions(localSuggestions = []) {
+                try {
+                    const response = await this.api.get('/api/greeting', {
+                        timeout: 5000
+                    });
+                    
+                    if (response.data) {
+                        // 检查响应格式并提取建议数据
+                        if (response.data.status === 'success' && response.data.data) {
+                            console.log('Successfully fetched suggestions from API:', response.data.data);
+                            return response.data.data;
+                        } else if (Array.isArray(response.data)) {
+                            // 如果直接返回数组格式
+                            console.log('Successfully fetched suggestions from API (array format):', response.data);
+                            return response.data;
+                        } else {
+                            console.warn('API response format unexpected, using local suggestions');
+                            return localSuggestions;
+                        }
+                    } else {
+                        console.warn('Failed to fetch suggestions from API, using local suggestions');
+                        return localSuggestions;
+                    }
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                    console.log('Using local suggestions due to API error');
+                    return localSuggestions;
+                }
+            }
+        }
+
+        // 原始的 fetchSuggestions 方法（从 ChatView.vue 复制）
+        window.originalFetchSuggestions = async (localSuggestions = []) => {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/greeting`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 5000
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    // 检查响应格式并提取建议数据
+                    if (data.status === 'success' && data.data) {
+                        console.log('Successfully fetched suggestions from API (original):', data.data);
+                        return data.data;
+                    } else {
+                        console.warn('API response format unexpected, using local suggestions (original)');
+                        return localSuggestions;
+                    }
+                } else {
+                    console.warn('Failed to fetch suggestions from API, using local suggestions (original)');
+                    return localSuggestions;
+                }
+            } catch (error) {
+                console.error('Error fetching suggestions (original):', error);
+                console.log('Using local suggestions due to API error (original)');
+                return localSuggestions;
+            }
+        };
+
+        // 创建 chatService 实例
+        window.chatService = new ChatService();
+
+        // 测试 chatService 集成
+        window.testChatServiceIntegration = async () => {
+            const integrationBtn = document.getElementById('integrationBtn');
+            const resultDiv = document.getElementById('testResult');
+            
+            integrationBtn.disabled = true;
+            integrationBtn.textContent = '🔄 测试中...';
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '正在测试 chatService 集成...';
+            
+            try {
+                const startTime = Date.now();
+                const suggestions = await window.chatService.fetchSuggestions(window.localSuggestions);
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    ✅ <strong>chatService 集成测试成功!</strong><br>
+                    📈 获取到 ${suggestions.length} 个建议<br>
+                    ⏱️ 耗时: ${duration}ms<br>
+                    🔧 方法: chatService.fetchSuggestions()
+                `;
+                
+                // 显示详细数据
+                const detailHtml = `
+                    <h4>📋 获取到的建议数据:</h4>
+                    <div class="data-display">${JSON.stringify(suggestions, null, 2)}</div>
+                `;
+                
+                resultDiv.innerHTML += detailHtml;
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    ❌ <strong>chatService 集成测试失败!</strong><br>
+                    🚨 错误信息: ${error.message}<br>
+                    📍 错误详情: ${error.stack ? error.stack.substring(0, 200) + '...' : '无'}
+                `;
+                
+                console.error('集成测试失败:', error);
+            } finally {
+                integrationBtn.disabled = false;
+                integrationBtn.textContent = '🚀 测试 chatService 集成';
+            }
+        };
+
+        // 测试原始方法
+        window.testOriginalMethod = async () => {
+            const originalBtn = document.getElementById('originalBtn');
+            const resultDiv = document.getElementById('testResult');
+            
+            originalBtn.disabled = true;
+            originalBtn.textContent = '🔄 测试中...';
+            resultDiv.className = 'result loading';
+            resultDiv.innerHTML = '正在测试原始方法...';
+            
+            try {
+                const startTime = Date.now();
+                const suggestions = await window.originalFetchSuggestions(window.localSuggestions);
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                resultDiv.className = 'result info';
+                resultDiv.innerHTML = `
+                    ℹ️ <strong>原始方法测试完成!</strong><br>
+                    📈 获取到 ${suggestions.length} 个建议<br>
+                    ⏱️ 耗时: ${duration}ms<br>
+                    🔧 方法: 原始 fetch 实现
+                `;
+                
+                // 显示详细数据
+                const detailHtml = `
+                    <h4>📋 获取到的建议数据:</h4>
+                    <div class="data-display">${JSON.stringify(suggestions, null, 2)}</div>
+                `;
+                
+                resultDiv.innerHTML += detailHtml;
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    ❌ <strong>原始方法测试失败!</strong><br>
+                    🚨 错误信息: ${error.message}
+                `;
+                
+                console.error('原始方法测试失败:', error);
+            } finally {
+                originalBtn.disabled = false;
+                originalBtn.textContent = '📋 测试原始方法（作为对比）';
+            }
+        };
+
+        // 对比测试
+        window.testBothMethods = async () => {
+            const comparisonBtn = document.getElementById('comparisonBtn');
+            const comparisonDiv = document.getElementById('comparisonResult');
+            const metricsDiv = document.getElementById('metricsResult');
+            
+            comparisonBtn.disabled = true;
+            comparisonBtn.textContent = '🔄 对比测试中...';
+            comparisonDiv.innerHTML = '<div class="loading">正在执行对比测试...</div>';
+            
+            try {
+                // 执行多次测试以获得平均性能数据
+                const testRounds = 3;
+                const chatServiceResults = [];
+                const originalResults = [];
+                
+                for (let i = 0; i < testRounds; i++) {
+                    // 测试 chatService 方法
+                    const chatServiceStart = Date.now();
+                    const chatServiceSuggestions = await window.chatService.fetchSuggestions(window.localSuggestions);
+                    const chatServiceEnd = Date.now();
+                    chatServiceResults.push({
+                        duration: chatServiceEnd - chatServiceStart,
+                        count: chatServiceSuggestions.length,
+                        data: chatServiceSuggestions
+                    });
+                    
+                    // 短暂延迟
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // 测试原始方法
+                    const originalStart = Date.now();
+                    const originalSuggestions = await window.originalFetchSuggestions(window.localSuggestions);
+                    const originalEnd = Date.now();
+                    originalResults.push({
+                        duration: originalEnd - originalStart,
+                        count: originalSuggestions.length,
+                        data: originalSuggestions
+                    });
+                    
+                    // 短暂延迟
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // 计算平均值
+                const chatServiceAvg = {
+                    duration: chatServiceResults.reduce((sum, r) => sum + r.duration, 0) / testRounds,
+                    count: chatServiceResults[0].count,
+                    data: chatServiceResults[0].data
+                };
+                
+                const originalAvg = {
+                    duration: originalResults.reduce((sum, r) => sum + r.duration, 0) / testRounds,
+                    count: originalResults[0].count,
+                    data: originalResults[0].data
+                };
+                
+                // 显示对比结果
+                comparisonDiv.innerHTML = `
+                    <div class="test-comparison">
+                        <div>
+                            <h4>🔧 chatService 方法</h4>
+                            <p><strong>平均响应时间:</strong> ${chatServiceAvg.duration.toFixed(2)}ms</p>
+                            <p><strong>建议数量:</strong> ${chatServiceAvg.count}</p>
+                            <p><strong>成功率:</strong> ${(chatServiceResults.filter(r => r.count > 0).length / testRounds * 100).toFixed(1)}%</p>
+                            <div class="data-display">${JSON.stringify(chatServiceAvg.data.slice(0, 3), null, 2)}</div>
+                        </div>
+                        <div>
+                            <h4>📋 原始方法</h4>
+                            <p><strong>平均响应时间:</strong> ${originalAvg.duration.toFixed(2)}ms</p>
+                            <p><strong>建议数量:</strong> ${originalAvg.count}</p>
+                            <p><strong>成功率:</strong> ${(originalResults.filter(r => r.count > 0).length / testRounds * 100).toFixed(1)}%</p>
+                            <div class="data-display">${JSON.stringify(originalAvg.data.slice(0, 3), null, 2)}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // 显示性能指标
+                const performanceDiff = ((originalAvg.duration - chatServiceAvg.duration) / originalAvg.duration * 100).toFixed(1);
+                const isImprovement = chatServiceAvg.duration < originalAvg.duration;
+                
+                metricsDiv.innerHTML = `
+                    <div class="test-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value">${testRounds}</div>
+                            <div class="metric-label">测试轮次</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" style="color: ${isImprovement ? '#28a745' : '#dc3545'}">
+                                ${isImprovement ? '+' : ''}${performanceDiff}%
+                            </div>
+                            <div class="metric-label">性能变化</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">${chatServiceAvg.count}</div>
+                            <div class="metric-label">建议数量</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" style="color: ${chatServiceAvg.count === originalAvg.count ? '#28a745' : '#dc3545'}">
+                                ${chatServiceAvg.count === originalAvg.count ? '✓' : '✗'}
+                            </div>
+                            <div class="metric-label">数据一致性</div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                comparisonDiv.innerHTML = `
+                    <div class="error">
+                        ❌ 对比测试失败: ${error.message}
+                    </div>
+                `;
+                console.error('对比测试失败:', error);
+            } finally {
+                comparisonBtn.disabled = false;
+                comparisonBtn.textContent = '🔄 对比测试';
+            }
+        };
+
+        // 清除结果
+        window.clearResults = () => {
+            document.getElementById('testResult').innerHTML = '';
+            document.getElementById('comparisonResult').innerHTML = '';
+            document.getElementById('metricsResult').innerHTML = '';
+        };
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('fetchSuggestions 集成测试页面已加载');
+            console.log('API_BASE_URL:', window.API_BASE_URL);
+            console.log('本地建议数量:', window.localSuggestions.length);
+        });
+    </script>
+</body>
+</html>
