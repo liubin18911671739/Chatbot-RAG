@@ -68,12 +68,14 @@ export const useUserStore = defineStore('user', {
           return { success: true };
         } else {
           return { success: false, message: response.data.message || '登录失败' };
-        }
-      } catch (error) {
+        }      } catch (error) {
         console.error('登录失败:', error);
+        const errorMessage = error.response && error.response.data && error.response.data.message 
+          ? error.response.data.message 
+          : '登录服务暂时不可用';
         return { 
           success: false, 
-          message: error.response?.data?.message || '登录服务暂时不可用' 
+          message: errorMessage
         };
       } finally {
         this.authLoading = false;

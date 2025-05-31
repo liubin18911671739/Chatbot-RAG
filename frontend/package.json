@@ -1,6 +1,7 @@
 {
   "name": "rag-qa-system-frontend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Frontend for the RAG Question Answering System",
   "author": "Your Name",
   "license": "MIT",

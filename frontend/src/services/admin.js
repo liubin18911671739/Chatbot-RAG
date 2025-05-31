@@ -202,16 +202,42 @@ export const approveQuestion = async (questionId) => {
   try {
     console.log(`审核问题ID: ${questionId}`);
     
-    const response = await axios.post(`${API_BASE_URL}/api/approve/${questionId}`, {}, {
+    // 发送PUT请求到/api/update端点，只更新status字段
+    const response = await axios.put(`${API_BASE_URL}/api/update/${questionId}`, {
+      status: "reviewed"
+    }, {
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     });
     
-    return response.data;
-  } catch (error) {
+    // 检查响应是否有效
+    if (!response) {
+      throw new Error('服务器响应为空');
+    }
+    
+    console.log('审核响应:', response);
+    
+    // 返回响应数据，如果没有data字段则返回整个响应
+    return response.data || response;  } catch (error) {
     console.error('审核问题失败:', error);
-    throw error;
+    
+    // 提供更详细的错误信息
+    if (error.response) {
+      // 服务器返回了错误响应
+      console.error('服务器错误响应:', error.response.status, error.response.data);
+      const errorMessage = error.response.data && error.response.data.message ? error.response.data.message : '未知错误';
+      throw new Error(`服务器错误: ${error.response.status} - ${errorMessage}`);
+    } else if (error.request) {
+      // 请求发送了但没有收到响应
+      console.error('网络错误，没有收到响应:', error.request);
+      throw new Error('网络错误，无法连接到服务器');
+    } else {
+      // 其他错误
+      console.error('请求配置错误:', error.message);
+      throw new Error(`请求错误: ${error.message}`);
+    }
   }
 };
 
@@ -533,112 +559,6 @@ async function insertData(keyString, valueString, userId, isAdmin) {
   }
 }
 
-// 调用示例：
-const question = "什么是Python?";
-const answer = "编程语言";
-const userId = "user";
-const isAdminStatus = false;
-
-insertData(question, answer, userId, isAdminStatus);
-
-// 另一个调用示例
-// insertData("另一个问题", "另一个答案", "anotherUser", false);
-
-
-
-// 假设 API_BASE_URL 和 id 已经在 JavaScript 中定义好了
-// // 假设 id 是你通过其他方式获取到的，例如：
-// const id = "some_item_id_from_previous_search";
-
-// 辅助函数：安全地将 Unicode 字符串编码为 Base64
-function unicodeStringToBase64(str) {
-  // 首先将字符串编码为 UTF-8 字节序列，然后将每个字节视为一个字符，再进行 Base64 编码
-  return btoa(unescape(encodeURIComponent(str)));
-}
-
-// 辅助函数：安全地将 Base64 字符串解码为 Unicode 字符串 (如果需要解码的话)
-// function base64ToUnicodeString(base64Str) {
-//   // 先 Base64 解码，然后将得到的字节序列（每个字节被视为一个字符）解码为 UTF-8 字符串
-//   return decodeURIComponent(escape(atob(base64Str)));
-// }
-
-async function updateData(id, newKeyString, newValueString, userId) {
-  if (!id) {
-    console.error("更新操作需要一个 ID！");
-    return null;
-  }
-
-  try {
-    // 在 JavaScript 中进行 Base64 编码
-    const encodedNewKey = unicodeStringToBase64(newKeyString);
-    const encodedNewValue = unicodeStringToBase64(newValueString);
-
-    const payload = {
-      new_key: encodedNewKey,
-      new_value: encodedNewValue,
-      upload_userid: userId
-    };
-
-    const response = await fetch(`${API_BASE_URL}/update/${id}`, {
-      method: 'PUT', // 指定 HTTP 方法为 PUT
-      headers: {
-        'Content-Type': 'application/json', // 表明我们发送的是 JSON 数据
-        // 如果你的 API 需要认证，在这里添加认证头，例如：
-        // 'Authorization': 'Bearer your_token_here'
-      },
-      body: JSON.stringify(payload) // 将 JavaScript 对象转换为 JSON 字符串
-    });
-
-    if (!response.ok) {
-      // 如果响应状态不是 2xx (例如 400, 404, 500), 则抛出错误
-      const errorData = await response.json().catch(() => ({ message: response.statusText }));
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
-    }
-
-    const result = await response.json(); // 解析 JSON 响应
-    console.log("更新结果:", result);
-    return result;
-
-  } catch (error) {
-    console.error("调用 API 更新数据时出错:", error);
-    // 在这里处理错误，例如向用户显示消息
-    return null; // 或抛出错误，或返回一个特定的错误对象
-  }
-}
-
-// 调用示例：
-// 假设你已经获取了要更新的项的 ID
-const itemIdToUpdate = "your_item_id_here"; // 替换为实际的 ID
-
-if (itemIdToUpdate !== "your_item_id_here") { // 简单检查，确保你替换了占位符
-  const newQuestion = "Python是什么?";
-  const newAnswer = "我是一种编程语言";
-  const updaterUserId = "admin_008";
-
-  updateData(itemIdToUpdate, newQuestion, newAnswer, updaterUserId);
-} else {
-  console.warn("请先设置 itemIdToUpdate 为一个有效的 ID 再运行示例。");
-}
-
-// 示例：如何模拟从搜索结果获取 ID
-async function simulateGetIdAndThenUpdate() {
-  // 假设这是模拟的搜索 API 调用
-  // const searchResponse = await fetch(`${API_BASE_URL}/search?q=some_query`);
-  // const searchResult = await searchResponse.json();
-  // const idFromSearch = searchResult.results[0].id; // 模拟 Python 代码的逻辑
-
-  // 为了演示，我们硬编码一个ID
-  const idFromSearch = "mocked_id_123";
-
-  if (idFromSearch) {
-    const newQuestion = "Python是什么?";
-    const newAnswer = "我是一种编程语言";
-    const updaterUserId = "admin_008";
-    updateData(idFromSearch, newQuestion, newAnswer, updaterUserId);
-  } else {
-    console.error("未能从模拟搜索中获取 ID。");
-  }
-}
 
 // simulateGetIdAndThenUpdate(); // 如果想运行这个模拟场景，取消注释
 
@@ -709,5 +629,89 @@ export const fetchStudentQuestions = async () => {
     console.log('使用模拟学生问题数据...');
     return getSimulatedStudentQuestions();
   }
+};
+
+/**
+ * 获取校园共建问题列表（替代原有的学生问题接口）
+ * @returns {Promise<Array>} 校园共建问题列表
+ */
+export const fetchCampusQuestions = async () => {  try {
+    console.log('开始获取校园共建问题...');
+    
+    const response = await axios.get(`${API_BASE_URL}/api/questions`);
+    
+    console.log('校园共建问题API响应:', response && response.data);
+    console.log('响应数据类型:', typeof response.data);
+    console.log('响应数据结构:', response.data);
+    
+    if (!response || !response.data) {
+      console.warn('API响应无效或无数据，使用模拟数据');
+      return getSimulatedCampusQuestions();
+    }
+      let questionItems = [];
+    if (Array.isArray(response.data)) {
+      questionItems = response.data;
+    } else if (response.data.data && Array.isArray(response.data.data)) {
+      // 处理 {data: Array, message: '', status: '', total: N} 格式的响应
+      questionItems = response.data.data;
+    } else if (response.data.questions && Array.isArray(response.data.questions)) {
+      questionItems = response.data.questions;
+    } else {
+      console.warn('API响应数据格式不正确，使用模拟数据');
+      return getSimulatedCampusQuestions();
+    }
+      if (questionItems.length === 0) {
+      console.log('未获取到校园共建问题，返回空列表。');
+      return [];
+    }
+    
+    console.log('从API获取到的问题数量:', questionItems.length);
+    console.log('第一条问题示例:', questionItems[0]);
+      // 处理校园共建问题数据
+    const campusQuestions = questionItems.map(item => ({
+      id: item.id,
+      question: item.question,
+      answer: item.answer,
+      userid: item.userid,
+      status: item.status
+    }));
+    
+    console.log('处理后的校园共建问题:', campusQuestions);
+    return campusQuestions;
+    
+  } catch (error) {
+    console.error('获取校园共建问题失败:', error);
+    console.log('使用模拟校园共建问题数据...');
+    return getSimulatedCampusQuestions();
+  }
+};
+
+/**
+ * 获取模拟的校园共建问题数据
+ * @returns {Array} 模拟的校园共建问题列表
+ */
+const getSimulatedCampusQuestions = () => {
+  return [
+    {
+      id: 1,
+      question: "问题密集书库的图书可以外借吗",
+      answer: "问题密集书库的图书一般不允许外借，主要用于现场阅读和学习。",
+      userid: "user1",
+      status: "reviewed"
+    },
+    {
+      id: 2,
+      question: "借阅图书遗失如何处理？",
+      answer: "如果借阅的图书遗失，请及时联系图书馆工作人员进行处理，可能需要赔偿或补办手续。",
+      userid: "user2",
+      status: "reviewed"
+    },
+    {
+      id: 3,
+      question: "借的书在哪儿还？",
+      answer: "请将借阅的图书归还到图书馆的指定还书地点。",
+      userid: "user3",
+      status: "unreview"
+    }  ];
 };
 

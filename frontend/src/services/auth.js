@@ -7,46 +7,19 @@ import router from '../router'; // 导入路由实例用于认证后跳转
 // RADIUS认证的API端点
 // const API_URL = 'http://localhost:5000/api/auth/';
 
-// const RADIUS_LOGIN_URL = 'http://localhost:5000/api/auth/radius-login';
+const API_BASE_URL = 'http://localhost:5000';
 
 // const API_URL = 'http://aiqa.bisu.edu.cn:5000/api/auth/';
 // const RADIUS_LOGIN_URL = 'http://aiqa.bisu.edu.cn:5000/api/auth/radius-login';
-const RADIUS_LOGIN_URL = 'http://10.10.15.211:5000/api/auth/radius-login';
+// const RADIUS_LOGIN_URL = 'http://10.10.15.211:5000/api/auth/radius-login';
 
 class AuthService {
-    login(username, password) {
-        return axios
-            .post(`${API_URL}login`, {
-                username,
-                password
-            })
-            .then(response => {
-                if (response.data.token) {
-                    localStorage.setItem('user', JSON.stringify(response.data));
-                }
-                return response.data;
-            });
-    }
-
-    logout() {
-        localStorage.removeItem('user');
-    }
-
-    register(username, password) {
-        return axios.post(`${API_URL}register`, {
-            username,
-            password
-        });
-    }    getCurrentUser() {
-        return JSON.parse(localStorage.getItem('user'));
-    }
-    
     // 使用RADIUS进行认证
     async loginWithRADIUS(username, password) {
         console.log('开始RADIUS认证流程...');
         
         try {
-            const response = await axios.post(RADIUS_LOGIN_URL, {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/radius-login`, {
                 username,
                 password
             }, {

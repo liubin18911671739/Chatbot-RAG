@@ -337,7 +337,106 @@ Each domain should have dedicated document collections, customized retrieval str
 Please implement this system with clean, well-structured code that follows best practices for each technology used. Include comprehensive documentation and deployment instructions.
 ```
 
+10.10.15.210:5001: 
+/api/suggestions
+## Suggestions API, get
+json
+{
+  "suggestions": [
+    "问题密集书库的图书可以外借吗",
+    "借阅图书遗失如何处理？"
+  ]
 
+}
 
+/api/questions
+## Questions API, get
+json
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "问题密集书库的图书可以外借吗",
+      "answer": "问题密集书库的图书一般不允许外借，主要用于现场阅读和学习。",
+      "userid": "user1",
+      "status": "reviewed"
+    },
+    {
+      "id": 2,
+      "question": "借阅图书遗失如何处理？",
+      "answer": "如果借阅的图书遗失，请及时联系图书馆工作人员进行处理，可能需要赔偿或补办手续。",
+      "userid": "user2",
+      "status": "reviewed"
+    },
+    {
+      "id": 3,
+      "question": "借的书在哪儿还？",
+      "answer": "请将借阅的图书归还到图书馆的指定还书地点。",
+      "userid": "user3",
+      "status": "unreview"
+    }
+  ]
+}
 
+/api/questions
+## Questions insert, post, 后端需要查重然后插入
+json
+{
+  "question": "新的问题1",
+  "answer": "问题的答案1",
+  "userid": "user4",
+  "status": "reviewed"
+}
 
+{
+  "question": "新的问题2",
+  "answer": "问题的答案2",
+  "userid": "user5",
+  "status": "unreview"
+}
+
+/api/update/{id}
+## Questions updateAPI, post
+json
+{
+  "question": "更新后的问题",
+  "answer": "更新后的答案",
+  "userid": "user6",
+  "status": "reviewed"
+}
+
+/api/delete/{id}
+## Questions delete API, post
+json
+{
+  "status": "success"
+}
+
+/api/search
+## Questions search API, get
+## params
+{
+  "query": "借阅图书遗失"
+}
+json
+{
+  "id": 1213
+}
+
+## 前端中处理多个 params
+  try {
+    const response = await axios.get('/api/search', {
+      params: {
+        key: btoa(unescape(encodeURIComponent(searchOptions.query))),
+        include_unreviewed: searchOptions.includeUnreviewed,
+        page: searchOptions.page || 1,
+        limit: searchOptions.limit || 10,
+        sort: searchOptions.sort || 'created_at',
+        order: searchOptions.order || 'desc'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('搜索失败:', error);
+    throw error;
+  }

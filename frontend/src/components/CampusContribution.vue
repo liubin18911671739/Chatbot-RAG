@@ -30,7 +30,7 @@
         ></textarea>
       </div>
       
-      <div class="form-group">
+      <!-- <div class="form-group">
         <label for="category">分类</label>
         <select id="category" v-model="formData.category" class="campus-input" required>
           <option value="">请选择分类</option>
@@ -38,7 +38,7 @@
             {{ category.name }}
           </option>
         </select>
-      </div>
+      </div> -->
       
       <div class="form-actions">
         <button 
@@ -67,62 +67,102 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'CampusContribution',
   data() {
     return {
       formData: {
         question: '',
-        answer: '',
-        category: ''
+        answer: ''
       },
-      categories: [
-        { id: 'general', name: '一般问题' },
-        { id: 'academic', name: '学术相关' },
-        { id: 'campus', name: '校园生活' },
-        { id: 'policy', name: '政策规定' },
-        { id: 'sizheng', name: '思政学习' }
-      ],
       isSubmitting: false,
       showSuccess: false
     };
   },
   methods: {
     async submitContribution() {
-      if (!this.formData.question || !this.formData.answer || !this.formData.category) {
-        alert('请填写所有必填字段！');
+      if (!this.formData.question || !this.formData.answer) {
+        alert('请填写问题和答案！');
         return;
       }
       
       this.isSubmitting = true;
       
       try {
-        // TODO: 连接到实际API
-        // const response = await axios.post('/api/contribution', this.formData);
-          // 模拟API调用延迟
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 获取当前用户ID
+        const userid = localStorage.getItem('userId') || '匿名用户';
         
-        console.log('提交的贡献:', this.formData);
-        this.showSuccess = true;        
-        // 两秒后自动显示成功信息
-        setTimeout(() => {
+        // 构建API请求数据
+        const submitData = {
+          question: this.formData.question,
+          answer: this.formData.answer,
+          userid: userid,
+          status: 'unreview' // 校园共建提交的内容都是未审核状态
+        };
+          // 创建axios实例，禁用代理
+        const axiosInstance = axios.create({
+          proxy: false, // 禁用代理
+          timeout: 10000, // 10秒超时
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: false
+        });
+        
+        // 调用REST API
+        const response = await axiosInstance.post('/api/insert', submitData);
+
+        if (response.data && response.data.status === 'success') {
+          console.log('提交成功:', response.data);
           this.showSuccess = true;
-        }, 1000);
+        } else {
+          throw new Error(response.data && response.data.message || '提交失败');
+        }
+        
       } catch (error) {
         console.error('提交贡献时出错:', error);
-        alert('提交失败，请稍后再试');
+        
+        if (error.response) {
+          // 服务器返回了错误响应
+          const statusCode = error.response.status;
+          const errorData = error.response.data;
+            if (statusCode === 409 && errorData.message === "问题已存在") {
+            // 处理重复问题的特殊情况
+            alert(`提交失败: ${errorData.message}\n已存在的问题: ${errorData.existing_question}`);
+          } else {
+            const errorMsg = (errorData && errorData.message) || error.response.statusText || '提交失败';
+            alert(`提交失败 (${statusCode}): ${errorMsg}`);
+          }
+        } else if (error.request) {
+          // 请求已发送但没有收到响应
+          console.error('请求详情:', error.request);
+          alert('网络连接失败，请检查网络后重试');
+        } else if (error.code === 'ECONNABORTED') {
+          // 请求超时
+          alert('请求超时，请稍后再试');
+        } else if (error.code === 'ECONNREFUSED') {
+          // 连接被拒绝
+          alert('无法连接到服务器，请检查服务器状态');
+        } else {
+          // 其他错误
+          alert('提交失败: ' + (error.message || '未知错误'));
+        }
       } finally {
         this.isSubmitting = false;
       }
     },
+    
     resetForm() {
       this.formData = {
         question: '',
-        answer: '',
-        category: ''
+        answer: ''
       };
       this.showSuccess = false;
     },
+    
     closeForm() {
       this.$emit('contribution-submitted');
     }

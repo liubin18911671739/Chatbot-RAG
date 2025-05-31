@@ -14,10 +14,9 @@
           <!-- <div class="nav-item" :class="{ active: activeTab === 'documents' }" @click="activeTab = 'documents'">
             <i class="icon-document"></i>
             <span>文档管理</span>
-          </div> -->
-          <div class="nav-item" :class="{ active: activeTab === 'students' }" @click="activeTab = 'students'">
+          </div> -->          <div class="nav-item" :class="{ active: activeTab === 'campus-questions' }" @click="activeTab = 'campus-questions'">
             <i class="icon-student"></i>
-            <span>学生常见问题</span>
+            <span>校园共建问题</span>
           </div>
           <!-- <div class="nav-item" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
             <i class="icon-users"></i>
@@ -72,12 +71,10 @@
               <p>暂无文档，请上传文档到知识库</p>
             </div>
           </div>
-        </div>
-
-        <!-- 学生问题面板 -->
-        <div v-if="activeTab === 'students'" class="panel students-panel">
+        </div>        <!-- 校园共建问题面板 -->
+        <div v-if="activeTab === 'campus-questions'" class="panel campus-questions-panel">
           <div class="panel-header">
-            <h2>学生问题管理</h2>
+            <h2>校园共建问题管理</h2>
             <div class="panel-actions">
               <button class="download-btn" @click="downloadQuestions">
                 <i class="icon-download"></i> 下载问题
@@ -86,47 +83,46 @@
                 <i class="icon-upload"></i> 上传反馈
               </button>
             </div>
-          </div>          <!-- 学生问题列表 -->
-          <div class="student-questions-list">
-            <table v-if="studentQuestions.length > 0">
-              <thead>
+          </div>
+
+          <!-- 校园共建问题列表 -->
+          <div class="campus-questions-list">
+            <table v-if="campusQuestions.length > 0">              <thead>
                 <tr>
-                  <th>学生ID</th>
+                  <th>问题ID</th>
+                  <th>提交者</th>
                   <th>问题内容</th>
-                  <th>提问时间</th>
+                  <th>答案</th>
                   <th>审核状态</th>
-                  <th>是否已回答</th>
                   <th>操作</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="question in studentQuestions" :key="question.id" 
-                    :class="{ 'unreviewed-row': !question.isReviewed }">
-                  <td>{{ question.studentId }}</td>
+                <tr v-for="question in campusQuestions" :key="question.id" 
+                    :class="{ 'unreviewed-row': question.status === 'unreview' }">
+                  <td>{{ question.id }}</td>
+                  <td>{{ question.userid }}</td>
                   <td class="question-content">
-                    <i class="icon-question"></i>  {{ question.content }}
+                    <i class="icon-question"></i> {{ question.question }}
                   </td>
-                  <td>{{ formatDate(question.createdAt) }}</td>
-                  <td>
-                    <span :class="['status-badge', question.isReviewed ? 'reviewed' : 'unreviewed']">
-                      {{ question.isReviewed ? '已审核' : '未审核' }}
-                    </span>
+                  <td class="answer-content">
+                    {{ question.answer }}
                   </td>
                   <td>
-                    <span :class="['status-badge', question.answered ? 'answered' : 'unanswered']">
-                      {{ question.answered ? '已回答' : '未回答' }}
+                    <span :class="['status-badge', question.status === 'reviewed' ? 'reviewed' : 'unreviewed']">
+                      {{ question.status === 'reviewed' ? '已审核' : '未审核' }}
                     </span>
                   </td>
                   <td class="actions">
-                    <button class="action-btn view" @click="viewQuestion(question.id)">查看</button>
-                    <button class="action-btn answer" @click="answerQuestion(question.id)">回答</button>
-                    <button v-if="!question.isReviewed" class="action-btn approve" @click="approveQuestionAction(question.id)">审核</button>
+                    <!-- <button class="action-btn view" @click="viewQuestion(question.id)">查看</button>
+                    <button class="action-btn edit" @click="editQuestion(question.id)">编辑</button> -->
+                    <button v-if="question.status === 'unreview'" class="action-btn approve" @click="approveQuestionAction(question.id)">审核</button>
                   </td>
                 </tr>
               </tbody>
             </table>
             <div v-else class="empty-state">
-              <p><i class="icon-empty"></i> 暂无学生问题记录</p>
+              <p><i class="icon-empty"></i> 暂无校园共建问题记录</p>
             </div>
           </div>
         </div>
@@ -351,6 +347,7 @@ import {
   fetchSettings,
   saveSettings,
   fetchStudentQuestions,
+  fetchCampusQuestions,
   approveQuestion,
   uploadDocuments,
   deleteDocument as deleteDocumentAPI,
@@ -371,9 +368,8 @@ export default {
     
     // 用户信息
     const username = ref('');
-    
-    // 活动标签页
-    const activeTab = ref('students');
+      // 活动标签页
+    const activeTab = ref('campus-questions');
     
     // 文档列表
     const documents = ref([]);
@@ -402,10 +398,10 @@ export default {
     
     // 删除文档相关
     const showDeleteConfirm = ref(false);
-    const docToDeleteId = ref(null);
-
-    // 学生问题相关
+    const docToDeleteId = ref(null);    // 学生问题相关
     const studentQuestions = ref([]);
+    // 校园共建问题相关
+    const campusQuestions = ref([]);
     const showFeedbackUploadModal = ref(false);
     const feedbackFile = ref(null);
     const feedbackFileInput = ref(null);
@@ -420,12 +416,12 @@ export default {
     });    // 加载初始数据
     onMounted(async () => {
       checkAdminAccess();
-      loadUsername();
-      await Promise.all([
+      loadUsername();      await Promise.all([
         loadDocuments(),
         loadUsers(),
         loadSettings(),
-        loadStudentQuestions()
+        loadStudentQuestions(),
+        loadCampusQuestions()
       ]);
     });
 
@@ -465,16 +461,23 @@ export default {
       } catch (error) {
         console.error('获取系统设置失败:', error);
       }
-    };
-
-    // 获取学生问题
+    };    // 获取学生问题
     const loadStudentQuestions = async () => {
       try {
         studentQuestions.value = await fetchStudentQuestions();
       } catch (error) {
         console.error('获取学生问题失败:', error);
       }
-    };    // 保存系统设置
+    };
+
+    // 获取校园共建问题
+    const loadCampusQuestions = async () => {
+      try {
+        campusQuestions.value = await fetchCampusQuestions();
+      } catch (error) {
+        console.error('获取校园共建问题失败:', error);
+      }
+    };// 保存系统设置
     const saveSystemSettings = async () => {
       try {
         await saveSettings(settings.value);
@@ -700,22 +703,29 @@ export default {
         alert(`回答问题ID: ${id}`);
         // 实际项目中可能会打开回答界面
       }
+    };
+
+    // 编辑问题
+    const editQuestion = (id) => {
+      if (id) {
+        alert(`编辑问题ID: ${id}`);
+        // 实际项目中可能会打开编辑界面
+      }
     };    // 审核问题
     const approveQuestionAction = async (id) => {
       try {
         await approveQuestion(id);
         
-        // 更新本地问题状态
-        const question = studentQuestions.value.find(q => q.id === id);
-        if (question) {
-          question.isReviewed = true;
-          question.answered = true;
+        // 更新本地校园共建问题状态
+        const campusQuestion = campusQuestions.value.find(q => q.id === id);
+        if (campusQuestion) {
+          campusQuestion.status = 'reviewed';
         }
 
         alert('问题审核成功');
       } catch (error) {
         console.error('审核问题失败:', error);
-        alert('审核失败，请重试');
+        alert(`审核失败: ${error.message || '请重试'}`);
       }
     };
 
@@ -738,9 +748,7 @@ export default {
         console.error('切换用户状态失败:', error);
         alert('操作失败，请重试');
       }
-    };
-
-    return {
+    };    return {
       username,
       activeTab,
       documents,
@@ -776,6 +784,8 @@ export default {
       logout,
       uploadOptions,
       studentQuestions,
+      campusQuestions,
+      loadCampusQuestions,
       downloadQuestions,
       openFeedbackUploadModal,
       triggerFeedbackFileInput,
@@ -783,6 +793,7 @@ export default {
       uploadFeedbackFile,
       viewQuestion,
       answerQuestion,
+      editQuestion,
       approveQuestionAction,
       isFeedbackDragging,
       feedbackUploading,
@@ -948,7 +959,7 @@ export default {
 }
 
 .status-badge.answered {
-  background-color: #e8f5e9;
+  background-color: #e8f5e8;
   color: #2e7d32;
 }
 
@@ -1324,48 +1335,39 @@ tbody td {
   color: #4CAF50;
 }
 
+/* 校园共建问题面板特有样式 */
+.campus-questions-panel .answer-content {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.campus-questions-panel .question-content {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-questions-panel .question-content .icon-question {
+  margin-right: 8px;
+  color: #4CAF50;
+}
+
+.campus-questions-panel tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
 /* 未审核问题行高亮 */
-.unreviewed-row {
+.campus-questions-panel .unreviewed-row {
   background-color: #fff3e0 !important;
 }
 
-.unreviewed-row:hover {
+.campus-questions-panel .unreviewed-row:hover {
   background-color: #ffe0b2 !important;
-}
-
-/* 状态徽章样式 */
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  display: inline-block;
-  min-width: 60px;
-  text-align: center;
-}
-
-.status-badge.reviewed {
-  background-color: #e8f5e8;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
-}
-
-.status-badge.unreviewed {
-  background-color: #fff3e0;
-  color: #f57c00;
-  border: 1px solid #ffcc02;
-}
-
-.status-badge.answered {
-  background-color: #e3f2fd;
-  color: #1976d2;
-  border: 1px solid #bbdefb;
-}
-
-.status-badge.unanswered {
-  background-color: #fce4ec;
-  color: #c2185b;
-  border: 1px solid #f8bbd9;
 }
 
 /* 操作按钮样式优化 */
@@ -1382,5 +1384,35 @@ tbody td {
 
 .action-btn.approve:hover {
   background-color: #f57c00;
+}
+
+.action-btn.edit {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn.edit:hover {
+  background-color: #1976D2;
+}
+
+.action-btn.view {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn.view:hover {
+  background-color: #388E3C;
 }
 </style>
