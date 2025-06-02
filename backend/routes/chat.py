@@ -50,47 +50,47 @@ def call_gemini_api(prompt, scene_id=None, history=None):
     
     # # Gemini API 配置
     try:
-    #     client = genai.Client(api_key="AIzaSyAZqjyE7wN3Mh81S-bfITb98lA0SISANBY")  # 请替换为实际的 API Key
+        client = genai.Client(api_key="AIzaSyAZqjyE7wN3Mh81S-bfITb98lA0SISANBY")  # 请替换为实际的 API Key
         
-    #     # 根据场景 ID 可以添加不同的系统提示词
-    #     system_instruction = "你是高校的AI助手，请对问题提供的详细答案，如果不知道就回答不知道，不要进行推理和联想。"
-    #     if scene_id:
-    #         # 可以根据不同场景定制系统提示词
-    #         scene_prompts = {
-    #             "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
-    #             "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
-    #             "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
-    #             "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
-    #             "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
-    #         }
-    #         if scene_id in scene_prompts:
-    #             system_instruction = scene_prompts[scene_id]
+        # 根据场景 ID 可以添加不同的系统提示词
+        system_instruction = "你是高校的AI助手，请对问题提供的详细答案，如果不知道就回答不知道，不要进行推理和联想。"
+        if scene_id:
+            # 可以根据不同场景定制系统提示词
+            scene_prompts = {
+                "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
+                "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
+                "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
+                "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
+                "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
+            }
+            if scene_id in scene_prompts:
+                system_instruction = scene_prompts[scene_id]
         
-    #     # 构建对话内容
-    #     conversation_content = ""
+        # 构建对话内容
+        conversation_content = ""
         
-    #     # 添加历史消息（如果有）
-    #     if history and isinstance(history, list):
-    #         for msg in history:
-    #             if 'user' in msg and msg['user']:
-    #                 conversation_content += f"用户: {msg['user']}\n"
-    #             if 'assistant' in msg and msg['assistant']:
-    #                 conversation_content += f"助手: {msg['assistant']}\n"
+        # 添加历史消息（如果有）
+        if history and isinstance(history, list):
+            for msg in history:
+                if 'user' in msg and msg['user']:
+                    conversation_content += f"用户: {msg['user']}\n"
+                if 'assistant' in msg and msg['assistant']:
+                    conversation_content += f"助手: {msg['assistant']}\n"
         
-    #     # 添加当前用户问题
-    #     conversation_content += f"用户: {prompt}"
-    #       # 调用 Gemini API
-    #     response = client.models.generate_content(
-    #         model="gemini-2.0-flash",
-    #         config=types.GenerateContentConfig(
-    #             system_instruction=system_instruction,
-    #             temperature=0.3,
-    #             max_output_tokens=2000
-    #         ),
-    #         contents=conversation_content
-    #     )
+        # 添加当前用户问题
+        conversation_content += f"用户: {prompt}"
+          # 调用 Gemini API
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.3,
+                max_output_tokens=2000
+            ),
+            contents=conversation_content
+        )
         
-        return prompt
+        return response.text.strip()  # 返回回答内容，去除首尾空格
         
     except Exception as e:
         print(f"Gemini API 错误: {str(e)}")

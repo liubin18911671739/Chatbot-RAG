@@ -1,5 +1,7 @@
 import axios from 'axios';
 const API_BASE_URL = 'http://localhost:5000';
+
+// const API_BASE_URL = 'http://localhost:5000';
 // 创建带超时配置的axios实例
 const api = axios.create({
   timeout: 600000, // 设置所有请求的默认超时时间为600秒
@@ -55,7 +57,7 @@ class ChatService {
     try {
       console.log('正在检查API连接...');
       // 先尝试greeting端点
-      const response = await api.get('/api/greeting');
+    const response = await axios.get(`${API_BASE_URL}/api/greeting`);
       console.log('API连接成功:', response.status, response.data);
       return true;
     } catch (error) {
@@ -100,7 +102,7 @@ class ChatService {
       //   payload.history = this.conversationHistory;
       // }
 
-      const response = await api.post('/api/chat', payload);
+    const response = await axios.post(`${API_BASE_URL}/api/chat`, payload);
 
       // 处理响应，移除<深度思考>标签中的内容
       if (response.data && response.data.response) {
@@ -153,7 +155,7 @@ class ChatService {
 
   async getScenes() {
     try {
-      const response = await api.get('/api/scenes');
+      const response = await axios.get(`${API_BASE_URL}/api/scenes`);
       return response.data;
     } catch (error) {
       console.error('获取场景列表失败:', error);
@@ -163,7 +165,7 @@ class ChatService {
 
   async sendFeedback(feedbackData) {
     try {
-      const response = await api.post('/api/feedback', feedbackData);
+      const response = await axios.post(`${API_BASE_URL}/api/feedback`, feedbackData);
       return response.data;
     } catch (error) {
       console.error('发送反馈失败:', error);
@@ -173,7 +175,7 @@ class ChatService {
 
   async getGreeting() {
     try {
-      const response = await api.get('/api/greeting');
+    const response = await axios.get(`${API_BASE_URL}/api/greeting`);
       return response;
     } catch (error) {
       console.error('获取欢迎消息失败:', error);
