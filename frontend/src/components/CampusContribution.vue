@@ -47,11 +47,23 @@
           :disabled="isSubmitting"
         >
           <span v-if="isSubmitting" class="loading-spinner"></span>
-          <span v-else>提交贡献</span>
+          <span v-else>提交</span>
         </button>
+      </div>    </form>
+
+    <!-- 错误提示 -->
+    <div v-if="showError" class="error-message">
+      <div class="error-icon">⚠️</div>
+      <div class="error-text">
+        <h3>提交失败</h3>
+        <p>{{ errorMessage }}</p>
       </div>
-    </form>
-      <!-- 成功提示 -->
+      <div class="error-actions">
+        <button @click="dismissError" class="campus-btn dismiss-btn">关闭</button>
+      </div>
+    </div>
+
+    <!-- 成功提示 -->
     <div v-if="showSuccess" class="success-message">
       <div class="success-icon">✓</div>
       <div class="success-text">
@@ -67,7 +79,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import contributionService, { getErrorSuggestion } from '@/services/contributionService';
 
 export default {
   name: 'CampusContribution',
@@ -78,78 +90,48 @@ export default {
         answer: ''
       },
       isSubmitting: false,
-      showSuccess: false
+      showSuccess: false,
+      errorMessage: '',
+      showError: false
     };
   },
   methods: {
     async submitContribution() {
-      if (!this.formData.question || !this.formData.answer) {
-        alert('请填写问题和答案！');
-        return;
-      }
+      // 清除之前的错误状态
+      this.showError = false;
+      this.errorMessage = '';
       
       this.isSubmitting = true;
       
       try {
-        // 获取当前用户ID
-        const userid = localStorage.getItem('userId') || '匿名用户';
+        // 使用校园共建服务提交数据
+        const result = await contributionService.submitContribution(this.formData);
         
-        // 构建API请求数据
-        const submitData = {
-          question: this.formData.question,
-          answer: this.formData.answer,
-          userid: userid,
-          status: 'unreview' // 校园共建提交的内容都是未审核状态
-        };
-          // 创建axios实例，禁用代理
-        const axiosInstance = axios.create({
-          proxy: false, // 禁用代理
-          timeout: 10000, // 10秒超时
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: false
-        });
-        
-        // 调用REST API
-        const response = await axiosInstance.post('/api/insert', submitData);
-
-        if (response.data && response.data.status === 'success') {
-          console.log('提交成功:', response.data);
+        if (result.success) {
+          console.log('✅ 提交成功:', result);
           this.showSuccess = true;
         } else {
-          throw new Error(response.data && response.data.message || '提交失败');
+          throw new Error(result.message);
         }
         
       } catch (error) {
-        console.error('提交贡献时出错:', error);
+        console.error('❌ 提交校园共建内容时出错:', error);
         
-        if (error.response) {
-          // 服务器返回了错误响应
-          const statusCode = error.response.status;
-          const errorData = error.response.data;
-            if (statusCode === 409 && errorData.message === "问题已存在") {
-            // 处理重复问题的特殊情况
-            alert(`提交失败: ${errorData.message}\n已存在的问题: ${errorData.existing_question}`);
-          } else {
-            const errorMsg = (errorData && errorData.message) || error.response.statusText || '提交失败';
-            alert(`提交失败 (${statusCode}): ${errorMsg}`);
+        // 显示错误信息
+        this.errorMessage = error.message || '提交失败，请重试';
+        this.showError = true;
+        
+        // 如果是服务返回的错误结果，显示更详细的信息
+        if (error.result && !error.result.success) {
+          this.errorMessage = error.result.message;
+          
+          // 如果有错误建议，也显示出来
+          const suggestion = getErrorSuggestion(error.result.type);
+          if (suggestion) {
+            this.errorMessage += '\n\n建议：' + suggestion;
           }
-        } else if (error.request) {
-          // 请求已发送但没有收到响应
-          console.error('请求详情:', error.request);
-          alert('网络连接失败，请检查网络后重试');
-        } else if (error.code === 'ECONNABORTED') {
-          // 请求超时
-          alert('请求超时，请稍后再试');
-        } else if (error.code === 'ECONNREFUSED') {
-          // 连接被拒绝
-          alert('无法连接到服务器，请检查服务器状态');
-        } else {
-          // 其他错误
-          alert('提交失败: ' + (error.message || '未知错误'));
         }
+        
       } finally {
         this.isSubmitting = false;
       }
@@ -161,10 +143,17 @@ export default {
         answer: ''
       };
       this.showSuccess = false;
+      this.showError = false;
+      this.errorMessage = '';
     },
     
     closeForm() {
       this.$emit('contribution-submitted');
+    },
+
+    dismissError() {
+      this.showError = false;
+      this.errorMessage = '';
     }
   }
 };
@@ -271,6 +260,68 @@ textarea.campus-input {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* 错误提示样式 */
+.error-message {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.error-icon {
+  background-color: #dc3545;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-right: 16px;
+}
+
+.error-text {
+  flex-grow: 1;
+}
+
+.error-text h3 {
+  margin: 0 0 4px 0;
+  color: #721c24;
+}
+
+.error-text p {
+  margin: 0;
+  color: #721c24;
+  white-space: pre-line;
+}
+
+.error-actions {
+  display: flex;
+  width: 100%;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.error-message .dismiss-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.error-message .dismiss-btn:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
 }
 
 /* 成功提示样式 */

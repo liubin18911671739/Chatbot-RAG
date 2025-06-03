@@ -1,23 +1,18 @@
-from flask import jsonify
 import requests
 import json
-from routes import bp  # 使用共享的Blueprint
 
+BASE_URL = "http://localhost:5000/api"
 
-
-@bp.route('/suggestions', methods=['GET'])
-def get_suggestions():
-    """获取建议列表 - 代理转发到目标API服务器"""
-    
+def test_suggestions_api():
     try:
         # 调用 suggestions API
-        BASE_URL = "http://10.10.15.210:5001"
-        response = requests.get(f"{BASE_URL}/api/suggestions")
+        response = requests.get(f"{BASE_URL}/questions")
         
         # 检查响应状态码
         if response.status_code == 200:
             print("API 调用成功!")
             print("响应状态码:", response.status_code)
+            print("响应内容:", response.json())
             return json.dumps(response.json(), indent=2, ensure_ascii=False)
         else:
             print("错误信息:", response.text)
@@ -30,3 +25,7 @@ def get_suggestions():
         print(f"请求异常: {e}")
     except json.JSONDecodeError:
         print("响应不是有效的 JSON 格式")
+        
+# 执行测试
+if __name__ == "__main__":
+    test_suggestions_api()

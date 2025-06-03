@@ -112,12 +112,12 @@
                     <span :class="['status-badge', question.status === 'reviewed' ? 'reviewed' : 'unreviewed']">
                       {{ question.status === 'reviewed' ? '已审核' : '未审核' }}
                     </span>
-                  </td>
-                  <td class="actions">
-                    <!-- <button class="action-btn view" @click="viewQuestion(question.id)">查看</button>
-                    <button class="action-btn edit" @click="editQuestion(question.id)">编辑</button> -->
-                    <button v-if="question.status === 'unreview'" class="action-btn approve" @click="approveQuestionAction(question.id)">审核</button>
-                  </td>
+                  </td>                    <td class="actions">
+                    <button class="action-btn view" @click="viewQuestionDetail(question)">查看</button>
+                    <button class="action-btn edit" @click="editQuestionAnswer(question)">编辑</button>
+                    <button class="action-btn approve" @click="approveQuestionAction(question.id)">审核</button>
+                    <button class="action-btn delete" @click="confirmDeleteQuestion(question.id)">删除</button>
+                    </td>
                 </tr>
               </tbody>
             </table>
@@ -274,10 +274,52 @@
         </div>
         <div class="modal-body">
           <p>确定要删除该文档吗？此操作不可恢复。</p>
-        </div>
+        </div>        
         <div class="modal-footer">
           <button class="cancel-btn" @click="showDeleteConfirm = false">取消</button>
           <button class="delete-btn" @click="deleteDoc">删除</button>
+        </div>
+      </div>
+    </div>    <!-- 删除问题确认弹窗 -->
+    <div v-if="showDeleteQuestionConfirm" class="modal-overlay">
+      <div class="confirm-modal delete-confirm-modal">
+        <div class="modal-icon-header">
+          <div class="delete-warning-icon">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 9V13M12 17.02H12.01M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C2 6.48 6.48 2 12 2Z" stroke="#f44336" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <button class="close-btn delete-close-btn" @click="showDeleteQuestionConfirm = false">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-content-body">
+          <h3 class="delete-title">删除问题确认</h3>
+          <p class="delete-message">
+            您即将删除这个问题。此操作无法撤销，相关的所有数据将被永久删除。
+          </p>
+          <div class="warning-notice">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 9V13M12 17.02H12.01M4.93 4.93L19.07 19.07" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>请确认您真的要执行此操作</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="action-btn cancel-action-btn" @click="showDeleteQuestionConfirm = false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            取消
+          </button>
+          <button class="action-btn delete-action-btn" @click="deleteQuestion">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 6H5H21M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M19 6V20C19 20.5523 18.5523 21 18 21H6C5.44772 21 5 20.5523 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            确认删除
+          </button>
         </div>
       </div>
     </div>
@@ -330,6 +372,95 @@
           <button class="cancel-btn" @click="showFeedbackUploadModal = false" :disabled="feedbackUploading">取消</button>
           <button class="upload-btn" @click="uploadFeedbackFile" :disabled="!feedbackFile || feedbackUploading">
             {{ feedbackUploading ? '上传中...' : '上传' }}
+          </button>        </div>
+      </div>
+    </div>
+
+    <!-- 问题详情查看弹窗 -->
+    <div v-if="showQuestionDetailModal" class="modal-overlay">
+      <div class="detail-modal">
+        <div class="modal-header">
+          <h3>问题详情</h3>
+          <button class="close-btn" @click="showQuestionDetailModal = false">&times;</button>
+        </div>
+        <div class="modal-body" v-if="currentQuestion">
+          <div class="detail-item">
+            <label>问题ID:</label>
+            <span>{{ currentQuestion.id }}</span>
+          </div>
+          <div class="detail-item">
+            <label>提交者:</label>
+            <span>{{ currentQuestion.userid }}</span>
+          </div>
+          <div class="detail-item">
+            <label>问题内容:</label>
+            <div class="detail-content">{{ currentQuestion.question }}</div>
+          </div>
+          <div class="detail-item">
+            <label>答案:</label>
+            <div class="detail-content">{{ currentQuestion.answer }}</div>
+          </div>
+          <div class="detail-item">
+            <label>审核状态:</label>
+            <span :class="['status-badge', currentQuestion.status === 'reviewed' ? 'reviewed' : 'unreviewed']">
+              {{ currentQuestion.status === 'reviewed' ? '已审核' : '未审核' }}
+            </span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="showQuestionDetailModal = false">关闭</button>
+          <button v-if="currentQuestion && currentQuestion.status === 'unreview'" 
+                  class="approve-btn" 
+                  @click="approveFromDetail">
+            审核通过
+          </button>
+          <button class="edit-btn" @click="openEditFromDetail">编辑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑问题弹窗 -->
+    <div v-if="showEditQuestionModal" class="modal-overlay">
+      <div class="edit-modal">
+        <div class="modal-header">
+          <h3>编辑问题</h3>
+          <button class="close-btn" @click="showEditQuestionModal = false">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editQuestion">问题内容:</label>
+            <textarea 
+              id="editQuestion" 
+              v-model="editForm.question" 
+              class="form-textarea"
+              rows="3"
+              readonly
+            ></textarea>
+            <small class="form-hint">问题内容不可修改</small>
+          </div>
+          <div class="form-group">
+            <label for="editAnswer">答案:</label>
+            <textarea 
+              id="editAnswer" 
+              v-model="editForm.answer" 
+              class="form-textarea"
+              rows="5"
+              placeholder="请输入或修改答案..."
+              required
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editStatus">审核状态:</label>
+            <select id="editStatus" v-model="editForm.status" class="form-select">
+              <option value="unreview">未审核</option>
+              <option value="reviewed">已审核</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-btn" @click="showEditQuestionModal = false">取消</button>
+          <button class="save-btn" @click="saveEditedQuestion" :disabled="!editForm.answer.trim()">
+            保存修改
           </button>
         </div>
       </div>
@@ -346,9 +477,9 @@ import {
   fetchUsers,
   fetchSettings,
   saveSettings,
-  fetchStudentQuestions,
   fetchCampusQuestions,
   approveQuestion,
+  updateQuestionAnswer,
   uploadDocuments,
   deleteDocument as deleteDocumentAPI,
   uploadFeedback,
@@ -395,12 +526,16 @@ export default {
       fileType: '',
       agentType: ''
     });
-    
-    // 删除文档相关
+      // 删除文档相关
     const showDeleteConfirm = ref(false);
-    const docToDeleteId = ref(null);    // 学生问题相关
-    const studentQuestions = ref([]);
-    // 校园共建问题相关
+    const docToDeleteId = ref(null);
+
+    // 删除问题相关
+    const showDeleteQuestionConfirm = ref(false);
+    const questionToDeleteId = ref(null);
+
+    // 学生问题相关
+    const studentQuestions = ref([]);    // 校园共建问题相关
     const campusQuestions = ref([]);
     const showFeedbackUploadModal = ref(false);
     const feedbackFile = ref(null);
@@ -409,6 +544,16 @@ export default {
     const feedbackUploading = ref(false);
     const feedbackUploadProgress = ref(0);
     const feedbackUploadError = ref('');
+
+    // 问题详情和编辑相关
+    const showQuestionDetailModal = ref(false);
+    const showEditQuestionModal = ref(false);
+    const currentQuestion = ref(null);
+    const editForm = ref({
+      question: '',
+      answer: '',
+      status: ''
+    });
 
     // 计算属性
     const isAdmin = computed(() => {
@@ -608,7 +753,43 @@ export default {
         alert('文档删除成功');
       } catch (error) {
         console.error('删除文档失败:', error);
-        alert('删除文档失败，请重试');
+        alert('删除文档失败，请重试');      }
+    };
+
+    // 确认删除问题
+    const confirmDeleteQuestion = (id) => {
+      questionToDeleteId.value = id;
+      showDeleteQuestionConfirm.value = true;
+    };
+
+    // 删除问题
+    const deleteQuestion = async () => {
+      try {
+        // 调用删除API
+        const response = await fetch(`/api/delete/${questionToDeleteId.value}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('删除问题失败');
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          // 从本地数组中移除已删除的问题
+          campusQuestions.value = campusQuestions.value.filter(q => q.id !== questionToDeleteId.value);
+          showDeleteQuestionConfirm.value = false;
+          alert('问题删除成功');
+        } else {
+          throw new Error(result.message || '删除失败');
+        }
+      } catch (error) {
+        console.error('删除问题失败:', error);
+        alert('删除问题失败，请重试');
       }
     };
 
@@ -689,32 +870,84 @@ export default {
       localStorage.removeItem('userId');
       localStorage.removeItem('userRole');
       router.push('/login');
+    };    // 查看问题详情
+    const viewQuestionDetail = (question) => {
+      currentQuestion.value = question;
+      showQuestionDetailModal.value = true;
     };
 
-    // 查看问题
-    const viewQuestion = (id) => {
-      if (id) {
-        alert(`查看问题ID: ${id}`);
-        // 实际项目中可能会打开问题详情页
-      }
-    };    // 回答问题
-    const answerQuestion = (id) => {
-      if (id) {
-        alert(`回答问题ID: ${id}`);
-        // 实际项目中可能会打开回答界面
-      }
+    // 编辑问题答案
+    const editQuestionAnswer = (question) => {
+      currentQuestion.value = question;
+      editForm.value = {
+        question: question.question,
+        answer: question.answer,
+        status: question.status
+      };
+      showEditQuestionModal.value = true;
     };
 
-    // 编辑问题
-    const editQuestion = (id) => {
-      if (id) {
-        alert(`编辑问题ID: ${id}`);
-        // 实际项目中可能会打开编辑界面
+    // 从详情页面打开编辑
+    const openEditFromDetail = () => {
+      showQuestionDetailModal.value = false;
+      editQuestionAnswer(currentQuestion.value);
+    };    // 从详情页面审核
+    const approveFromDetail = async () => {
+      if (currentQuestion.value) {
+        await approveQuestionAction(currentQuestion.value.id);
+        currentQuestion.value.status = 'reviewed';
+        showQuestionDetailModal.value = false;
+      }
+    };    // 保存编辑的问题
+    const saveEditedQuestion = async () => {
+      try {
+        if (!editForm.value.answer.trim()) {
+          alert('答案不能为空');
+          return;
+        }
+
+        const updateData = {
+          question: currentQuestion.value.question, // 包含问题内容
+          answer: editForm.value.answer.trim(),
+          status: editForm.value.status,
+          userid: currentQuestion.value.userid || "admin" // 确保包含userid
+        };
+
+        await updateQuestionAnswer(currentQuestion.value.id, updateData);
+
+        // 更新本地数据
+        const questionIndex = campusQuestions.value.findIndex(q => q.id === currentQuestion.value.id);
+        if (questionIndex !== -1) {
+          campusQuestions.value[questionIndex] = {
+            ...campusQuestions.value[questionIndex],
+            ...updateData
+          };
+        }
+
+        alert('问题编辑成功');
+        showEditQuestionModal.value = false;
+        
+        // 刷新数据
+        await loadCampusQuestions();
+      } catch (error) {
+        console.error('编辑问题失败:', error);
+        alert(`编辑失败: ${error.message || '请重试'}`);
       }
     };    // 审核问题
     const approveQuestionAction = async (id) => {
       try {
-        await approveQuestion(id);
+        // 查找要审核的问题数据
+        const questionToApprove = campusQuestions.value.find(q => q.id === id);
+        if (!questionToApprove) {
+          throw new Error('找不到要审核的问题');
+        }
+        
+        // 传递问题的完整数据
+        await approveQuestion(id, {
+          question: questionToApprove.question,
+          answer: questionToApprove.answer,
+          userid: questionToApprove.userid
+        });
         
         // 更新本地校园共建问题状态
         const campusQuestion = campusQuestions.value.find(q => q.id === id);
@@ -791,9 +1024,8 @@ export default {
       triggerFeedbackFileInput,
       handleFeedbackFileSelected,
       uploadFeedbackFile,
-      viewQuestion,
-      answerQuestion,
-      editQuestion,
+      viewQuestionDetail,
+      editQuestionAnswer,
       approveQuestionAction,
       isFeedbackDragging,
       feedbackUploading,
@@ -804,8 +1036,20 @@ export default {
       onFeedbackDrop,
       showFeedbackUploadModal,
       feedbackFile,
-      feedbackFileInput,
-      docToDeleteId
+      feedbackFileInput,      docToDeleteId,
+      // 新增的变量和方法
+      showQuestionDetailModal,
+      showEditQuestionModal,
+      currentQuestion,
+      editForm,
+      openEditFromDetail,
+      approveFromDetail,
+      saveEditedQuestion,
+      // 删除问题相关
+      showDeleteQuestionConfirm,
+      questionToDeleteId,
+      confirmDeleteQuestion,
+      deleteQuestion
     };
   }
 }
@@ -1137,50 +1381,308 @@ tbody td {
   cursor: not-allowed;
 }
 
+/* 删除确认弹窗样式 */
+.delete-confirm-modal {
+  background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 20px rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.1);
+  overflow: hidden;
+  animation: delete-modal-appear 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transform-origin: center;
+}
+
+.modal-icon-header {
+  position: relative;
+  padding: 30px 20px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #ffebee 0%, #fff 100%);
+  border-bottom: 1px solid rgba(244, 67, 54, 0.1);
+}
+
+.delete-warning-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
+  border-radius: 50%;
+  margin-bottom: 10px;
+  animation: delete-icon-pulse 2s ease-in-out infinite;
+  position: relative;
+}
+
+.delete-warning-icon::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px solid rgba(244, 67, 54, 0.2);
+  border-radius: 50%;
+  animation: delete-ring-pulse 2s ease-in-out infinite;
+}
+
+.delete-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.delete-close-btn:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  transform: rotate(90deg) scale(1.1);
+}
+
+.modal-content-body {
+  padding: 20px 30px 30px;
+  text-align: center;
+}
+
+.delete-title {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.delete-message {
+  margin: 0 0 20px 0;
+  color: #5a6c7d;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.warning-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%);
+  border: 1px solid rgba(255, 152, 0, 0.2);
+  border-radius: 8px;
+  color: #e65100;
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: warning-glow 3s ease-in-out infinite;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 0 30px 30px;
+  justify-content: center;
+}
+
+.action-btn {
+  flex: 1;
+  max-width: 140px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+.cancel-action-btn {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.cancel-action-btn:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.delete-action-btn {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.delete-action-btn:hover {
+  background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+.delete-action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+/* 动画效果 */
+@keyframes delete-modal-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes delete-icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes delete-ring-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes warning-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 152, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.15);
+  }
+}
+
 /* 模态框样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: modal-overlay-fade-in 0.3s ease-out;
 }
 
-.upload-modal,
+/* 基础确认模态框样式 */
 .confirm-modal {
-  background-color: #fff;
+  background-color: white;
   border-radius: 8px;
-  width: 500px;
-  max-width: 90%;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 问题详情模态框 */
+.detail-modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 编辑问题模态框 */
+.edit-modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+  border-radius: 8px 8px 0 0;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 1.2rem;
   color: #333;
+  font-size: 1.2rem;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 24px;
   cursor: pointer;
-  color: #9e9e9e;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
 }
 
 .modal-body {
@@ -1190,229 +1692,269 @@ tbody td {
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+  background-color: #f8f9fa;
+  border-radius: 0 0 8px 8px;
 }
 
+/* 详情项目样式 */
+.detail-item {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.detail-item span {
+  color: #666;
+  font-size: 1rem;
+}
+
+.detail-content {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  color: #333;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* 表单样式 */
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.form-textarea[readonly] {
+  background-color: #f8f9fa;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.form-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.form-hint {
+  color: #999;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* 按钮样式 */
 .cancel-btn {
   padding: 8px 16px;
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #6c757d;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background-color 0.2s;
 }
 
 .cancel-btn:hover {
-  background-color: #e0e0e0;
+  background-color: #545b62;
 }
 
-.delete-btn {
+.save-btn {
   padding: 8px 16px;
-  background-color: #f44336;
+  background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: background-color 0.2s;
 }
 
-.delete-btn:hover {
-  background-color: #d32f2f;
+.save-btn:hover {
+  background-color: #45a049;
 }
 
-/* 上传区域样式 */
-.upload-dropzone {
-  border: 2px dashed #ccc;
-  padding: 30px;
-  text-align: center;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  transition: all 0.3s;
+.save-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-.active-dropzone {
-  border-color: #4CAF50;
-  background-color: #e8f5e9;
-}
-
-.dropzone-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.browse-link {
-  color: #4CAF50;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.file-hint {
-  font-size: 0.8rem;
-  color: #9e9e9e;
-}
-
-.selected-files {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.selected-file {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-.file-name {
-  flex: 1;
-  font-weight: 500;
-}
-
-.file-size {
-  color: #9e9e9e;
-  margin: 0 8px;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  color: #f44336;
-  cursor: pointer;
-  font-size: 1.2rem;
-}
-
-.upload-progress {
-  margin-top: 20px;
-}
-
-.progress-bar {
-  height: 8px;
-  background-color: #e0e0e0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: #4CAF50;
-  border-radius: 4px;
-  transition: width 0.3s;
-}
-
-.progress-text {
-  text-align: center;
-  font-size: 0.9rem;
-  color: #555;
-}
-
-.upload-error {
-  margin-top: 16px;
-  color: #f44336;
-  background-color: #ffebee;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-/* 学生问题管理相关样式 */
-.students-panel .question-content {
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.students-panel .question-content .icon-question {
-  margin-right: 8px;
-  color: #4CAF50;
-}
-
-/* 校园共建问题面板特有样式 */
-.campus-questions-panel .answer-content {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.campus-questions-panel .question-content {
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.campus-questions-panel .question-content .icon-question {
-  margin-right: 8px;
-  color: #4CAF50;
-}
-
-.campus-questions-panel tbody tr:hover {
-  background-color: #f5f5f5;
-}
-
-/* 未审核问题行高亮 */
-.campus-questions-panel .unreviewed-row {
-  background-color: #fff3e0 !important;
-}
-
-.campus-questions-panel .unreviewed-row:hover {
-  background-color: #ffe0b2 !important;
-}
-
-/* 操作按钮样式优化 */
-.action-btn.approve {
+.approve-btn {
+  padding: 8px 16px;
   background-color: #ff9800;
   color: white;
   border: none;
-  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.8rem;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: background-color 0.2s;
 }
 
-.action-btn.approve:hover {
+.approve-btn:hover {
   background-color: #f57c00;
 }
 
-.action-btn.edit {
+.edit-btn {
+  padding: 8px 16px;
   background-color: #2196F3;
   color: white;
   border: none;
-  padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.8rem;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: background-color 0.2s;
 }
 
-.action-btn.edit:hover {
+.edit-btn:hover {
   background-color: #1976D2;
 }
 
-.action-btn.view {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
+/* 状态标签样式 */
+.status-badge.reviewed {
+  background-color: #e8f5e8;
+  color: #2e7d32;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.8rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 500;
 }
 
-.action-btn.view:hover {
-  background-color: #388E3C;
+.status-badge.unreviewed {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .detail-modal,
+  .edit-modal {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .modal-footer button {
+    width: 100%;
+    padding: 12px;
+  }
+
+  /* 删除确认弹窗移动端适配 */
+  .delete-confirm-modal {
+    width: 95%;
+    max-width: 400px;
+    margin: 20px;
+  }
+
+  .modal-icon-header {
+    padding: 20px 15px 15px;
+  }
+
+  .delete-warning-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .delete-warning-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modal-content-body {
+    padding: 15px 20px 20px;
+  }
+
+  .delete-title {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+
+  .delete-message {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  .warning-notice {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 20px 20px;
+  }
+
+  .action-btn {
+    max-width: none;
+    padding: 14px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-overlay-fade-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
 }
 </style>

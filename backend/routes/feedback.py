@@ -10,4 +10,4 @@ def feedback():
     
     # 这里可以添加逻辑来处理反馈，例如保存到数据库或发送到消息队列
     # 目前只是返回成功消息
-    return jsonify({"status": "success", "message": "感谢您的反馈"})
+    return jsonify(data), 200

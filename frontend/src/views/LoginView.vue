@@ -133,32 +133,7 @@ export default {
           this.$router.push('/admin');
           return;
         }
-        
-        // 开发模式且API未连接时，直接使用模拟方式登录
-        if (this.isDevelopment && !this.apiConnected) {
-          // 检查是否是合法用户名/密码
-          if (this.username && this.password.length >= 6) {
-            console.log('开发模式：模拟登录成功');
-            // 设置模拟token
-            localStorage.setItem('token', 'dev-mode-token');
-            localStorage.setItem('userId', this.username);
-            localStorage.setItem('userRole', 'user'); // 默认为普通用户角色
-            
-            if (this.rememberMe) {
-              localStorage.setItem('rememberedUsername', this.username);
-            } else {
-              localStorage.removeItem('rememberedUsername');
-            }
-            
-            // 登录成功后重定向到聊天页面
-            this.$router.push('/chat');
-            return;
-          } else {
-            this.error = '用户名或密码格式不正确';
-            this.loading = false;
-            return;
-          }
-        }
+
 
         // 检查是否是模拟用户
         const mockUser = this.mockUsers.find(user => 
@@ -280,55 +255,32 @@ export default {
       alert('请联系系统管理员重置密码');
     },
     
-    // 检查API连接状态
-    async checkApiConnection() {
-      if (!this.isDevelopment) return true;
-      
-      try {
-        // 尝试调用一个简单的API接口
-        await axios.get('/api/greeting');
-        this.apiConnected = true;
-        console.log('后端API连接成功');
-        return true;
-      } catch (err) {
-        console.warn('后端API连接失败，将使用模拟模式:', err);
-        this.apiConnected = false;
-        return false;
-      }
-    }
   },
   async mounted() {
     // 检查API连接状态
-    await this.checkApiConnection();
+    // await this.checkApiConnection();
     
     // 开发模式且未连接API时自动跳过登录
-    if (this.isDevelopment && !this.apiConnected) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        this.devModeLogin();
-        return;
-      }
-    } else {
+
       // 正常的登录流程，如之前记住用户名等
-      const rememberedUsername = localStorage.getItem('rememberedUsername');
-      if (rememberedUsername) {
-        this.username = rememberedUsername;
-        this.rememberMe = true;
-      }
-      
-      // 如果已有token，则根据用户角色自动跳转到相应页面
-      const token = localStorage.getItem('token');
-      if (token) {
-        const userRole = localStorage.getItem('userRole');
-        if (userRole === 'admin') {
-          // 管理员用户直接进入管理界面
-          this.$router.push('/admin');
-        } else {
-          // 普通用户进入聊天页面
-          this.$router.push('/chat');
+    const rememberedUsername = localStorage.getItem('rememberedUsername');
+    if (rememberedUsername) {
+      this.username = rememberedUsername;
+      this.rememberMe = true;
+    }
+    
+    // 如果已有token，则根据用户角色自动跳转到相应页面
+    const token = localStorage.getItem('token');
+    if (token) {
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'admin') {
+        // 管理员用户直接进入管理界面
+        this.$router.push('/admin');
+      } else {
+        // 普通用户进入聊天页面
+        this.$router.push('/chat');
         }
       }
-    }
   }
 }
 </script>

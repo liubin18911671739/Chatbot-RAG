@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from routes import bp  # 使用共享的Blueprint
 import requests
-import json
+import json, re
 from google import genai
 from google.genai import types
 
@@ -12,34 +12,78 @@ def chat():
     
     # 输出调试信息
     print(f"收到聊天请求: {data}")
-    
-    # 验证输入数据
+      # 验证输入数据
     if not data or 'prompt' not in data:
         print("错误: 缺少prompt字段")
         return jsonify({"status": "error", "message": "缺少提示信息"}), 400
     
     prompt = data['prompt']
     scene_id = data.get('scene_id')  # 支持可选的scene_id参数
-    history = data.get('history', [])  # 获取历史对话，如果没有则为空列表    
-    try:
-        # 调用 Gemini API 获取回答
-        api_response = call_gemini_api(prompt, scene_id, history)
-        
-        # 构建响应
-        response = {
-            "status": "success",
-            "response": api_response,
-            "attachment_data": [],
-            "special_note": ""
-        }
-        
-        print(f"返回响应: {response}")
-        return jsonify(response)
-    except Exception as e:
-        print(f"处理聊天请求时出错: {str(e)}")
-        return jsonify({"status": "error", "message": "处理请求时出错"}), 500
+    
+    response = requests.post(
+        "http://10.10.15.210:5000/api/chat",
+        json={
+            "prompt": prompt,
+            "scene_id": scene_id
+        },
+        headers={"Content-Type": "application/json"},
+        timeout=30
+    )
+    
+    if response.status_code == 200:
+        try:
+            response_data = response.json()
+            if "response" in response_data:
+                response_withoutthink = re.sub(
+                    r'<深度思考>[\s\S]*?</深度思考>', '', response_data["response"]
+                )
+                cleaned_response = re.sub(r'\n{3,}', '\n\n', response_withoutthink).strip()
+                return jsonify({
+                    "status": "success",
+                    "response": cleaned_response,
+                    "attachment_data": [],
+                    "special_note": ""
+                })
+            else:
+                print("警告: 响应中缺少 'response' 字段")
+                # 如果主API响应格式不正确，使用备用API
+                api_response = call_gemini_api(prompt, scene_id)
+                return jsonify({
+                    "status": "success",
+                    "response": api_response,
+                    "attachment_data": [],
+                    "special_note": ""
+                })
+        except json.JSONDecodeError:
+            print("警告: 主API响应不是有效的JSON格式")
+            # 如果主API响应不是JSON，使用备用API
+            api_response = call_gemini_api(prompt, scene_id)
+            return jsonify({
+                "status": "success",
+                "response": api_response,
+                "attachment_data": [],
+                "special_note": ""
+            })
+    else:     
+        try:
+            # 调用 Gemini API 获取回答
+            api_response = call_gemini_api(prompt, scene_id)
+            
+            # 构建响应
+            response = {
+                "status": "success",
+                "response": api_response,
+                "attachment_data": [],
+                "special_note": ""
+            }
+            
+            print(f"返回响应: {response}")
+            return jsonify(response)
+        except Exception as e:
+            print(f"处理聊天请求时出错: {str(e)}")
+            return jsonify({"status": "error", "message": "处理请求时出错"}), 500
 
-def call_gemini_api(prompt, scene_id=None, history=None):
+def call_gemini_api(prompt, scene_id=None):
     """调用 Gemini API 获取回答"""
     # 调试模式：返回精简版回答，避免实际调用API
     # debug_mode = False  # 设置为True开启调试模式
@@ -49,84 +93,67 @@ def call_gemini_api(prompt, scene_id=None, history=None):
     #     return f"精简调试回答: 您问了关于'{prompt[:30]}...'的问题。场景ID: {scene_id or '默认'}"
     
     # # Gemini API 配置
-    try:
-        client = genai.Client(api_key="AIzaSyAZqjyE7wN3Mh81S-bfITb98lA0SISANBY")  # 请替换为实际的 API Key
+    # try:
+    #     client = genai.Client(api_key="AIzaSyAZqjyE7wN3Mh81S-bfITb98lA0SISANBY")  # 请替换为实际的 API Key
         
-        # 根据场景 ID 可以添加不同的系统提示词
-        system_instruction = "你是高校的AI助手，请对问题提供的详细答案，如果不知道就回答不知道，不要进行推理和联想。"
-        if scene_id:
-            # 可以根据不同场景定制系统提示词
-            scene_prompts = {
-                "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
-                "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
-                "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
-                "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
-                "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
-            }
-            if scene_id in scene_prompts:
-                system_instruction = scene_prompts[scene_id]
+    #     # 根据场景 ID 可以添加不同的系统提示词
+    #     system_instruction = "你是高校的AI助手，请对问题提供的详细答案，如果不知道就回答不知道，不要进行推理和联想。"
+    #     if scene_id:
+    #         # 可以根据不同场景定制系统提示词
+    #         scene_prompts = {
+    #             "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
+    #             "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
+    #             "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
+    #             "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
+    #             "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
+    #         }
+    #         if scene_id in scene_prompts:
+    #             system_instruction = scene_prompts[scene_id]
         
-        # 构建对话内容
-        conversation_content = ""
+    #     # 构建对话内容
+    #     conversation_content = ""
         
-        # 添加历史消息（如果有）
-        if history and isinstance(history, list):
-            for msg in history:
-                if 'user' in msg and msg['user']:
-                    conversation_content += f"用户: {msg['user']}\n"
-                if 'assistant' in msg and msg['assistant']:
-                    conversation_content += f"助手: {msg['assistant']}\n"
+    #     # 添加当前用户问题
+    #     conversation_content += f"用户: {prompt}"
+    #       # 调用 Gemini API
+    #     response = client.models.generate_content(
+    #         model="gemini-2.0-flash",
+    #         config=types.GenerateContentConfig(
+    #             system_instruction=system_instruction,
+    #             temperature=0.3,
+    #             max_output_tokens=2000
+    #         ),
+    #         contents=conversation_content
+    #     )
         
-        # 添加当前用户问题
-        conversation_content += f"用户: {prompt}"
-          # 调用 Gemini API
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.3,
-                max_output_tokens=2000
-            ),
-            contents=conversation_content
-        )
+    #     return response.text.strip()  # 返回回答内容，去除首尾空格
         
-        return response.text.strip()  # 返回回答内容，去除首尾空格
-        
-    except Exception as e:
-        print(f"Gemini API 错误: {str(e)}")
-        raise Exception(f"Gemini API 错误: {str(e)}")
+    # except Exception as e:
+    #     print(f"Gemini API 错误: {str(e)}")
+    #     raise Exception(f"Gemini API 错误: {str(e)}")
 
-    # 以下是原来的 DeepSeek API 实现（已注释）
-    """
+    # # 以下是原来的 DeepSeek API 实现（已注释）
     api_key = "sk-8aee1f222a834f1290a7fa365d498bb2"
     api_url = "https://api.deepseek.com/v1/chat/completions"
     
     # 根据场景 ID 可以添加不同的系统提示词
     system_message = "你是北京第二外国语学院的AI助手，请提供简要的回答。"
-    # if scene_id:
-    #     # 可以根据不同场景定制系统提示词
-    #     scene_prompts = {
-    #         "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
-    #         "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
-    #         "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
-    #         "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
-    #         "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
-    #     }
-    #     if scene_id in scene_prompts:
-    #         system_message = scene_prompts[scene_id]
+    if scene_id:
+        # 可以根据不同场景定制系统提示词
+        scene_prompts = {
+            "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
+            "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
+            "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
+            "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
+            "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
+        }
+        if scene_id in scene_prompts:
+            system_message = scene_prompts[scene_id]
     
     # 构建消息列表
     messages = [
         {"role": "system", "content": system_message}
     ]
-    
-    # 添加历史消息（如果有）
-    if history and isinstance(history, list):
-        for msg in history:
-            if 'user' in msg and msg['user']:
-                messages.append({"role": "user", "content": msg['user']})
-            if 'assistant' in msg and msg['assistant']:
-                messages.append({"role": "assistant", "content": msg['assistant']})
     
     # 添加当前用户问题
     messages.append({"role": "user", "content": prompt})
@@ -163,7 +190,6 @@ def call_gemini_api(prompt, scene_id=None, history=None):
         print(f"解析 DeepSeek API 响应时出错: {str(e)}")
         print(f"响应内容: {response_data}")
         raise Exception("无法解析 DeepSeek API 响应")
-    """
 
 # 测试主函数
 def main():
