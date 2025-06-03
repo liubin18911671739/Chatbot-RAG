@@ -482,6 +482,7 @@ import {
   updateQuestionAnswer,
   uploadDocuments,
   deleteDocument as deleteDocumentAPI,
+  deleteCampusQuestion,
   uploadFeedback,
   downloadStudentQuestions as downloadStudentQuestionsAPI,
   toggleUserStatus as toggleUserStatusAPI,
@@ -754,9 +755,7 @@ export default {
       } catch (error) {
         console.error('删除文档失败:', error);
         alert('删除文档失败，请重试');      }
-    };
-
-    // 确认删除问题
+    };    // 确认删除问题
     const confirmDeleteQuestion = (id) => {
       questionToDeleteId.value = id;
       showDeleteQuestionConfirm.value = true;
@@ -765,31 +764,23 @@ export default {
     // 删除问题
     const deleteQuestion = async () => {
       try {
-        // 调用删除API
-        const response = await fetch(`/api/delete/${questionToDeleteId.value}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('删除问题失败');
+        if (!questionToDeleteId.value) {
+          alert('未找到要删除的问题');
+          return;
         }
 
-        const result = await response.json();
+        await deleteCampusQuestion(questionToDeleteId.value);
+
+        // 从本地数组中移除已删除的问题
+        campusQuestions.value = campusQuestions.value.filter(q => q.id !== questionToDeleteId.value);
         
-        if (result.status === 'success') {
-          // 从本地数组中移除已删除的问题
-          campusQuestions.value = campusQuestions.value.filter(q => q.id !== questionToDeleteId.value);
-          showDeleteQuestionConfirm.value = false;
-          alert('问题删除成功');
-        } else {
-          throw new Error(result.message || '删除失败');
-        }
+        showDeleteQuestionConfirm.value = false;
+        questionToDeleteId.value = null;
+        
+        alert('问题删除成功');
       } catch (error) {
         console.error('删除问题失败:', error);
-        alert('删除问题失败，请重试');
+        alert(`删除失败: ${error.message || '请重试'}`);
       }
     };
 

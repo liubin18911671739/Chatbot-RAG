@@ -717,12 +717,7 @@ export const deleteCampusQuestion = async (questionId) => {
   try {
     console.log(`删除校园共建问题ID: ${questionId}`);
     
-    const response = await axios.delete(`${API_BASE_URL}/api/delete/${questionId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    });
+    const response = await axios.delete(`${API_BASE_URL}/api/delete/${questionId}`);
     
     console.log('删除问题响应:', response.status, response.statusText);
     console.log('响应数据:', response.data);

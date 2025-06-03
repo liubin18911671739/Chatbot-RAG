@@ -3,7 +3,7 @@ from routes import bp
 import requests
 
 # 目标API基础URL
-BASE_URL = "http://10.10.15.210:5001"
+BASE_URL = "http://10.10.15.210:5001/api"
 
 @bp.route('/insert', methods=['POST'])
 def insert_question():
@@ -24,21 +24,32 @@ def insert_question():
             if field not in data or not data[field]:
                 return jsonify({
                     "status": "error",
-                    "message": f"缺少必填字段: {field}"
-                }), 400
+                    "message": f"缺少必填字段: {field}"                }), 400
         
         question = data['question'].strip()
         answer = data['answer'].strip()
         userid = data['userid'].strip()
-        status = data.get('status', 'unreview')  # 默认状态为未审核
+          # 根据用户类型设置默认状态
+        if 'status' not in data:
+            # 如果没有提供status，根据用户类型设置默认值
+            if userid == "admin":
+                status = 'reviewed'  # 管理员插入的内容默认为已审核
+            else:
+                status = 'unreviewed'  # 普通用户插入的内容默认为未审核
+        else:
+            status = data['status'].strip()
         
         # 验证状态值
-        valid_statuses = ['reviewed', 'unreview']
+        valid_statuses = ['reviewed', 'unreviewed', 'unreview']  # 兼容多种拼写
         if status not in valid_statuses:
             return jsonify({
                 "status": "error",
-                "message": f"无效的状态值。允许的状态: {', '.join(valid_statuses)}"
+                "message": f"无效的状态值。允许的状态: reviewed, unreviewed"
             }), 400
+        
+        # 统一状态值格式（将unreview转换为unreviewed）
+        if status == 'unreview':
+            status = 'unreviewed'
         
         # 查重检查 - 使用search.py中的函数检查是否已存在相同问题
         from .search import find_question_by_text
@@ -61,16 +72,8 @@ def insert_question():
         
         try:
             # 调用目标API插入问题
-            if userid == "admin":
-                # 管理员用户，直接插入审核状态
-                response = requests.post(f"{BASE_URL}/insert", json=insert_data)
-            # #####################插入管理员问答对（自动审核）
-                print("插入管理员问答:", response.json())
-            else:
-                insert_data['status'] = 'reviewed'
-                response = requests.post(f"{BASE_URL}/insert", json=insert_data)
-            # #####################插入管理员问答对（自动审核）
-                print("插入问答:", response.json())
+            print(f"向目标API插入问题: {insert_data}")
+            response = requests.post(f"{BASE_URL}/insert", json=insert_data)
             
             if response.status_code == 201:
                 result = response.json()

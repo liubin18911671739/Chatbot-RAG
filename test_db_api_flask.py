@@ -3,9 +3,9 @@ import base64
 
 BASE_URL = "http://10.10.15.210:5001/api"
 
-response = requests.delete(f"{BASE_URL}/delete/1562")
+# response = requests.delete(f"{BASE_URL}/delete/1562")
 
-print("删除结果:", response.json())
+# print("删除结果:", response.json())
 # # #####################插入普通问答对（未审核）
 # response = requests.post(f"{BASE_URL}/insert", json={
 #     "question": "什么是Python?",
@@ -16,13 +16,13 @@ print("删除结果:", response.json())
 # print("插入普通问答:", response.json())
 
 # # #####################插入管理员问答对（自动审核）
-# response = requests.post(f"{BASE_URL}/insert", json={
-#     "question": "什么是Flask?",
-#     "answer":"Web框架",
-#     "userid": "admin",
-#     "status": "reviewed" # is_admin为true，说明已经是审核状态
-# })
-# print("插入管理员问答:", response.json())
+response = requests.post(f"{BASE_URL}/insert", json={
+    "question": "什么是Flask?",
+    "answer":"Web框架",
+    "userid": "admin",
+    "status": "reviewed" # is_admin为true，说明已经是审核状态
+})
+print("插入管理员问答:", response.json())
 
 # # #####################搜索所有问答（包含未审核）
 # response = requests.get(f"{BASE_URL}/search", params={
