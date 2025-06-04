@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://10.10.15.211:5000';
 
 // const API_BASE_URL = 'http://localhost:5000';
 // 创建带超时配置的axios实例

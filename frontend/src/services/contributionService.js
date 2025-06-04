@@ -6,7 +6,7 @@
 import axios from 'axios';
 
 // API 基础配置
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://10.10.15.211:5000';
 
 /**
  * 校园共建服务类

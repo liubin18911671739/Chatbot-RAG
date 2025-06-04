@@ -3,7 +3,7 @@ from routes import bp
 import requests
 
 # 目标API基础URL
-TARGET_API_URL = "http://localhost:5000/api"
+TARGET_API_URL = "http://10.10.15.211:5000/api"
 
 
 def find_question_by_text(query_text):

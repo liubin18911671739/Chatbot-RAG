@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 // API基础URL
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://10.10.15.211:5000';
+// const API_BASE_URL = 'http://localhost:5000';
 /**
  * 网络连接监控工具类
  * 用于监控前端应用与API服务器的连接状态
