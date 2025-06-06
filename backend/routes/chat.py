@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from routes import bp  # 使用共享的Blueprint
 import requests
-import json, re
+import json, re, time
 from google import genai
 from google.genai import types
 
@@ -12,76 +12,55 @@ def chat():
     
     # 输出调试信息
     print(f"收到聊天请求: {data}")
-      # 验证输入数据
+    
+    # 验证输入数据
     if not data or 'prompt' not in data:
         print("错误: 缺少prompt字段")
         return jsonify({"status": "error", "message": "缺少提示信息"}), 400
     
     prompt = data['prompt']
     scene_id = data.get('scene_id')  # 支持可选的scene_id参数
-    
-    response = requests.post(
-        "http://10.10.15.210:5000/api/chat",
-        json={
-            "prompt": prompt,
-            "scene_id": scene_id
-        },
-        headers={"Content-Type": "application/json"},
-        timeout=30
-    )
-    
-    if response.status_code == 200:
-        try:
-            response_data = response.json()
-            if "response" in response_data:
-                response_withoutthink = re.sub(
-                    r'<深度思考>[\s\S]*?</深度思考>', '', response_data["response"]
-                )
-                cleaned_response = re.sub(r'\n{3,}', '\n\n', response_withoutthink).strip()
-                return jsonify({
-                    "status": "success",
-                    "response": cleaned_response,
-                    "attachment_data": [],
-                    "special_note": ""
-                })
-            else:
-                print("警告: 响应中缺少 'response' 字段")
-                # 如果主API响应格式不正确，使用备用API
-                api_response = call_gemini_api(prompt, scene_id)
-                return jsonify({
-                    "status": "success",
-                    "response": api_response,
-                    "attachment_data": [],
-                    "special_note": ""
-                })
-        except json.JSONDecodeError:
-            print("警告: 主API响应不是有效的JSON格式")
-            # 如果主API响应不是JSON，使用备用API
-            api_response = call_gemini_api(prompt, scene_id)
-            return jsonify({
-                "status": "success",
-                "response": api_response,
-                "attachment_data": [],
-                "special_note": ""
-            })
-    else:     
-        try:
-            # 调用 Gemini API 获取回答
-            api_response = call_gemini_api(prompt, scene_id)
-            
-            # 构建响应
-            response = {
-                "status": "success",
-                "response": api_response,
-                "attachment_data": [],
-                "special_note": ""
-            }
-            
-            print(f"返回响应: {response}")
-            return jsonify(response)
-        except Exception as e:
-            print(f"处理聊天请求时出错: {str(e)}")
-            return jsonify({"status": "error", "message": "处理请求时出错"}), 500
+    try:
+        response = requests.post(
+            "http://10.10.15.210:5000/api/chat",
+            json={
+                "prompt": prompt,
+                "scene_id": scene_id
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=15
+        )
+        # 检查HTTP状态码
+        if response.status_code == 200:
+                response_data = response.json()
+                print(f"主API返回响应: {response_data}")
+                return jsonify(response_data)
+        else:
+            print(f"主API调用失败，状态码: {response.status_code}, 错误信息: {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"主API请求出错: {str(e)}")
+        return jsonify({"status": "error", "message": "主API请求出错，请稍后再试"}), 500
+
+    # 如果主API失败，使用备用API (Gemini/DeepSeek)
+    # try:
+    #     print("主API失败，调用备用API...")
+    #     api_response = call_gemini_api(prompt, scene_id)
+        
+    #     # 构建响应
+    #     response = {
+    #         "status": "success",
+    #         "response": api_response,
+    #         "attachment_data": [],
+    #         "special_note": ""
+    #     }
+        
+    #     print(f"备用API返回响应: {response}")
+    #     return jsonify(response)
+        
+    # except Exception as e:
+    #     print(f"备用API调用失败: {str(e)}")
+    #     return jsonify({"status": "error", "message": "所有API调用均失败，请稍后再试"}), 500
+
 
 def call_gemini_api(prompt, scene_id=None):
     """调用 Gemini API 获取回答"""
@@ -132,7 +111,7 @@ def call_gemini_api(prompt, scene_id=None):
     #     print(f"Gemini API 错误: {str(e)}")
     #     raise Exception(f"Gemini API 错误: {str(e)}")
 
-    # # 以下是原来的 DeepSeek API 实现（已注释）
+    # 以下是原来的 DeepSeek API 实现（已注释）
     api_key = "sk-8aee1f222a834f1290a7fa365d498bb2"
     api_url = "https://api.deepseek.com/v1/chat/completions"
     

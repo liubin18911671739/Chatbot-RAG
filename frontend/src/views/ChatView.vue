@@ -116,6 +116,9 @@
               </div>
             </div>
           </div> -->
+          <div class="welcome-body">
+              {{ welcomeMessage }}
+          </div>
         </div>
         
         <div v-for="(message, index) in currentMessages" :key="index"
@@ -224,15 +227,13 @@
             <button class="attach-button campus-btn" @click="triggerFileUpload" :disabled="loading">
               <i class="icon-paperclip"></i>
             </button>
-          </div>
-
-          <button
-            @click="sendMessage"
-            :disabled="(loading || (!userInput.trim() && !selectedFile))"
+          </div>          <button
+            @click="loading ? stopMessage() : sendMessage()"
+            :disabled="!loading && (!userInput.trim() && !selectedFile)"
             class="campus-btn campus-btn-primary send-button"
           >
             <span v-if="!loading">发送</span>
-            <span v-else class="sending-spinner"></span>
+            <span v-else>停止</span>
           </button>
         </div>
         
@@ -266,8 +267,7 @@ export default {
       breaks: true,       // 将\n转换为<br>
       linkify: true       // 自动将URL转为链接
     });
-    
-    // 创建响应式状态
+      // 创建响应式状态
     const scenes = ref([]);
     const currentScene = ref(null);
     const messagesHistory = ref({});
@@ -279,6 +279,7 @@ export default {
     const isApiConnected = ref(false);
     const apiCheckInProgress = ref(false);
     const retryCount = ref(0);
+    const abortController = ref(null); // 用于取消请求的控制器
       // 校园共建表单控制
     const isContributionFormVisible = ref(false);
 
@@ -408,7 +409,7 @@ export default {
       try {
         const response = await chatService.getGreeting();
         if (response.data && response.data.greeting) {
-          welcomeMessage.value = response.data.greeting;
+          welcomeMessage.value = "你好！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨";
         }
       } catch (error) {
         console.error('获取欢迎消息失败:', error);
@@ -432,9 +433,7 @@ export default {
 
     const usePrompt = (prompt) => {
       userInput.value = prompt;
-    };
-
-    const sendMessage = async () => {
+    };    const sendMessage = async () => {
       if ((!userInput.value.trim() && !selectedFile.value) || loading.value) return;
 
       const sceneId = currentScene.value.id;
@@ -454,6 +453,9 @@ export default {
       loading.value = true;
 
       try {
+        // 创建 AbortController 以支持取消请求
+        abortController.value = new AbortController();
+        
         // 引入chatStore获取缓存功能
         const chatStore = useChatStore();
         
@@ -474,10 +476,11 @@ export default {
         } else {
           console.log('没有缓存，调用API');
           
-          // 没有缓存，调用API获取回答
+          // 没有缓存，调用API获取回答 - 现在包含重试机制
           const response = await chatService.sendChatMessage(
             userQuestion, 
-            sceneId 
+            sceneId,
+            abortController.value
           );
 
           const data = response;
@@ -504,7 +507,15 @@ export default {
         }
       } catch (error) {
         console.error('获取回答时出错:', error);
-        let errorMessage = '抱歉，获取回答时出现问题，请稍后再试。';
+        
+        // 如果是用户取消的请求，不显示错误
+        if (error.name === 'AbortError' || error.name === 'CanceledError') {
+          console.log('请求已被用户取消');
+          return;
+        }
+        
+        // 使用错误消息，优先使用服务返回的消息
+        let errorMessage = error.message || '抱歉，获取回答时出现问题，请稍后再试。';
         
         // 添加错误消息到历史
         messagesHistory.value[sceneId].push({
@@ -515,11 +526,11 @@ export default {
         
         ElMessage.error(errorMessage);
       } finally {
+        // 清理 AbortController
+        abortController.value = null;
         loading.value = false;
       }
-    };
-
-    const recallLastMessage = () => {
+    };    const recallLastMessage = () => {
       if (!userInput.value.trim() && currentScene.value) {
         const messages = messagesHistory.value[currentScene.value.id] || [];
         for (let i = messages.length - 1; i >= 0; i--) {
@@ -528,6 +539,17 @@ export default {
             break;
           }
         }
+      }
+    };
+
+    // 停止当前消息发送
+    const stopMessage = () => {
+      if (abortController.value) {
+        abortController.value.abort();
+        abortController.value = null;
+        loading.value = false;
+        console.log('用户取消了消息发送');
+        ElMessage.info('已取消发送');
       }
     };
 
@@ -2536,9 +2558,9 @@ onUnmounted(() => {
       loadScenes,
       loadWelcomeMessage,
       selectScene,
-      createNewChat,
-      usePrompt,
+      createNewChat,      usePrompt,
       sendMessage,
+      stopMessage,
       recallLastMessage,
       handleFileSelected,
       removeSelectedFile,

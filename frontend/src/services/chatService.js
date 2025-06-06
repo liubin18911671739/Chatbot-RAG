@@ -89,22 +89,27 @@ class ChatService {
       // }
     }
   }
-
-  async sendChatMessage(prompt, sceneId = null) {
+  async sendChatMessage(prompt, sceneId = null, abortController = null, retryCount = 0) {
+    const maxRetries = 5;
+    
     try {
       const payload = { prompt };
       if (sceneId) {
         payload.scene_id = sceneId;
       }
 
-      // 不再添加对话历史到请求中
-      // if (this.conversationHistory.length > 0) {
-      //   payload.history = this.conversationHistory;
-      // }
+      // 设置请求配置，包括取消信号
+      const requestConfig = {
+        timeout: 60000, // 60秒超时
+      };
+      
+      if (abortController) {
+        requestConfig.signal = abortController.signal;
+      }
 
-    const response = await axios.post(`${API_BASE_URL}/api/chat`, payload);
+      const response = await axios.post(`${API_BASE_URL}/api/chat`, payload, requestConfig);
 
-      // 处理响应，移除<深度思考>标签中的内容
+      // 检查响应是否有效
       if (response.data && response.data.response) {
         // 使用正则表达式去除<深度思考>标签及其内容
         response.data.response = response.data.response.replace(/<深度思考>[\s\S]*?<\/深度思考>/g, '');
@@ -113,31 +118,42 @@ class ChatService {
         response.data.response = response.data.response
           .replace(/\n{3,}/g, '\n\n') // 将3个及以上连续换行符替换为2个
           .trim(); // 去除首尾空白
+        
+        return response.data;
+      } else {
+        // 响应格式不正确，需要重试
+        console.warn(`第${retryCount + 1}次请求响应格式不正确，response.data:`, response.data);
+        
+        if (retryCount < maxRetries - 1) {
+          console.log(`响应格式不正确，准备进行第${retryCount + 2}次重试...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // 递增延迟
+          return this.sendChatMessage(prompt, sceneId, abortController, retryCount + 1);
+        } else {
+          throw new Error('服务器响应超时，稍后再试...');
+        }
+      }
+    } catch (error) {
+      // 如果是用户取消的请求，直接抛出错误
+      if (error.name === 'AbortError' || error.name === 'CanceledError') {
+        throw error;
       }
 
-      // 不再将当前对话添加到历史记录中
-      // this.conversationHistory.push({
-      //   user: prompt,
-      //   assistant: response.data.response || ''
-      // });
-
-      // 不再维护历史记录
-      // if (this.conversationHistory.length > 3) {
-      //   this.conversationHistory.shift(); // 移除最早的一轮对话
-      // }
-
-      return response.data;
-    } catch (error) {
-      console.error('发送聊天消息失败:', error);
-      // 针对不同类型的错误提供更具体的信息
+      console.error(`第${retryCount + 1}次发送聊天消息失败:`, error);
+      
+      // 如果还有重试次数，进行重试
+      if (retryCount < maxRetries - 1) {
+        console.log(`第${retryCount + 1}次请求失败，准备进行第${retryCount + 2}次重试...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // 递增延迟
+        return this.sendChatMessage(prompt, sceneId, abortController, retryCount + 1);
+      }
+      
+      // 所有重试都失败了，返回默认错误消息
       if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
-        // throw new Error('无法连接到API服务器: 请求超时，服务器响应时间过长');
-        throw new Error('请求超时');
+        throw new Error('服务器响应超时，稍后再试...');
       } else if (!error.response) {
-        // throw new Error('无法连接到API服务器: 服务可能不可用或网络问题');
-        throw new Error('网络连接问题');
+        throw new Error('服务器响应超时，稍后再试...');
       } else {
-        throw error;
+        throw new Error('服务器响应超时，稍后再试...');
       }
     }
   }

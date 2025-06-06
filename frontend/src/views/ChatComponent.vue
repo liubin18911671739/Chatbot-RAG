@@ -124,7 +124,7 @@ export default {
     const showRetry = ref(false);
     const lastMessage = ref('');
     const messagesContainer = ref(null);
-    const welcomeMessage = ref('你好！有什么我可以帮助你的吗？');
+    const welcomeMessage = ref('你好！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨');
     const inputField = ref(null);
     const enlargedImage = ref(null);
     const isApiConnected = ref(true);

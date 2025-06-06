@@ -61,16 +61,19 @@ if platform.system() == 'Windows':
     import struct
     import hashlib
     import random
-    
-    # Windows平台上的备用RADIUS认证函数
-    def windows_radius_auth(username, password, server=None, port=None, secret=None, logger=None):
+      # Windows平台上的备用RADIUS认证函数
+    def windows_radius_auth(username, password, nas_ip_address=None, server=None, port=None, secret=None, logger=None):
         """
         Windows平台上的备用RADIUS认证方式，通过socket直接实现基本的RADIUS协议
         """
         if logger:
             logger.info(f"Using Windows-specific RADIUS auth for user: {username}")
+            if nas_ip_address:
+                logger.info(f"Using NAS-IP-Address: {nas_ip_address}")
         else:
             print(f"Using Windows-specific RADIUS auth for user: {username}")
+            if nas_ip_address:
+                print(f"Using NAS-IP-Address: {nas_ip_address}")
             
         # 使用默认参数或传入的参数
         server = server or '10.10.15.95'
@@ -118,6 +121,20 @@ if platform.system() == 'Windows':
             
             # 组装属性部分
             attributes = username_attr + password_attr
+            
+            # 添加NAS-IP-Address属性 (Type=4)
+            if nas_ip_address:
+                try:
+                    import ipaddress
+                    # 将IP地址转换为4字节的二进制格式
+                    ip_bytes = ipaddress.IPv4Address(nas_ip_address).packed
+                    nas_ip_attr = bytes([4, 6]) + ip_bytes  # Type(4) + Length(6) + IP(4)
+                    attributes += nas_ip_attr
+                    if logger:
+                        logger.info(f"Added NAS-IP-Address attribute: {nas_ip_address}")
+                except Exception as ip_error:
+                    if logger:
+                        logger.warning(f"Failed to add NAS-IP-Address: {ip_error}")
             
             # 计算总长度
             total_length = 20 + len(attributes)  # 20是头部长度
@@ -188,13 +205,14 @@ RADIUS_SECRET = b'123456' # Secret should be bytes
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def radius_authenticate(username, password):
+def radius_authenticate(username, password, nas_ip_address=None):
     """
     使用RADIUS服务器验证用户凭据
     
     Args:
         username (str): 用户名
         password (str): 密码
+        nas_ip_address (str): NAS-IP-Address，可选参数，默认为None
         
     Returns:
         bool: 认证成功返回True，否则返回False
@@ -243,18 +261,26 @@ def radius_authenticate(username, password):
             dict=Dictionary(dict_path),
             timeout=5
         )
-        
-        # pyrad API可能有变化，根据不同版本尝试不同的方法
+          # pyrad API可能有变化，根据不同版本尝试不同的方法
         logger.info(f"Attempting to create auth packet for user: {username}")
+        if nas_ip_address:
+            logger.info(f"Using NAS-IP-Address: {nas_ip_address}")
+        
         try:
             # 尝试新版API (pyrad 2.x)
             req = client.CreateAuthPacket(code=1, User_Name=username)
             req["User-Password"] = req.PwCrypt(password)
+            # 添加NAS-IP-Address属性
+            if nas_ip_address:
+                req["NAS-IP-Address"] = nas_ip_address
             logger.info("Using pyrad 2.x API")
         except (AttributeError, TypeError):
             # 兼容旧版API (pyrad 1.x)
             req = client.create_auth_packet(code=1, User_Name=username)
             req["User-Password"] = req.encrypt_password(password)
+            # 添加NAS-IP-Address属性
+            if nas_ip_address:
+                req["NAS-IP-Address"] = nas_ip_address
             logger.info("Using pyrad 1.x API")
         
         logger.info(f"Sending RADIUS authentication request for user: {username}")
@@ -366,14 +392,14 @@ def radius_authenticate(username, password):
                 logger.error("无法连接到RADIUS服务器，请确认服务器地址和端口是否正确，以及服务器是否在运行")
             elif "WinError 10060" in str(e) or "timed out" in str(e):
                 logger.error("连接RADIUS服务器超时，可能是防火墙阻止了连接或服务器响应时间过长")
-            
-            # Windows平台的备用方法：尝试使用直接socket通信
+              # Windows平台的备用方法：尝试使用直接socket通信
             logger.info("Trying Windows fallback direct socket method...")
             try:
                 # 调用前面定义的windows_radius_auth函数
                 result = windows_radius_auth(
                     username, 
                     password, 
+                    nas_ip_address=nas_ip_address,
                     server=RADIUS_SERVER, 
                     port=RADIUS_PORT, 
                     secret=RADIUS_SECRET, 
@@ -396,12 +422,13 @@ def radius_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    nas_ip_address = '10.10.15.211'
     
     if not username or not password:
         return jsonify({"message": "Username and password are required"}), 400
 
-    # 使用统一的认证函数进行验证
-    result = radius_authenticate(username, password)
+    # 使用统一的认证函数进行验证，传入NAS-IP-Address
+    result = radius_authenticate(username, password, nas_ip_address)
     
     if result:
         logger.info(f"Login successful for user: {username}")
@@ -510,8 +537,7 @@ if platform.system() == 'Windows':
         return jsonify({
             "status": "info",
             "platform": "Windows",
-            "message": "Windows平台已应用select.poll补丁和直接Socket通信",
-            "fix_applied": hasattr(select, 'poll'),
+            "message": "Windows平台已应用select.poll补丁和直接Socket通信",            "fix_applied": hasattr(select, 'poll'),
             "socket_auth_available": True
         })
     
@@ -523,11 +549,13 @@ if platform.system() == 'Windows':
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
+        nas_ip_address = data.get('nas_ip_address')  # 添加NAS-IP-Address支持
         
         if not username or not password:
             return jsonify({"message": "Username and password are required"}), 400
             
         result = windows_radius_auth(username, password, 
+                                    nas_ip_address=nas_ip_address,
                                     server=RADIUS_SERVER, 
                                     port=RADIUS_PORT, 
                                     secret=RADIUS_SECRET, 

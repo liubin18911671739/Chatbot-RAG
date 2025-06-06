@@ -96,7 +96,7 @@ def feedback():
 def greeting():
     """获取问候语"""
     # 实现获取问候语的逻辑
-    greeting_text = "欢迎使用我们的QA系统!"
+    greeting_text = "欢迎使用我们的QA系统！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨"
     return jsonify({"status": "success", "greeting": greeting_text})
 
 ## 独立运行服务

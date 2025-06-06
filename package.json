@@ -1,7 +1,7 @@
 {
   "name": "ichat",
   "version": "1.0.0",
-  "description": "{\r   \"registry-mirrors\": [\r     \"https://registry.cn-hangzhou.aliyuncs.com\",\r     \"https://mirror.ccs.tencentyun.com\",\r     \"https://hub-mirror.c.163.com\",\r     \"https://mirror.baidubce.com\"\r   ]\r }",
+  "description": "iChat - 智能校园问答系统",
   "main": "test-delete-campus-question.js",
   "directories": {
     "test": "test"
