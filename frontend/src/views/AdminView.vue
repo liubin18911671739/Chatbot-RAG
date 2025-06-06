@@ -104,9 +104,8 @@
                   <td>{{ question.userid }}</td>
                   <td class="question-content">
                     <i class="icon-question"></i> {{ question.question }}
-                  </td>
-                  <td class="answer-content">
-                    {{ question.answer }}
+                  </td>                  <td class="answer-content">
+                    <div v-html="renderMarkdown(question.answer)"></div>
                   </td>
                   <td>
                     <span :class="['status-badge', question.status === 'reviewed' ? 'reviewed' : 'unreviewed']">
@@ -395,10 +394,9 @@
           <div class="detail-item">
             <label>问题内容:</label>
             <div class="detail-content">{{ currentQuestion.question }}</div>
-          </div>
-          <div class="detail-item">
+          </div>          <div class="detail-item">
             <label>答案:</label>
-            <div class="detail-content">{{ currentQuestion.answer }}</div>
+            <div class="detail-content markdown-content" v-html="renderMarkdown(currentQuestion.answer)"></div>
           </div>
           <div class="detail-item">
             <label>审核状态:</label>
@@ -472,6 +470,7 @@
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import MarkdownIt from 'markdown-it';
 import {
   fetchDocuments,
   fetchUsers,
@@ -495,8 +494,14 @@ import {
 
 export default {
   name: 'AdminView',
-  setup() {
-    const router = useRouter();
+  setup() {    const router = useRouter();
+    
+    // 创建 markdown 解析器实例
+    const md = new MarkdownIt({
+      html: false,        // 禁用HTML标签
+      breaks: true,       // 将\n转换为<br>
+      linkify: true       // 自动将URL转为链接
+    });
     
     // 用户信息
     const username = ref('');
@@ -851,8 +856,13 @@ export default {
       isDragging.value = false;
       const files = Array.from(event.dataTransfer.files);
       if (files.length) {
-        selectedFiles.value = [...selectedFiles.value, ...files];
-      }
+        selectedFiles.value = [...selectedFiles.value, ...files];      }
+    };
+
+    // 渲染 markdown 文本
+    const renderMarkdown = (content) => {
+      if (!content) return '';
+      return md.render(content);
     };
 
     // 退出登录
@@ -1002,9 +1012,9 @@ export default {
       getAgentTypeName,
       getFileTypeName,
       viewDocument,
-      editDocument,
-      formatFileSize,
+      editDocument,      formatFileSize,
       formatDate,
+      renderMarkdown,
       logout,
       uploadOptions,
       studentQuestions,
@@ -1945,7 +1955,142 @@ tbody td {
   }
   to {
     opacity: 1;
-    backdrop-filter: blur(8px);
-  }
+    backdrop-filter: blur(8px);  }
+}
+
+/* Markdown 内容样式 */
+.markdown-content {
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 8px;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+}
+
+.markdown-content h3 {
+  font-size: 1.2em;
+}
+
+.markdown-content p {
+  margin: 8px 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.markdown-content li {
+  margin: 4px 0;
+}
+
+.markdown-content blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #dee2e6;
+  color: #6c757d;
+}
+
+.markdown-content code {
+  background-color: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.markdown-content pre {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-content a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #dee2e6;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.markdown-content hr {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #dee2e6;
+}
+
+/* 答案内容区域特殊样式 */
+.answer-content .markdown-content {
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.detail-content.markdown-content {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
 }
 </style>
