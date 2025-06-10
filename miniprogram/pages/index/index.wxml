@@ -1,0 +1,91 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 头部欢迎区 -->
+  <view class="header-section">
+    <view class="logo-container">
+      <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+      <view class="app-title">棠心问答</view>
+      <view class="app-subtitle">北京第二外国语学院AI助手</view>
+    </view>
+    
+    <!-- 用户信息区 -->
+    <view class="user-section">
+      <view wx:if="{{hasUserInfo}}" class="user-info">
+        <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <text class="nickname">{{userInfo.nickName}}</text>
+      </view>
+      <button wx:else class="login-btn btn btn-outline" bindtap="getUserProfile">
+        点击登录
+      </button>
+    </view>
+  </view>
+
+  <!-- 欢迎消息 -->
+  <view class="greeting-section card">
+    <view class="greeting-icon">🎓</view>
+    <view class="greeting-text">{{greeting}}</view>
+  </view>
+
+  <!-- 快速操作 -->
+  <view class="quick-actions">
+    <view class="action-item" bindtap="startNewChat">
+      <view class="action-icon">💬</view>
+      <view class="action-text">开始对话</view>
+    </view>
+    <view class="action-item" bindtap="selectScene">
+      <view class="action-icon">📚</view>
+      <view class="action-text">选择场景</view>
+    </view>
+  </view>
+
+  <!-- 推荐问题 -->
+  <view wx:if="{{quickQuestions.length > 0}}" class="section">
+    <view class="section-title">推荐问题</view>
+    <view class="quick-questions">
+      <view 
+        wx:for="{{quickQuestions}}" 
+        wx:key="index"
+        class="question-item"
+        data-question="{{item}}"
+        bindtap="onQuickQuestionTap"
+      >
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近聊天 -->
+  <view wx:if="{{recentChats.length > 0}}" class="section">
+    <view class="section-header">
+      <view class="section-title">最近聊天</view>
+      <view class="more-link" bindtap="viewMoreHistory">查看更多</view>
+    </view>
+    <view class="recent-chats">
+      <view 
+        wx:for="{{recentChats}}" 
+        wx:key="sceneId"
+        class="chat-item card"
+        data-scene-id="{{item.sceneId}}"
+        bindtap="onRecentChatTap"
+      >
+        <view class="chat-preview">
+          <view class="chat-content">{{item.lastMessage.content}}</view>
+          <view class="chat-time">{{item.timestamp}}</view>
+        </view>
+        <view class="chat-meta">
+          <view class="message-count">{{item.messageCount}}条消息</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{isLoading}}" class="loading">
+    <view class="loading-dots">
+      <view class="loading-dot"></view>
+      <view class="loading-dot"></view>
+      <view class="loading-dot"></view>
+    </view>
+    <view class="loading-text">加载中...</view>
+  </view>
+</view>

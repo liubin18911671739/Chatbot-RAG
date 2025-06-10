@@ -1,0 +1,250 @@
+/* pages/index/index.wxss */
+.container {
+  padding: 32rpx;
+  background-color: var(--background-color);
+  min-height: 100vh;
+}
+
+/* 头部区域 */
+.header-section {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.logo-container {
+  margin-bottom: 32rpx;
+}
+
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  margin-bottom: 16rpx;
+}
+
+.app-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 8rpx;
+}
+
+.app-subtitle {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+/* 用户信息区 */
+.user-section {
+  margin-bottom: 32rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+}
+
+.nickname {
+  font-size: 32rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.login-btn {
+  margin: 0 auto;
+  display: block;
+  max-width: 200rpx;
+}
+
+/* 欢迎消息 */
+.greeting-section {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  text-align: center;
+  margin-bottom: 40rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.greeting-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.greeting-icon {
+  font-size: 48rpx;
+  margin-bottom: 16rpx;
+}
+
+.greeting-text {
+  font-size: 32rpx;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+}
+
+/* 快速操作 */
+.quick-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 48rpx;
+}
+
+.action-item {
+  flex: 1;
+  background-color: white;
+  border-radius: var(--radius-large);
+  padding: 40rpx 24rpx;
+  text-align: center;
+  box-shadow: var(--shadow-light);
+  transition: all 0.3s;
+}
+
+.action-item:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-medium);
+}
+
+.action-icon {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+
+.action-text {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* 通用区块样式 */
+.section {
+  margin-bottom: 48rpx;
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 24rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.more-link {
+  font-size: 28rpx;
+  color: var(--primary-color);
+}
+
+/* 推荐问题 */
+.quick-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.question-item {
+  background-color: white;
+  padding: 32rpx;
+  border-radius: var(--radius-medium);
+  box-shadow: var(--shadow-light);
+  border-left: 6rpx solid var(--accent-color);
+  font-size: 28rpx;
+  color: var(--text-primary);
+  transition: all 0.3s;
+}
+
+.question-item:active {
+  transform: translateX(8rpx);
+  box-shadow: var(--shadow-medium);
+}
+
+/* 最近聊天 */
+.recent-chats {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.chat-item {
+  padding: 32rpx;
+  transition: all 0.3s;
+}
+
+.chat-item:active {
+  transform: scale(0.98);
+}
+
+.chat-preview {
+  margin-bottom: 16rpx;
+}
+
+.chat-content {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 8rpx;
+}
+
+.chat-time {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+.chat-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-count {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  background-color: var(--background-color);
+  padding: 8rpx 16rpx;
+  border-radius: 16rpx;
+}
+
+/* 加载状态 */
+.loading {
+  text-align: center;
+  padding: 80rpx 32rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-top: 16rpx;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 400px) {
+  .quick-actions {
+    flex-direction: column;
+  }
+  
+  .action-item {
+    margin-bottom: 16rpx;
+  }
+}

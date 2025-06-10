@@ -1,0 +1,130 @@
+<!--pages/feedback/feedback.wxml-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <view class="page-title">意见反馈</view>
+    <view class="page-subtitle">您的每一个建议都很重要</view>
+  </view>
+
+  <!-- 反馈类型选择 -->
+  <view class="section">
+    <view class="section-title">反馈类型</view>
+    <view class="type-selector">
+      <view 
+        wx:for="{{feedbackTypes}}" 
+        wx:key="value"
+        class="type-item {{feedbackType === item.value ? 'active' : ''}}"
+        data-type="{{item.value}}"
+        bindtap="onTypeSelect"
+      >
+        <view class="type-icon">{{item.icon}}</view>
+        <view class="type-label">{{item.label}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 反馈内容 -->
+  <view class="section">
+    <view class="section-title">
+      反馈内容 
+      <text class="required">*</text>
+    </view>
+    <view class="content-input-wrapper card">
+      <textarea
+        class="content-input"
+        placeholder="请详细描述您遇到的问题或建议..."
+        value="{{feedbackContent}}"
+        bindinput="onContentInput"
+        maxlength="500"
+        auto-height
+        show-confirm-bar="{{false}}"
+      ></textarea>
+      <view class="char-count">
+        <text class="{{feedbackContent.length > 450 ? 'warning' : ''}}">
+          {{feedbackContent.length}}/500
+        </text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 截图附件 -->
+  <view class="section">
+    <view class="section-title">截图附件（可选）</view>
+    <view class="images-section card">
+      <view class="images-grid">
+        <view 
+          wx:for="{{images}}" 
+          wx:key="index"
+          class="image-item"
+          data-index="{{index}}"
+          bindtap="previewImage"
+        >
+          <image src="{{item}}" mode="aspectFill" class="image-preview"></image>
+          <view 
+            class="image-delete"
+            data-index="{{index}}"
+            catchtap="deleteImage"
+          >
+            ✕
+          </view>
+        </view>
+        
+        <view 
+          wx:if="{{images.length < maxImages}}"
+          class="image-add"
+          bindtap="chooseImage"
+        >
+          <view class="add-icon">📷</view>
+          <view class="add-text">添加图片</view>
+        </view>
+      </view>
+      <view class="images-tip">
+        <text class="tip-text">最多可上传{{maxImages}}张图片，支持截图和拍照</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 联系方式 -->
+  <view class="section">
+    <view class="section-title">联系方式（可选）</view>
+    <view class="contact-input-wrapper card">
+      <input
+        class="contact-input"
+        placeholder="请留下您的联系方式，以便我们及时回复"
+        value="{{contactInfo}}"
+        bindinput="onContactInput"
+        maxlength="50"
+      />
+    </view>
+    <view class="contact-tip">
+      <text class="tip-text">💡 填写联系方式可以获得问题处理进度通知</text>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-section">
+    <button 
+      class="submit-btn btn {{feedbackContent.trim() ? 'btn-primary' : 'btn-disabled'}}"
+      disabled="{{!feedbackContent.trim() || isSubmitting}}"
+      bindtap="submitFeedback"
+    >
+      <text wx:if="{{!isSubmitting}}">提交反馈</text>
+      <text wx:else>提交中...</text>
+    </button>
+    
+    <button class="clear-btn btn btn-outline" bindtap="clearForm">
+      清空表单
+    </button>
+  </view>
+
+  <!-- 温馨提示 -->
+  <view class="tips-section card">
+    <view class="tips-title">💡 反馈小贴士</view>
+    <view class="tips-content">
+      <view class="tip-item">• 详细描述问题可以帮助我们更快定位和解决</view>
+      <view class="tip-item">• 截图能够更直观地展示问题</view>
+      <view class="tip-item">• 我们会在1-3个工作日内处理您的反馈</view>
+      <view class="tip-item">• 您的隐私信息将得到严格保护</view>
+    </view>
+  </view>
+</view>

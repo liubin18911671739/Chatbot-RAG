@@ -1,0 +1,71 @@
+// project.config.json - 微信小程序项目配置文件
+{
+  "description": "项目配置文件",
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "file",
+        "value": ".eslintrc.js"
+      }
+    ]
+  },
+  "setting": {
+    "bundle": false,
+    "userConfirmedBundleSwitch": false,
+    "urlCheck": false,
+    "scopeDataCheck": false,
+    "coverView": true,
+    "es6": true,
+    "postcss": true,
+    "compileHotReLoad": false,
+    "lazyloadPlaceholderEnable": false,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "autoAudits": false,
+    "newFeature": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "useIsolateContext": true,
+    "nodeModules": false,
+    "enhance": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "showShadowRootInWxmlPanel": true,
+    "packNpmManually": false,
+    "enableEngineNative": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "showES6CompileOption": false,
+    "minifyWXML": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "libVersion": "2.19.4",
+  "appid": "your_app_id_here",
+  "projectname": "iChat%E6%A3%A0%E5%BF%83%E9%97%AE%E7%AD%94",
+  "condition": {
+    "search": {
+      "list": []
+    },
+    "conversation": {
+      "list": []
+    },
+    "game": {
+      "list": []
+    },
+    "plugin": {
+      "list": []
+    },
+    "gamePlugin": {
+      "list": []
+    },
+    "miniprogram": {
+      "list": []
+    }
+  }
+}

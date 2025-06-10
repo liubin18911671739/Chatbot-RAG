@@ -1,0 +1,130 @@
+<!--pages/history/history.wxml-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <view class="header-content">
+      <view class="page-title">聊天历史</view>
+      <view class="header-actions">
+        <view wx:if="{{chatHistories.length > 0}}" class="clear-all-btn" bindtap="clearAllHistory">
+          清空全部
+        </view>
+      </view>
+    </view>
+    <view class="page-subtitle">查看和管理您的聊天记录</view>
+  </view>
+
+  <!-- 搜索和排序 -->
+  <view wx:if="{{chatHistories.length > 0}}" class="controls-section">
+    <!-- 搜索栏 -->
+    <view class="search-container">
+      <view class="search-wrapper">
+        <input
+          class="search-input"
+          placeholder="搜索聊天记录..."
+          value="{{searchText}}"
+          bindinput="onSearchInput"
+        />
+        <view wx:if="{{searchText}}" class="search-clear" bindtap="clearSearch">
+          ✕
+        </view>
+      </view>
+    </view>
+
+    <!-- 排序选项 -->
+    <view class="sort-options">
+      <view class="sort-label">排序:</view>
+      <view 
+        class="sort-btn {{sortBy === 'time' ? 'active' : ''}}"
+        data-type="time"
+        bindtap="onSortChange"
+      >
+        时间 {{sortBy === 'time' ? (sortOrder === 'desc' ? '↓' : '↑') : ''}}
+      </view>
+      <view 
+        class="sort-btn {{sortBy === 'count' ? 'active' : ''}}"
+        data-type="count"
+        bindtap="onSortChange"
+      >
+        消息数 {{sortBy === 'count' ? (sortOrder === 'desc' ? '↓' : '↑') : ''}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 历史记录列表 -->
+  <view class="history-container">
+    <!-- 空状态 -->
+    <view wx:if="{{!isLoading && chatHistories.length === 0}}" class="empty-state">
+      <view class="empty-icon">💭</view>
+      <view class="empty-title">暂无聊天记录</view>
+      <view class="empty-text">开始您的第一次对话吧！</view>
+      <button class="btn btn-primary" bindtap="startNewChat">开始对话</button>
+    </view>
+
+    <!-- 搜索无结果 -->
+    <view wx:elif="{{!isLoading && filteredHistories.length === 0 && searchText}}" class="empty-state">
+      <view class="empty-icon">🔍</view>
+      <view class="empty-title">没有找到匹配的记录</view>
+      <view class="empty-text">尝试使用其他关键词搜索</view>
+      <button class="btn btn-outline" bindtap="clearSearch">清空搜索</button>
+    </view>
+
+    <!-- 历史记录列表 -->
+    <view wx:else class="history-list">
+      <view 
+        wx:for="{{filteredHistories}}" 
+        wx:key="sceneId"
+        class="history-item card"
+        data-scene-id="{{item.sceneId}}"
+        bindtap="viewChat"
+        bindlongpress="showActionSheet"
+      >
+        <!-- 左侧内容 -->
+        <view class="history-content">
+          <view class="history-header">
+            <view class="scene-info">
+              <view class="scene-name">{{item.sceneId || '通用场景'}}</view>
+              <view class="message-count">{{item.messageCount}}条消息</view>
+            </view>
+            <view class="history-time">{{item.formattedTime}}</view>
+          </view>
+          
+          <view class="history-preview">
+            <text class="preview-text">{{item.preview}}</text>
+          </view>
+        </view>
+
+        <!-- 右侧操作 -->
+        <view class="history-actions" catchtap="showActionSheet" data-scene-id="{{item.sceneId}}">
+          <view class="action-icon">⋯</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{isLoading}}" class="loading-container">
+    <view class="loading">
+      <view class="loading-dots">
+        <view class="loading-dot"></view>
+        <view class="loading-dot"></view>
+        <view class="loading-dot"></view>
+      </view>
+      <view class="loading-text">加载历史记录...</view>
+    </view>
+  </view>
+
+  <!-- 底部统计信息 -->
+  <view wx:if="{{chatHistories.length > 0}}" class="stats-section">
+    <view class="stats-card">
+      <view class="stat-item">
+        <view class="stat-value">{{chatHistories.length}}</view>
+        <view class="stat-label">聊天会话</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-value">{{chatHistories.reduce((sum, item) => sum + item.messageCount, 0)}}</view>
+        <view class="stat-label">总消息数</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,240 @@
+/**app.wxss**/
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 200rpx 0;
+  box-sizing: border-box;
+} 
+
+/* 全局样式变量 */
+page {
+  --primary-color: #2E5266;
+  --secondary-color: #4A90A4;
+  --accent-color: #87C38F;
+  --background-color: #f8f9fa;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --border-color: #e0e0e0;
+  --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-medium: 0 4px 8px rgba(0,0,0,0.15);
+  --radius-small: 8rpx;
+  --radius-medium: 16rpx;
+  --radius-large: 24rpx;
+}
+
+/* 通用样式 */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-center {
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  justify-content: space-between;
+}
+
+.flex-around {
+  justify-content: space-around;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* 文本样式 */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 20rpx 40rpx;
+  border-radius: var(--radius-medium);
+  border: none;
+  font-size: 28rpx;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 2rpx solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-small {
+  padding: 12rpx 24rpx;
+  font-size: 24rpx;
+}
+
+.btn-large {
+  padding: 32rpx 64rpx;
+  font-size: 32rpx;
+}
+
+.btn:active {
+  transform: scale(0.98);
+  opacity: 0.8;
+}
+
+/* 卡片样式 */
+.card {
+  background-color: white;
+  border-radius: var(--radius-medium);
+  box-shadow: var(--shadow-light);
+  padding: 32rpx;
+  margin: 16rpx;
+}
+
+/* 输入框样式 */
+.input {
+  border: 2rpx solid var(--border-color);
+  border-radius: var(--radius-small);
+  padding: 24rpx;
+  font-size: 28rpx;
+  background-color: white;
+}
+
+.input:focus {
+  border-color: var(--primary-color);
+}
+
+/* 加载动画 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 8rpx;
+}
+
+.loading-dot {
+  width: 12rpx;
+  height: 12rpx;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  animation: loading-bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes loading-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* 消息气泡样式 */
+.message-bubble {
+  max-width: 80%;
+  padding: 24rpx;
+  border-radius: var(--radius-medium);
+  margin: 16rpx;
+  word-wrap: break-word;
+}
+
+.message-user {
+  background-color: var(--primary-color);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 8rpx;
+}
+
+.message-ai {
+  background-color: #f0f0f0;
+  color: var(--text-primary);
+  align-self: flex-start;
+  border-bottom-left-radius: 8rpx;
+}
+
+/* 场景卡片样式 */
+.scene-card {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-radius: var(--radius-large);
+  padding: 40rpx;
+  margin: 16rpx;
+  box-shadow: var(--shadow-medium);
+  position: relative;
+  overflow: hidden;
+}
+
+.scene-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* 状态样式 */
+.status-available {
+  color: var(--accent-color);
+}
+
+.status-developing {
+  color: #ffa726;
+}
+
+.status-unavailable {
+  color: #ef5350;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 400px) {
+  .card {
+    margin: 8rpx;
+    padding: 24rpx;
+  }
+  
+  .btn {
+    padding: 16rpx 32rpx;
+    font-size: 26rpx;
+  }
+}

@@ -1,0 +1,124 @@
+<!--pages/chat/chat.wxml-->
+<view class="chat-container">
+  <!-- 聊天消息区 -->
+  <scroll-view 
+    class="messages-container"
+    scroll-y="{{true}}"
+    scroll-top="{{scrollTop}}"
+    bindscroll="onScroll"
+    style="margin-bottom: {{keyboardHeight}}px"
+  >
+    <view class="messages-list">
+      <view 
+        wx:for="{{messages}}" 
+        wx:key="id"
+        class="message-wrapper {{item.sender}}"
+      >
+        <!-- AI消息 -->
+        <view wx:if="{{item.sender === 'ai'}}" class="message ai-message">
+          <view class="message-avatar">
+            <image src="/images/ai-avatar.png" class="avatar-img"></image>
+          </view>
+          <view class="message-content">
+            <view class="message-bubble {{item.type === 'error' ? 'error-bubble' : ''}}">
+              <text class="message-text">{{item.content}}</text>
+            </view>
+            <view wx:if="{{item.sources && item.sources.length > 0}}" class="message-sources">
+              <text class="sources-label">参考来源：</text>
+              <view wx:for="{{item.sources}}" wx:for-item="source" wx:key="index" class="source-item">
+                <text class="source-text">{{source.title || source.document}}</text>
+              </view>
+            </view>
+            <view class="message-time">{{item.timestamp}}</view>
+          </view>
+          <view class="message-actions">
+            <view 
+              class="action-btn copy-btn"
+              data-content="{{item.content}}"
+              bindtap="copyMessage"
+            >
+              📋
+            </view>
+          </view>
+        </view>
+
+        <!-- 用户消息 -->
+        <view wx:else class="message user-message">
+          <view class="message-content">
+            <view 
+              class="message-bubble"
+              data-content="{{item.content}}"
+              data-id="{{item.id}}"
+              bindlongpress="onMessageLongPress"
+            >
+              <text class="message-text">{{item.content}}</text>
+            </view>
+            <view class="message-time">{{item.timestamp}}</view>
+          </view>
+          <view class="message-avatar">
+            <view class="user-avatar">我</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 加载状态 -->
+      <view wx:if="{{isLoading}}" class="loading-message">
+        <view class="message-avatar">
+          <image src="/images/ai-avatar.png" class="avatar-img"></image>
+        </view>
+        <view class="message-content">
+          <view class="loading-bubble">
+            <view class="typing-indicator">
+              <view class="typing-dot"></view>
+              <view class="typing-dot"></view>
+              <view class="typing-dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 回到底部按钮 -->
+  <view 
+    wx:if="{{showScrollToBottom}}" 
+    class="scroll-to-bottom"
+    bindtap="scrollToBottom"
+  >
+    ⬇️
+  </view>
+
+  <!-- 输入区域 -->
+  <view class="input-container">
+    <view class="input-wrapper">
+      <textarea
+        class="message-input"
+        placeholder="输入您的问题..."
+        value="{{inputText}}"
+        bindinput="onInputChange"
+        bindconfirm="onInputConfirm"
+        maxlength="500"
+        auto-height
+        show-confirm-bar="{{false}}"
+        adjust-position="{{true}}"
+      ></textarea>
+      <view class="input-actions">
+        <button 
+          class="send-btn {{inputText.trim() ? 'active' : ''}}"
+          disabled="{{!inputText.trim() || isLoading}}"
+          bindtap="onSendTap"
+        >
+          发送
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 工具栏 -->
+  <view class="toolbar">
+    <view class="toolbar-btn" bindtap="clearChat">
+      <view class="toolbar-icon">🗑️</view>
+      <view class="toolbar-text">清空</view>
+    </view>
+  </view>
+</view>

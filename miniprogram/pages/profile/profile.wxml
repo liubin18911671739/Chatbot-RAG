@@ -1,0 +1,192 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+  <!-- 用户信息区 -->
+  <view class="user-section card">
+    <view wx:if="{{hasUserInfo}}" class="user-info">
+      <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      <view class="user-details">
+        <view class="user-name">{{userInfo.nickName}}</view>
+        <view class="user-desc">棠心问答用户</view>
+      </view>
+    </view>
+    <view wx:else class="login-section">
+      <view class="login-icon">👤</view>
+      <view class="login-text">点击登录，获得更好的使用体验</view>
+      <button class="btn btn-primary login-btn" bindtap="getUserProfile">
+        微信登录
+      </button>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stats-section card">
+    <view class="stats-title">使用统计</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <view class="stat-value">{{statisticsData.totalChats}}</view>
+        <view class="stat-label">聊天会话</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{statisticsData.totalMessages}}</view>
+        <view class="stat-label">消息总数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value">{{statisticsData.favoriteScene}}</view>
+        <view class="stat-label">常用场景</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置区域 -->
+  <view class="settings-section">
+    <view class="section-title">应用设置</view>
+    
+    <!-- 声音设置 -->
+    <view class="setting-item card">
+      <view class="setting-info">
+        <view class="setting-icon">🔊</view>
+        <view class="setting-content">
+          <view class="setting-name">声音提示</view>
+          <view class="setting-desc">开启消息提示音</view>
+        </view>
+      </view>
+      <switch 
+        checked="{{settings.enableSound}}" 
+        data-key="enableSound"
+        bindchange="onSettingChange"
+        color="var(--primary-color)"
+      />
+    </view>
+
+    <!-- 震动设置 -->
+    <view class="setting-item card">
+      <view class="setting-info">
+        <view class="setting-icon">📳</view>
+        <view class="setting-content">
+          <view class="setting-name">震动反馈</view>
+          <view class="setting-desc">开启触觉反馈</view>
+        </view>
+      </view>
+      <switch 
+        checked="{{settings.enableVibration}}" 
+        data-key="enableVibration"
+        bindchange="onSettingChange"
+        color="var(--primary-color)"
+      />
+    </view>
+
+    <!-- 字体大小 -->
+    <view class="setting-item card">
+      <view class="setting-info">
+        <view class="setting-icon">🔤</view>
+        <view class="setting-content">
+          <view class="setting-name">字体大小</view>
+          <view class="setting-desc">调整文字显示大小</view>
+        </view>
+      </view>
+      <picker 
+        range="{{['小', '中', '大']}}" 
+        value="{{settings.fontSize === 'small' ? 0 : settings.fontSize === 'medium' ? 1 : 2}}"
+        data-key="fontSize"
+        bindchange="onFontSizeChange"
+      >
+        <view class="picker-text">
+          {{settings.fontSize === 'small' ? '小' : settings.fontSize === 'medium' ? '中' : '大'}}
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 数据管理 -->
+  <view class="data-section">
+    <view class="section-title">数据管理</view>
+    
+    <view class="action-item card" bindtap="clearAllHistory">
+      <view class="action-info">
+        <view class="action-icon">🗑️</view>
+        <view class="action-content">
+          <view class="action-name">清空聊天记录</view>
+          <view class="action-desc">删除所有本地聊天历史</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+
+    <view class="action-item card" bindtap="clearCache">
+      <view class="action-info">
+        <view class="action-icon">🧹</view>
+        <view class="action-content">
+          <view class="action-name">清空应用缓存</view>
+          <view class="action-desc">清除所有本地数据</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+  </view>
+
+  <!-- 帮助与支持 -->
+  <view class="help-section">
+    <view class="section-title">帮助与支持</view>
+    
+    <view class="action-item card" bindtap="provideFeedback">
+      <view class="action-info">
+        <view class="action-icon">💬</view>
+        <view class="action-content">
+          <view class="action-name">意见反馈</view>
+          <view class="action-desc">提出您的建议和意见</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+
+    <view class="action-item card" bindtap="showHelp">
+      <view class="action-info">
+        <view class="action-icon">❓</view>
+        <view class="action-content">
+          <view class="action-name">使用帮助</view>
+          <view class="action-desc">查看使用说明</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+
+    <view class="action-item card" bindtap="contactSupport">
+      <view class="action-info">
+        <view class="action-icon">📞</view>
+        <view class="action-content">
+          <view class="action-name">联系技术支持</view>
+          <view class="action-desc">获取技术帮助</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+
+    <view class="action-item card" bindtap="checkUpdate">
+      <view class="action-info">
+        <view class="action-icon">🔄</view>
+        <view class="action-content">
+          <view class="action-name">检查更新</view>
+          <view class="action-desc">查看是否有新版本</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+
+    <view class="action-item card" bindtap="showAbout">
+      <view class="action-info">
+        <view class="action-icon">ℹ️</view>
+        <view class="action-content">
+          <view class="action-name">关于我们</view>
+          <view class="action-desc">版本信息和开发团队</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+  </view>
+
+  <!-- 版本信息 -->
+  <view class="version-info">
+    <text class="version-text">棠心问答 v{{version}}</text>
+    <text class="copyright-text">© 2025 北京第二外国语学院</text>
+  </view>
+</view>

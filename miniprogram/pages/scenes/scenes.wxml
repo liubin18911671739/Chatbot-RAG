@@ -1,0 +1,98 @@
+<!--pages/scenes/scenes.wxml-->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <view class="page-title">选择服务场景</view>
+    <view class="page-subtitle">选择适合您需求的专业服务领域</view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-container">
+    <view class="search-wrapper">
+      <input
+        class="search-input"
+        placeholder="搜索场景..."
+        value="{{searchText}}"
+        bindinput="onSearchInput"
+      />
+      <view wx:if="{{searchText}}" class="search-clear" bindtap="clearSearch">
+        ✕
+      </view>
+    </view>
+  </view>
+
+  <!-- 场景列表 -->
+  <view class="scenes-container">
+    <!-- 上次选择提示 -->
+    <view wx:if="{{lastSelectedScene}}" class="last-scene-hint">
+      <text class="hint-text">💡 上次您选择了"{{lastSelectedScene}}"场景</text>
+    </view>
+
+    <view wx:if="{{!isLoading && filteredScenes.length === 0}}" class="empty-state">
+      <view class="empty-icon">🔍</view>
+      <view class="empty-text">没有找到匹配的场景</view>
+      <button class="btn btn-outline" bindtap="clearSearch">清空搜索</button>
+    </view>
+
+    <view class="scenes-grid">
+      <view 
+        wx:for="{{filteredScenes}}" 
+        wx:key="id"
+        class="scene-card {{item.status}}"
+        data-scene="{{item}}"
+        bindtap="onSceneSelect"
+        bindlongpress="onSceneDetail"
+      >
+        <!-- 场景图标 -->
+        <view class="scene-icon">
+          {{item.icon || '📚'}}
+        </view>
+        
+        <!-- 场景信息 -->
+        <view class="scene-info">
+          <view class="scene-name">{{item.name}}</view>
+          <view class="scene-description">{{item.description}}</view>
+        </view>
+        
+        <!-- 状态指示器 -->
+        <view class="scene-status">
+          <view class="status-indicator status-{{item.status}}"></view>
+          <text class="status-text">
+            <block wx:if="{{item.status === 'available'}}">可用</block>
+            <block wx:elif="{{item.status === 'developing'}}">开发中</block>
+            <block wx:else>维护中</block>
+          </text>
+        </view>
+        
+        <!-- 选中标记 -->
+        <view wx:if="{{lastSelectedScene === item.id}}" class="selected-mark">
+          ✓
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{isLoading}}" class="loading-container">
+    <view class="loading">
+      <view class="loading-dots">
+        <view class="loading-dot"></view>
+        <view class="loading-dot"></view>
+        <view class="loading-dot"></view>
+      </view>
+      <view class="loading-text">加载场景中...</view>
+    </view>
+  </view>
+
+  <!-- 底部说明 -->
+  <view class="bottom-info">
+    <view class="info-item">
+      <view class="info-icon">💡</view>
+      <view class="info-text">长按场景卡片可查看详细信息</view>
+    </view>
+    <view class="info-item">
+      <view class="info-icon">🔄</view>
+      <view class="info-text">下拉可刷新场景列表</view>
+    </view>
+  </view>
+</view>
