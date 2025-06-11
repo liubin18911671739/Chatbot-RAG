@@ -10,6 +10,7 @@ Page({
     messages: [],
     inputText: '',
     isLoading: false,
+    isInputEmpty: true, // 新增：用于判断输入是否为空
     currentScene: null,
     sceneId: null,
     scrollTop: 0,
@@ -138,22 +139,26 @@ Page({
           this.scrollToBottom()
         }, 100)
       }
-    })
-  },
+    })  },
+
   // 输入框变化
   onInputChange(e) {
     const inputText = e.detail.value
+    const isEmpty = inputText.trim() === '';
     console.log('输入框内容变化:', {
       inputText,
       trimmed: inputText.trim(),
       length: inputText.trim().length,
-      isEmpty: !inputText.trim()
+      isEmpty: isEmpty
     })
     
     this.setData({
-      inputText
+      inputText,
+      isInputEmpty: isEmpty // 更新 isInputEmpty 状态
     })
-  },  // 发送消息
+  },
+
+  // 发送消息
   async sendMessage(customText = null) {
     console.log('sendMessage 方法被调用', {
       customText,
@@ -193,7 +198,8 @@ Page({
     this.setData({
       messages: [...this.data.messages, userMessage],
       inputText: '',
-      isLoading: true
+      isLoading: true,
+      isInputEmpty: true // 输入框清空，所以设置为 true
     })
 
     // 滚动到底部
@@ -231,7 +237,7 @@ Page({
       console.error('发送消息失败:', error)
       this.handleApiError('网络请求失败，请稍后重试')
     } finally {
-      this.setData({ isLoading: false })
+      this.setData({ isLoading: false }) // isInputEmpty 保持 true 因为 inputText 为空
       this.scrollToBottom()
       this.saveChatHistory()
     }
@@ -305,13 +311,13 @@ Page({
       }
     })
   },
-
   // 删除消息
   deleteMessage(messageId) {
     const messages = this.data.messages.filter(msg => msg.id !== messageId)
     this.setData({ messages })
     this.saveChatHistory()
-  },  // 点击发送按钮
+  },
+  // 点击发送按钮
   onSendTap() {
     console.log('发送按钮被点击', {
       inputText: this.data.inputText,
@@ -325,7 +331,10 @@ Page({
     }
     
     // 直接发送消息
-    this.sendMessage()  },  // 键盘确认发送
+    this.sendMessage()
+  },
+
+  // 键盘确认发送
   onInputConfirm() {
     console.log('键盘确认发送', {
       inputText: this.data.inputText,

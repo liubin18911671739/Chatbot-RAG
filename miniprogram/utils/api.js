@@ -91,7 +91,7 @@ class ApiService {
       data
     })
   }  // 聊天API - 统一使用配置的baseUrl
-  async sendMessage(prompt, userId = 'miniprogram_user', sceneId = null, retryCount = 0) {
+  async sendMessage(prompt, userId = 'miniprogram_user', sceneId = 'general', retryCount = 0) {
     const maxRetries = 3; // 减少重试次数，提高响应速度
     
     try {
@@ -101,9 +101,8 @@ class ApiService {
       }
 
       const payload = { prompt: prompt.trim() };
-      if (sceneId) {
-        payload.scene_id = sceneId;
-      }
+      // 默认使用 'general' 场景，如果传入了其他场景则使用传入的值
+      payload.scene_id = sceneId || 'general';
 
       // 设置请求配置
       const requestOptions = {

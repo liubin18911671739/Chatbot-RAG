@@ -32,10 +32,10 @@
       <view class="action-icon">💬</view>
       <view class="action-text">开始对话</view>
     </view>
-    <view class="action-item" bindtap="selectScene">
+    <!-- <view class="action-item" bindtap="selectScene">
       <view class="action-icon">📚</view>
       <view class="action-text">选择场景</view>
-    </view>
+    </view> -->
   </view>
 
   <!-- 推荐问题 -->
