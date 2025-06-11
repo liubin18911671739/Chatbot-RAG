@@ -44,7 +44,7 @@ function getCurrentEnv() {
   
   // 开发者工具
   if (systemInfo.platform === 'devtools') {
-    return 'development'
+    return 'development' // 开发工具使用开发环境
   }
   
   // 根据版本号判断环境

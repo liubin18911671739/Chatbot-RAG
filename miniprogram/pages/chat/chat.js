@@ -161,16 +161,6 @@ Page({
       isLoading: this.data.isLoading
     })
     
-    // 测试工具函数是否可用
-    try {
-      const testId = utils.generateId()
-      console.log('工具函数测试通过，生成ID:', testId)
-    } catch (error) {
-      console.error('工具函数测试失败:', error)
-      utils.showToast('系统错误，请重试')
-      return
-    }
-    
     const text = customText || this.data.inputText.trim()
     console.log('准备发送的文本:', text)
     
@@ -204,7 +194,9 @@ Page({
       messages: [...this.data.messages, userMessage],
       inputText: '',
       isLoading: true
-    })    // 滚动到底部
+    })
+
+    // 滚动到底部
     this.scrollToBottom()
 
     try {
@@ -213,7 +205,7 @@ Page({
       
       console.log('API响应:', response)
       
-      // 处理响应 - 根据新的API实现，直接检查response字段
+      // 处理响应
       if (response && response.response) {
         const aiMessage = {
           id: utils.generateId(),
@@ -332,184 +324,8 @@ Page({
       return
     }
     
-    // 检查是否在开发环境
-    const isDev = wx.getSystemInfoSync().platform === 'devtools'
-    
-    if (isDev) {
-      // 开发环境：提供选择
-      wx.showActionSheet({
-        itemList: ['本地测试发送', '网络API发送'],
-        success: (res) => {
-          if (res.tapIndex === 0) {
-            // 本地测试
-            this.localTestSend(text)
-          } else {
-            // 网络API（可能会有域名限制）
-            this.simpleSendMessage(text)
-          }
-        }
-      })
-    } else {
-      // 生产环境：直接使用API
-      this.sendMessage()
-    }
-  },
-  // 测试按钮（用于调试）
-  testSend() {
-    console.log('测试按钮被点击')
-    
-    // 检查是否在开发环境
-    const isDev = wx.getSystemInfoSync().platform === 'devtools'
-    
-    if (isDev) {
-      // 开发环境使用本地模拟
-      this.localTestSend('这是一条测试消息，请回复')
-    } else {
-      // 生产环境使用实际API
-      this.simpleSendMessage('这是一条测试消息，请回复')
-    }
-  },
-
-  // 本地测试发送（不依赖网络）
-  localTestSend(text) {
-    console.log('=== 本地测试发送开始 ===')
-    console.log('发送文本:', text)
-    
-    // 添加用户消息
-    const userMessage = {
-      id: utils.generateId(),
-      content: text,
-      sender: 'user',
-      timestamp: Date.now(),
-      type: 'text'
-    }
-    
-    this.setData({
-      messages: [...this.data.messages, userMessage],
-      inputText: '',
-      isLoading: true
-    })
-    
-    this.scrollToBottom()
-    
-    // 模拟API延迟
-    setTimeout(() => {
-      const aiMessage = {
-        id: utils.generateId(),
-        content: `收到您的消息："${text}"。\n\n这是一条本地测试回复，用于验证聊天界面功能是否正常。\n\n✅ 消息发送功能正常\n✅ 界面显示功能正常\n✅ 滚动功能正常\n\n您可以继续测试其他功能。`,
-        sender: 'ai',
-        timestamp: Date.now(),
-        type: 'text',
-        sources: [
-          { title: '本地测试', document: 'local_test.md' }
-        ]
-      }
-      
-      this.setData({
-        messages: [...this.data.messages, aiMessage],
-        isLoading: false
-      })
-      
-      this.scrollToBottom()
-      this.saveChatHistory()
-      
-      console.log('本地测试消息已添加')
-      console.log('=== 本地测试发送结束 ===')
-    }, 2000) // 2秒延迟模拟网络请求
-  },
-  // 简化版发送消息（用于调试和备用）
-  async simpleSendMessage(text) {
-    console.log('=== 简化发送消息开始 ===')
-    console.log('发送文本:', text)
-    
-    if (!text || !text.trim()) {
-      utils.showToast('请输入消息内容')
-      return
-    }
-    
-    // 添加用户消息
-    const userMessage = {
-      id: utils.generateId(),
-      content: text.trim(),
-      sender: 'user',
-      timestamp: Date.now(),
-      type: 'text'
-    }
-    
-    this.setData({
-      messages: [...this.data.messages, userMessage],
-      inputText: '',
-      isLoading: true
-    })
-    
-    this.scrollToBottom()
-    
-    try {
-      console.log('开始API调用...')
-      
-      // 使用原始wx.request来测试网络连接
-      const apiResponse = await new Promise((resolve, reject) => {
-        wx.request({
-          url: 'http://10.10.15.211:5000/api/chat',
-          method: 'POST',
-          data: {
-            prompt: text.trim(),
-            scene_id: this.data.sceneId
-          },
-          header: {
-            'Content-Type': 'application/json'
-          },
-          timeout: 30000,
-          success: resolve,
-          fail: reject
-        })
-      })
-      
-      console.log('API响应:', apiResponse)
-      
-      if (apiResponse.statusCode === 200 && apiResponse.data && apiResponse.data.response) {
-        // 处理响应内容
-        let responseText = apiResponse.data.response
-        
-        // 去除深度思考标签
-        responseText = responseText.replace(/<深度思考>[\s\S]*?<\/深度思考>/g, '')
-        
-        // 格式化文本
-        responseText = responseText.replace(/\n{3,}/g, '\n\n').trim()
-        
-        const aiMessage = {
-          id: utils.generateId(),
-          content: responseText,
-          sender: 'ai',
-          timestamp: Date.now(),
-          type: 'text',
-          sources: apiResponse.data.sources || [],
-          attachments: apiResponse.data.attachment_data || []
-        }
-        
-        this.setData({
-          messages: [...this.data.messages, aiMessage]
-        })
-        
-        console.log('AI消息已添加')
-      } else {
-        console.error('API响应格式错误:', apiResponse)
-        this.handleApiError('服务器响应格式错误')
-      }
-      
-    } catch (error) {
-      console.error('API调用失败:', error)
-      this.handleApiError('网络请求失败: ' + (error.errMsg || error.message || '未知错误'))
-    } finally {
-      this.setData({ isLoading: false })
-      this.scrollToBottom()
-      this.saveChatHistory()
-    }
-    
-    console.log('=== 简化发送消息结束 ===')
-  },
-
-  // 键盘确认发送
+    // 直接发送消息
+    this.sendMessage()  },  // 键盘确认发送
   onInputConfirm() {
     console.log('键盘确认发送', {
       inputText: this.data.inputText,

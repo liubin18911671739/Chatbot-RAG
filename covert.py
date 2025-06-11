@@ -132,7 +132,7 @@ def main():
     print("=" * 60)
     
     # 输入文件路径
-    input_path = "miniprogram/images/scenes-active.png"
+    input_path = "miniprogram/images/ai-avatar.png"
     
     # 检查输入文件是否存在
     if not os.path.exists(input_path):
@@ -147,8 +147,8 @@ def main():
     
     # 输出文件列表
     output_files = [
-        "scenes-active.png",
-        "miniprogram/images/scenes-active.png"
+        "ai-avatar.png",
+        "miniprogram/images/ai-avatar.png"
     ]
     
     for output_path in output_files:

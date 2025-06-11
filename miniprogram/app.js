@@ -18,6 +18,14 @@ App({
     
     // 校园网络环境检测
     this.validateNetworkAccess()
+    
+    // 启用vConsole查看日志
+    wx.setEnableDebug({
+      enableDebug: true
+    })
+    
+    // 运行调试
+    this.runDebug()
   },
   initializeApp() {
     // 获取系统信息
@@ -75,6 +83,17 @@ App({
       
       return allowOnError
     }
+  },
+  runDebug() {
+    console.log('=== 环境调试开始 ===')
+    
+    const { getConfig } = require('./config/env.js')
+    const config = getConfig()
+    
+    console.log('当前环境:', config.env)
+    console.log('API地址:', config.baseURL)
+    console.log('预期地址: http://10.10.15.211:5000')
+    console.log('地址是否正确:', config.baseURL === 'http://10.10.15.211:5000')
   },
   globalData: {
     userInfo: null,

@@ -100,7 +100,7 @@ class ChatService {
 
       // 设置请求配置，包括取消信号
       const requestConfig = {
-        timeout: 40000, // 40秒超时
+        timeout: 40000, // 60秒超时
       };
       
       if (abortController) {

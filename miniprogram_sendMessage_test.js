@@ -29,6 +29,7 @@ const mockWx = {
   getSystemInfoSync: function() {
     return {
       platform: 'devtools'
+      // platform: 'production' // 模拟生产环境
     };
   }
 };
