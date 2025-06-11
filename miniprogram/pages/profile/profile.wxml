@@ -123,7 +123,6 @@
       <view class="action-arrow">></view>
     </view>
   </view>
-
   <!-- 帮助与支持 -->
   <view class="help-section">
     <view class="section-title">帮助与支持</view>
@@ -134,6 +133,17 @@
         <view class="action-content">
           <view class="action-name">意见反馈</view>
           <view class="action-desc">提出您的建议和意见</view>
+        </view>
+      </view>
+      <view class="action-arrow">></view>
+    </view>
+
+    <view class="action-item card" bindtap="openAdminConfig">
+      <view class="action-info">
+        <view class="action-icon">⚙️</view>
+        <view class="action-content">
+          <view class="action-name">管理员配置</view>
+          <view class="action-desc">系统管理和网络设置</view>
         </view>
       </view>
       <view class="action-arrow">></view>

@@ -119,10 +119,9 @@
       <view class="stat-item">
         <view class="stat-value">{{chatHistories.length}}</view>
         <view class="stat-label">聊天会话</view>
-      </view>
-      <view class="stat-divider"></view>
+      </view>      <view class="stat-divider"></view>
       <view class="stat-item">
-        <view class="stat-value">{{chatHistories.reduce((sum, item) => sum + item.messageCount, 0)}}</view>
+        <view class="stat-value">{{totalMessages}}</view>
         <view class="stat-label">总消息数</view>
       </view>
     </view>

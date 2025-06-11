@@ -100,7 +100,7 @@ class ChatService {
 
       // 设置请求配置，包括取消信号
       const requestConfig = {
-        timeout: 60000, // 60秒超时
+        timeout: 40000, // 40秒超时
       };
       
       if (abortController) {
@@ -126,7 +126,7 @@ class ChatService {
         
         if (retryCount < maxRetries - 1) {
           console.log(`响应格式不正确，准备进行第${retryCount + 2}次重试...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // 递增延迟
+          await new Promise(resolve => setTimeout(resolve, 100 * (retryCount + 1))); // 递增延迟
           return this.sendChatMessage(prompt, sceneId, abortController, retryCount + 1);
         } else {
           throw new Error('服务器响应超时，稍后再试...');

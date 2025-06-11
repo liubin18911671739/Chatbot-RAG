@@ -1,0 +1,67 @@
+<!-- pages/access-denied/access-denied.wxml -->
+<view class="container">
+  <!-- 头部图标和标题 -->
+  <view class="header">
+    <image class="restriction-icon" src="/images/network-restriction.png" mode="aspectFit"></image>
+    <view class="title">{{title}}</view>
+    <view class="subtitle">{{subtitle}}</view>
+  </view>
+
+  <!-- 说明内容 -->
+  <view class="content">
+    <view class="instructions-title">使用说明：</view>
+    <view class="instructions">
+      <view class="instruction-item" wx:for="{{instructions}}" wx:key="index">
+        <text class="bullet">•</text>
+        <text class="instruction-text">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 网络连接帮助 -->
+    <view class="help-section">
+      <button class="help-button" bindtap="onNetworkHelp">
+        <text class="help-icon">📶</text>
+        <text>查看网络连接帮助</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button class="retry-button" bindtap="onRetry" disabled="{{retryCount >= maxRetries}}">
+      <text class="button-icon">🔄</text>
+      <text>重新检测网络 ({{retryCount}}/{{maxRetries}})</text>
+    </button>
+    
+    <button class="contact-button" bindtap="onContactSupport">
+      <text class="button-icon">📞</text>
+      <text>联系技术支持</text>
+    </button>
+  </view>
+
+  <!-- 联系信息 -->
+  <view class="contact-info">
+    <view class="contact-title">技术支持联系方式：</view>
+    <view class="contact-item">
+      <text class="contact-label">电话：</text>
+      <text class="contact-value">{{contactInfo.phone}}</text>
+    </view>
+    <view class="contact-item">
+      <text class="contact-label">办公地点：</text>
+      <text class="contact-value">{{contactInfo.office}}</text>
+    </view>
+    <view class="contact-item">
+      <text class="contact-label">邮箱：</text>
+      <text class="contact-value">{{contactInfo.email}}</text>
+    </view>
+  </view>
+
+  <!-- 调试信息（开发环境显示） -->
+  <view class="debug-info" wx:if="{{systemInfo.platform === 'devtools'}}">
+    <view class="debug-title">调试信息：</view>
+    <view class="debug-item">平台：{{systemInfo.platform}}</view>
+    <view class="debug-item">系统：{{systemInfo.system}}</view>
+    <view class="debug-item">版本：{{systemInfo.version}}</view>
+    <button class="debug-button" bindtap="onShowLogs">查看访问日志</button>
+  </view>
+</view>

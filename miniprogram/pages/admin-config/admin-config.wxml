@@ -1,0 +1,88 @@
+<!-- pages/admin-config/admin-config.wxml -->
+<view class="container">
+  <!-- 管理员登录界面 -->
+  <view class="login-section" wx:if="{{showPasswordInput}}">
+    <view class="login-header">
+      <text class="login-title">管理员配置</text>
+      <text class="login-subtitle">请输入管理员密码</text>
+    </view>
+    
+    <view class="login-form">
+      <input 
+        class="password-input" 
+        type="password" 
+        placeholder="请输入管理员密码"
+        value="{{adminPassword}}"
+        bindinput="onPasswordInput"
+      />
+      <button class="login-button" bindtap="onAdminLogin">登录</button>
+    </view>
+  </view>
+
+  <!-- 管理员配置界面 -->
+  <view class="admin-panel" wx:if="{{isAdmin}}">
+    <!-- 头部信息 -->
+    <view class="panel-header">
+      <text class="panel-title">校园网访问控制配置</text>
+      <button class="logout-button" bindtap="onLogout">退出</button>
+    </view>
+
+    <!-- 网络配置部分 -->
+    <view class="config-section">
+      <view class="section-title">网络限制配置</view>
+      
+      <view class="config-item">
+        <text class="config-label">启用校园网限制</text>
+        <switch 
+          class="config-switch" 
+          checked="{{networkConfig.restrictionEnabled}}"
+          bindchange="onToggleRestriction"
+        />
+      </view>
+
+      <view class="config-info">
+        <text class="info-text">当前环境: {{systemInfo.platform}}</text>
+        <text class="info-text">系统版本: {{systemInfo.system}}</text>
+        <text class="info-text">微信版本: {{systemInfo.version}}</text>
+      </view>
+    </view>
+
+    <!-- 网络测试部分 -->
+    <view class="test-section">
+      <view class="section-title">网络连接测试</view>
+      <button class="test-button" bindtap="onTestNetwork">测试校园网连接</button>
+    </view>
+
+    <!-- 访问日志部分 -->
+    <view class="logs-section">
+      <view class="section-header">
+        <text class="section-title">访问日志 (最近{{accessLogs.length}}条)</text>
+        <button class="clear-button" bindtap="onClearLogs">清空</button>
+      </view>
+      
+      <scroll-view class="logs-container" scroll-y="true">
+        <view class="log-item" wx:for="{{accessLogs}}" wx:key="timestamp">
+          <view class="log-header">
+            <text class="log-time">{{item.timestamp}}</text>
+            <text class="log-status {{item.success ? 'success' : 'failed'}}">
+              {{item.success ? '成功' : '失败'}}
+            </text>
+          </view>
+          <view class="log-details">
+            <text class="log-detail">平台: {{item.platform}}</text>
+            <text class="log-detail">系统: {{item.system}}</text>
+          </view>
+        </view>
+        
+        <view class="no-logs" wx:if="{{accessLogs.length === 0}}">
+          <text>暂无访问记录</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="actions">
+      <button class="action-button" bindtap="onExportConfig">导出配置</button>
+    </view>
+  </view>
+</view>

@@ -253,7 +253,6 @@ Page({
       }
     })
   },
-
   // 联系客服
   contactSupport() {
     wx.showModal({
@@ -261,6 +260,13 @@ Page({
       content: '如需技术支持，请联系：\n\n邮箱：support@bisu.edu.cn\n电话：010-65778XXX\n\n工作时间：周一至周五 9:00-17:00',
       showCancel: false,
       confirmText: '知道了'
+    })
+  },
+
+  // 打开管理员配置
+  openAdminConfig() {
+    wx.navigateTo({
+      url: '/pages/admin-config/admin-config'
     })
   },
 

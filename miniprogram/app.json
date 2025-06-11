@@ -1,11 +1,12 @@
-{
-  "pages": [
+{  "pages": [
     "pages/index/index",
     "pages/chat/chat",
     "pages/scenes/scenes",
     "pages/profile/profile",
     "pages/history/history",
-    "pages/feedback/feedback"
+    "pages/feedback/feedback",
+    "pages/access-denied/access-denied",
+    "pages/admin-config/admin-config"
   ],
   "window": {
     "backgroundTextStyle": "light",

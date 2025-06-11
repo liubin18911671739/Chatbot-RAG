@@ -101,12 +101,19 @@
         auto-height
         show-confirm-bar="{{false}}"
         adjust-position="{{true}}"
-      ></textarea>
-      <view class="input-actions">
-        <button 
+      ></textarea>      <view class="input-actions">
+        <!-- <button 
           class="send-btn {{inputText.trim() ? 'active' : ''}}"
           disabled="{{!inputText.trim() || isLoading}}"
           bindtap="onSendTap"
+        >
+          发送
+        </button>        -->
+         <!-- 临时测试按钮 -->
+        <button 
+          class="send-btn test-btn"
+          bindtap="testSend"
+          style="margin-left: 10rpx; background-color: #10ce3f; font-size: 24rpx;"
         >
           发送
         </button>

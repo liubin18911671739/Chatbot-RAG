@@ -1,0 +1,236 @@
+/* pages/admin-config/admin-config.wxss */
+.container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 20rpx;
+}
+
+/* 登录界面样式 */
+.login-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 60rpx 40rpx;
+  margin-top: 200rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.login-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.login-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.password-input {
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  font-size: 32rpx;
+}
+
+.login-button {
+  background: var(--primary-color);
+  color: white;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  font-size: 32rpx;
+}
+
+/* 管理员面板样式 */
+.admin-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.panel-header {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.panel-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.logout-button {
+  background: #ff6b6b;
+  color: white;
+  border-radius: 8rpx;
+  padding: 12rpx 24rpx;
+  font-size: 24rpx;
+}
+
+/* 配置部分样式 */
+.config-section, .test-section, .logs-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+  display: block;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.config-label {
+  font-size: 30rpx;
+  color: #333;
+}
+
+.config-switch {
+  transform: scale(0.8);
+}
+
+.config-info {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 8rpx;
+}
+
+.info-text {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+/* 测试按钮样式 */
+.test-button {
+  width: 100%;
+  background: var(--secondary-color);
+  color: white;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  font-size: 30rpx;
+}
+
+/* 日志部分样式 */
+.clear-button {
+  background: #ffc107;
+  color: white;
+  border-radius: 8rpx;
+  padding: 12rpx 24rpx;
+  font-size: 24rpx;
+}
+
+.logs-container {
+  max-height: 600rpx;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 20rpx;
+}
+
+.log-item {
+  margin-bottom: 20rpx;
+  padding: 16rpx;
+  background: #f8f9fa;
+  border-radius: 8rpx;
+  border-left: 6rpx solid #ddd;
+}
+
+.log-item:last-child {
+  margin-bottom: 0;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.log-time {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.log-status {
+  font-size: 24rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+  color: white;
+}
+
+.log-status.success {
+  background: #28a745;
+}
+
+.log-status.failed {
+  background: #dc3545;
+}
+
+.log-details {
+  display: flex;
+  gap: 20rpx;
+}
+
+.log-detail {
+  font-size: 22rpx;
+  color: #888;
+}
+
+.no-logs {
+  text-align: center;
+  padding: 60rpx 20rpx;
+  color: #999;
+}
+
+/* 操作按钮样式 */
+.actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-button {
+  flex: 1;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  font-size: 30rpx;
+}
