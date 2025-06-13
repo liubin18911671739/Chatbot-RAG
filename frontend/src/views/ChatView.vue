@@ -447,36 +447,13 @@ export default {
         content: userQuestion,
         sender: 'user',
         timestamp: Date.now()
-      });
-
-      userInput.value = '';
+      });      userInput.value = '';
       loading.value = true;
 
+      // 创建 AbortController 实例
+      abortController.value = new AbortController();
+
       try {
-        // 创建 AbortController 以支持取消请求
-        abortController.value = new AbortController();
-        
-        // 引入chatStore获取缓存功能
-        const chatStore = useChatStore();
-        
-        // 1. 首先检查缓存中是否有相同问题的答案
-        const cachedAnswer = chatStore.findCachedAnswer(userQuestion);
-        
-        if (cachedAnswer) {
-          console.log('使用缓存的回答');
-          
-          // 如果有缓存的答案，直接使用缓存的答案
-          messagesHistory.value[sceneId].push({
-            content: cachedAnswer,
-            sender: 'ai',
-            timestamp: Date.now(),
-            fromCache: true // 标记是来自缓存的答案
-          });
-          
-        } else {
-          console.log('没有缓存，调用API');
-          
-          // 没有缓存，调用API获取回答 - 现在包含重试机制
           const response = await chatService.sendChatMessage(
             userQuestion, 
             sceneId,
@@ -485,15 +462,9 @@ export default {
 
           const data = response;
           
-          // 获取AI回复内容
-          const aiResponse = data.response || data.answer || '没有回答';
-          
-          // 添加到缓存
-          chatStore.addToQACache(userQuestion, aiResponse);
-          
           // 添加AI回复到历史
           messagesHistory.value[sceneId].push({
-            content: aiResponse,
+            content: data.response || data.answer || '抱歉，我不太清楚这个问题答案，请换一个问题。',
             sender: 'ai',
             timestamp: Date.now(),
             attachments: data.attachment_data || [],
@@ -505,7 +476,7 @@ export default {
             currentChatId.value = data.chat_id;
           }
         }
-      } catch (error) {
+      catch (error) {
         console.error('获取回答时出错:', error);
         
         // 如果是用户取消的请求，不显示错误

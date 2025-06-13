@@ -13,10 +13,10 @@ module.exports = {
 
         changeOrigin: true,
         // 正确设置超时
-        proxyTimeout: 60000, // 60秒超时
+        proxyTimeout: 40000, // 60秒超时
         // 或者使用 http-proxy-middleware 的配置格式
         onProxyReq: (proxyReq) => {
-          proxyReq.timeout = 60000; // 60秒超时
+          proxyReq.timeout = 40000; // 60秒超时
         },
         // 添加错误处理
         onError: (err, req, res) => {

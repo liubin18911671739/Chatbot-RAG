@@ -1,0 +1,24 @@
+{
+  "name": "ichat-test-scripts",
+  "version": "1.0.0",
+  "description": "测试脚本集合用于 iChat 项目",
+  "main": "test_sendChatMessage.js",
+  "scripts": {
+    "test": "node test_sendChatMessage.js",
+    "test:simple": "node test_sendChatMessage_simple.js",
+    "test:batch": "node test_sendChatMessage_simple.js --batch",
+    "test:connection": "node -e \"require('./test_sendChatMessage_simple.js')\""
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "test",
+    "chat",
+    "api",
+    "chatservice"
+  ],
+  "author": "iChat Team",
+  "license": "MIT"
+}

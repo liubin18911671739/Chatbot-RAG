@@ -2,7 +2,7 @@
 const envConfig = {
   // 开发环境
   development: {
-    baseURL: 'http://10.10.15.211:5000',
+    baseURL: 'http://localhost:5000',
     timeout: 80000,
     enableMock: false,
     enableLog: true,
@@ -12,7 +12,7 @@ const envConfig = {
   // 测试环境 - 使用云函数代理
   staging: {
     baseURL: 'http://10.10.15.211:5000',
-    timeout: 30000,
+    timeout: 80000,
     enableMock: false,
     enableLog: true,
     useProxy: true,
