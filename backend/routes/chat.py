@@ -20,7 +20,10 @@ def chat():
     
     prompt = data['prompt']
     scene_id = data.get('scene_id')  # 支持可选的scene_id参数
+    
+    # 首先尝试主API
     try:
+        print("尝试调用主API: http://10.10.15.210:5000/api/chat")
         response = requests.post(
             "http://10.10.15.210:5000/api/chat",
             json={
@@ -28,39 +31,47 @@ def chat():
                 "scene_id": scene_id
             },
             headers={"Content-Type": "application/json"},
-            timeout=15
+            timeout=40
         )
+        
         # 检查HTTP状态码
         if response.status_code == 200:
-                response_data = response.json()
-                print(f"主API返回响应: {response_data}")
-                return jsonify(response_data)
+            response_data = response.json()
+            print(f"主API返回响应: {response_data}")
+            return jsonify(response_data)
         else:
             print(f"主API调用失败，状态码: {response.status_code}, 错误信息: {response.text}")
+            # 主API失败时返回错误响应
+            raise Exception(f"主API调用失败，状态码: {response.status_code}")
+            
     except requests.exceptions.RequestException as e:
         print(f"主API请求出错: {str(e)}")
-        return jsonify({"status": "error", "message": "主API请求出错，请稍后再试"}), 500
-
-    # 如果主API失败，使用备用API (Gemini/DeepSeek)
-    # try:
-    #     print("主API失败，调用备用API...")
-    #     api_response = call_gemini_api(prompt, scene_id)
+    except Exception as e:
+        print(f"主API调用异常: {str(e)}")
+    
+    # 如果主API失败，使用备用API (call_gemini_api)
+    try:
+        print("主API失败，调用备用API (Gemini/DeepSeek)...")
+        api_response = call_gemini_api(prompt, scene_id)
         
-    #     # 构建响应
-    #     response = {
-    #         "status": "success",
-    #         "response": api_response,
-    #         "attachment_data": [],
-    #         "special_note": ""
-    #     }
+        # 构建响应
+        response_data = {
+            "status": "success",
+            "response": api_response,
+            "attachment_data": [],
+            "special_note": "响应来自备用API服务"
+        }
         
-    #     print(f"备用API返回响应: {response}")
-    #     return jsonify(response)
+        print(f"备用API返回响应: {response_data}")
+        return jsonify(response_data)
         
-    # except Exception as e:
-    #     print(f"备用API调用失败: {str(e)}")
-    #     return jsonify({"status": "error", "message": "所有API调用均失败，请稍后再试"}), 500
-
+    except Exception as e:
+        print(f"备用API调用失败: {str(e)}")
+        return jsonify({
+            "status": "error", 
+            "message": "所有API调用均失败，请稍后再试",
+            "error_detail": str(e)
+        }), 500
 
 def call_gemini_api(prompt, scene_id=None):
     """调用 Gemini API 获取回答"""
@@ -180,19 +191,14 @@ def main():
         {
             "prompt": "你好，请简单介绍一下北京第二外国语学院",
             "scene_id": None,
-            "history": []
         },
         {
             "prompt": "什么是人工智能？",
             "scene_id": "db_xuexizhidao",
-            "history": [
-                {"user": "你好", "assistant": "您好！我是北京第二外国语学院的AI助手"}
-            ]
         },
         {
             "prompt": "党政办公室综合事务的办公室是？",
             "scene_id": "db_wangshangbanshiting",
-            "history": []
         }
     ]
     
@@ -200,15 +206,12 @@ def main():
         print(f"📋 测试用例 {i}:")
         print(f"提问: {test_case['prompt']}")
         print(f"场景ID: {test_case['scene_id']}")
-        print(f"历史记录: {len(test_case['history'])} 条")
         
         try:
             # 调用函数
             result = call_gemini_api(
                 prompt=test_case['prompt'],
-                scene_id=test_case['scene_id'],
-                history=test_case['history']
-            )
+                scene_id=test_case['scene_id'],            )
             
             print(f"✅ 成功获取回答:")
             print(f"回答长度: {len(result)} 字符")
