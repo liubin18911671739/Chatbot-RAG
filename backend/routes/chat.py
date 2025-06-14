@@ -31,7 +31,7 @@ def chat():
                 "scene_id": scene_id
             },
             headers={"Content-Type": "application/json"},
-            timeout=40
+            timeout=20
         )
         
         # 检查HTTP状态码
@@ -73,7 +73,7 @@ def chat():
             "error_detail": str(e)
         }), 500
 
-def call_gemini_api(prompt, scene_id=None):
+def call_gemini_api(prompt, scene_id='general'):
     """调用 Gemini API 获取回答"""
     # 调试模式：返回精简版回答，避免实际调用API
     # debug_mode = False  # 设置为True开启调试模式
@@ -91,7 +91,7 @@ def call_gemini_api(prompt, scene_id=None):
     #     if scene_id:
     #         # 可以根据不同场景定制系统提示词
     #         scene_prompts = {
-    #             "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
+    #             "db_AI": "你是北京第二外国语学院的AI助手，请提供北京第二外国语学院的相关信息。",
     #             "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
     #             "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
     #             "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
@@ -127,15 +127,15 @@ def call_gemini_api(prompt, scene_id=None):
     api_url = "https://api.deepseek.com/v1/chat/completions"
     
     # 根据场景 ID 可以添加不同的系统提示词
-    system_message = "你是北京第二外国语学院的AI助手，请提供简要的回答。"
+    system_message = "你是北京第二外国语学院的生活和学习AI助手，请提供简要的回答："
     if scene_id:
         # 可以根据不同场景定制系统提示词
         scene_prompts = {
-            "db_sizheng": "你是北京第二外国语学院的思政学习助手，请提供准确的思政知识。",
-            "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供有效的学习方法指导。",
-            "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政助手，请解答思政相关问题。",
-            "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供科研方法和学术写作指导。",
-            "db_wangshangbanshiting": "你是北京第二外国语学院的8001助手，请提供校园事务办理指南。"
+            "general": "你是北京第二外国语学院的生活和学习AI助手，请提供简要的回答：",
+            "db_xuexizhidao": "你是北京第二外国语学院的学习指导助手，请提供简要的回答：",
+            "db_zhihuisizheng": "你是北京第二外国语学院的智慧思政辅导助手，请提供简要的回答：",
+            "db_keyanfuzhu": "你是北京第二外国语学院的科研辅助助手，请提供简要的回答：",
+            "db_wangshangbanshiting": "你是北京第二外国语学院的校园事务办理助手，请提供简要的回答："
         }
         if scene_id in scene_prompts:
             system_message = scene_prompts[scene_id]

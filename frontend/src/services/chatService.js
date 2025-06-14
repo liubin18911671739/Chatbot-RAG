@@ -85,7 +85,7 @@ class ChatService {
       }
 
       // 先尝试主要地址的greeting端点
-      const response = await this.api.get('/api/greeting');
+      const response = await this.api.get('/api/health');
       console.log('API连接成功:', response.status, response.data);
       return true;
     } catch (error) {
