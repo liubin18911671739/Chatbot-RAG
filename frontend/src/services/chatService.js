@@ -3,12 +3,12 @@ import axios from 'axios';
 // 环境配置
 const getConfig = () => {
   return {
-    baseURL: process.env.VUE_APP_API_URL || 'http://localhost:5000',
+    baseURL: 'http://localhost:5000',
     backupURLs: [
       'http://10.10.15.210:5000',
       'http://10.10.15.211:5000'
     ],
-    timeout: 80000,
+    timeout: 60000,
     environment: process.env.NODE_ENV || 'development',
     campusRestriction: false
   };
@@ -17,7 +17,7 @@ const getConfig = () => {
 class ChatService {
   constructor() {
     this.baseUrl = '';
-    this.timeout = 80000;
+    this.timeout = 60000;
     this.config = null;
     this.conversationHistory = [];
     this.init();
@@ -26,8 +26,8 @@ class ChatService {
   // 初始化API配置
   init() {
     this.config = getConfig();
-    this.baseUrl = this.config.baseURL || 'http://localhost:5000';
-    this.timeout = this.config.timeout || 80000;
+    this.baseUrl = 'http://localhost:5000';
+    this.timeout = this.config.timeout || 60000;
     
     console.log('API服务初始化:', {
       baseUrl: this.baseUrl,

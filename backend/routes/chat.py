@@ -31,13 +31,37 @@ def chat():
                 "scene_id": scene_id
             },
             headers={"Content-Type": "application/json"},
-            timeout=20
+            timeout=5
         )
-        
-        # 检查HTTP状态码
+          # 检查HTTP状态码
         if response.status_code == 200:
             response_data = response.json()
-            print(f"主API返回响应: {response_data}")
+            # print(f"主API返回响应: {response_data}")
+            print(f"response_data.get('response')")
+            if response_data.get('response') == 'NO_ANSWER_FOUND':
+                    # 如果主API失败，使用备用API (call_gemini_api)
+                try:
+                    print("主API失败，调用备用API (Gemini/DeepSeek)...")
+                    api_response = call_gemini_api(prompt, scene_id)
+                    
+                    # 构建响应
+                    response_data = {
+                        "status": "success",
+                        "response": api_response,
+                        "attachment_data": [],
+                        "special_note": "响应来自备用API服务"
+                    }
+                    
+                    print(f"备用API返回响应: {response_data}")
+                    return jsonify(response_data)
+                    
+                except Exception as e:
+                    print(f"备用API调用失败: {str(e)}")
+                    return jsonify({
+                        "status": "error", 
+                        "message": "所有API调用均失败，请稍后再试",
+                        "error_detail": str(e)
+                    }), 500
             return jsonify(response_data)
         else:
             print(f"主API调用失败，状态码: {response.status_code}, 错误信息: {response.text}")
