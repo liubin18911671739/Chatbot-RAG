@@ -1,12 +1,16 @@
 // pages/profile/profile.js
 import storageManager from '../../utils/storage.js'
 import utils from '../../utils/utils.js'
+import authService from '../../utils/auth.js'
 
 Page({
   data: {
     userInfo: null,
     hasUserInfo: false,
     canIUseGetUserProfile: false,
+    // RADIUS认证状态
+    isLoggedIn: false,
+    radiusUser: null,
     settings: {
       enableSound: true,
       enableVibration: true,
@@ -22,6 +26,9 @@ Page({
   },
 
   onLoad() {
+    // 检查RADIUS认证状态
+    this.checkAuthStatus()
+    
     // 检查getUserProfile支持
     if (wx.getUserProfile) {
       this.setData({
@@ -36,7 +43,8 @@ Page({
   },
 
   onShow() {
-    // 页面显示时刷新统计数据
+    // 页面显示时刷新认证状态和统计数据
+    this.checkAuthStatus()
     this.loadStatistics()
   },
 
@@ -277,5 +285,52 @@ Page({
 
   onShareTimeline() {
     return utils.getShareContent()
-  }
+  },
+
+  // 检查RADIUS认证状态
+  checkAuthStatus() {
+    const isLoggedIn = authService.checkLoginStatus()
+    const currentUser = authService.getCurrentUser()
+    
+    this.setData({
+      isLoggedIn: isLoggedIn,
+      radiusUser: currentUser
+    })
+  },
+
+  // RADIUS退出登录
+  onRadiusLogout() {
+    wx.showModal({
+      title: '确认退出',
+      content: '确定要退出认证吗？',
+      success: (res) => {
+        if (res.confirm) {
+          const success = authService.logout()
+          if (success) {
+            this.setData({
+              isLoggedIn: false,
+              radiusUser: null
+            })
+            utils.showToast('已退出认证', 'success')
+            
+            // 跳转到首页
+            setTimeout(() => {
+              wx.switchTab({
+                url: '/pages/index/index'
+              })
+            }, 1000)
+          } else {
+            utils.showToast('退出失败', 'none')
+          }
+        }
+      }
+    })
+  },
+
+  // 跳转到登录页面
+  goToLogin() {
+    wx.switchTab({
+      url: '/pages/index/index'
+    })
+  },
 })

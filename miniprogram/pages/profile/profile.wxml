@@ -2,18 +2,35 @@
 <view class="container">
   <!-- 用户信息区 -->
   <view class="user-section card">
-    <view wx:if="{{hasUserInfo}}" class="user-info">
+    <!-- RADIUS认证状态 -->
+    <view wx:if="{{isLoggedIn}}" class="user-info">
+      <view class="radius-avatar">🔐</view>
+      <view class="user-details">
+        <view class="user-name">{{radiusUser.username}}</view>
+        <view class="user-desc">认证用户</view>
+        <view class="auth-status">
+          <text class="auth-badge">{{radiusUser.authType === 'RADIUS' ? '已认证' : '开发模式'}}</text>
+          <text class="auth-time">{{radiusUser.timestamp}}</text>
+        </view>
+      </view>
+      <button class="btn btn-outline logout-btn" bindtap="onRadiusLogout" size="mini">
+        退出
+      </button>
+    </view>
+    <!-- 微信用户信息 -->
+    <view wx:elif="{{hasUserInfo}}" class="user-info">
       <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
       <view class="user-details">
         <view class="user-name">{{userInfo.nickName}}</view>
         <view class="user-desc">棠心问答用户</view>
       </view>
     </view>
+    <!-- 未登录状态 -->
     <view wx:else class="login-section">
       <view class="login-icon">👤</view>
-      <view class="login-text">点击登录，获得更好的使用体验</view>
-      <button class="btn btn-primary login-btn" bindtap="getUserProfile">
-        微信登录
+      <view class="login-text">请先进行认证</view>
+      <button class="btn btn-primary login-btn" bindtap="goToLogin">
+        去登录
       </button>
     </view>
   </view>

@@ -2,6 +2,7 @@
 import apiService from '../../utils/api.js'
 import storageManager from '../../utils/storage.js'
 import utils from '../../utils/utils.js'
+import authService from '../../utils/auth.js'
 
 Page({
   data: {
@@ -13,6 +14,11 @@ Page({
   },
 
   onLoad() {
+    // 检查认证状态
+    if (!this.checkAuthStatus()) {
+      return
+    }
+    
     // 初始化API
     apiService.init()
     
@@ -25,7 +31,28 @@ Page({
 
   onShow() {
     // 页面显示时刷新数据
-    this.loadScenes()
+    if (this.checkAuthStatus()) {
+      this.loadScenes()
+    }
+  },
+
+  // 检查认证状态
+  checkAuthStatus() {
+    const isLoggedIn = authService.checkLoginStatus()
+    if (!isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '请先进行认证后再使用场景功能',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          })
+        }
+      })
+      return false
+    }
+    return true
   },
 
   async loadScenes() {

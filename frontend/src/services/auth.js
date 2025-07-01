@@ -73,23 +73,23 @@ class AuthService {
                 devDetails = '网络连接问题';
                 
                 // 开发环境下的测试账号处理
-                if (process.env.NODE_ENV === 'development') {
-                    if (username === 'testing' && password === 'password') {
-                        console.log('开发模式：使用RADIUS测试账号登录成功');
-                        const userData = {
-                            username: username,
-                            authenticated: true,
-                            authType: 'RADIUS_DEV',
-                            timestamp: new Date().getTime()
-                        };
-                        localStorage.setItem('user', JSON.stringify(userData));
-                        return { 
-                            success: true,
-                            message: '开发模式：RADIUS模拟认证成功',
-                            token: 'radius-dev-token'
-                        };
-                    }
-                }
+                // if (process.env.NODE_ENV === 'development') {
+                //     if (username === 'testing' && password === 'password') {
+                //         console.log('开发模式：使用RADIUS测试账号登录成功');
+                //         const userData = {
+                //             username: username,
+                //             authenticated: true,
+                //             authType: 'RADIUS_DEV',
+                //             timestamp: new Date().getTime()
+                //         };
+                //         localStorage.setItem('user', JSON.stringify(userData));
+                //         return { 
+                //             success: true,
+                //             message: '开发模式：RADIUS模拟认证成功',
+                //             token: 'radius-dev-token'
+                //         };
+                //     }
+                // }
             } else {
                 // 请求配置出错
                 errorMessage = 'RADIUS认证请求配置错误';

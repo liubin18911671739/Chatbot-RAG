@@ -10,12 +10,19 @@
     
     <!-- 用户信息区 -->
     <view class="user-section">
-      <view wx:if="{{hasUserInfo}}" class="user-info">
+      <view wx:if="{{isLoggedIn}}" class="user-info">
+        <view class="user-display">
+          <view class="username">{{userInfo.username}}</view>
+          <view class="auth-type">{{userInfo.authType === 'RADIUS' ? '认证成功' : '开发模式'}}</view>
+        </view>
+        <button class="logout-btn btn btn-outline" bindtap="onLogout" size="mini">退出</button>
+      </view>
+      <view wx:elif="{{hasUserInfo}}" class="user-info">
         <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
         <text class="nickname">{{userInfo.nickName}}</text>
       </view>
-      <button wx:else class="login-btn btn btn-outline" bindtap="getUserProfile">
-        点击登录
+      <button wx:else class="login-btn btn btn-primary" bindtap="showLogin">
+        登录
       </button>
     </view>
   </view>
@@ -87,5 +94,57 @@
       <view class="loading-dot"></view>
     </view>
     <view class="loading-text">加载中...</view>
+  </view>
+</view>
+
+<!-- RADIUS登录弹窗 -->
+<view wx:if="{{showLoginModal}}" class="login-modal">
+  <view class="modal-mask" bindtap="hideLogin"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <view class="modal-title">认证登录</view>
+      <view class="modal-close" bindtap="hideLogin">×</view>
+    </view>
+    
+    <view class="modal-body">
+      <view class="input-group">
+        <view class="input-label">用户名</view>
+        <input 
+          class="input-field" 
+          placeholder="请输入用户名" 
+          value="{{username}}"
+          bindinput="onUsernameInput"
+          maxlength="50"
+        />
+      </view>
+      
+      <view class="input-group">
+        <view class="input-label">密码</view>
+        <input 
+          class="input-field" 
+          placeholder="请输入密码" 
+          password="{{true}}"
+          value="{{password}}"
+          bindinput="onPasswordInput"
+          maxlength="50"
+        />
+      </view>
+      
+      <view class="login-tips">
+        <text class="tip-text">请使用您的校园网账号登录</text>
+        <!-- <text class="dev-tip">开发模式测试账号: testing / password</text> -->
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button 
+        class="login-submit-btn btn btn-primary"
+        bindtap="onRadiusLogin"
+        loading="{{loginLoading}}"
+        disabled="{{loginLoading}}"
+      >
+        {{loginLoading ? '登录中...' : '登录'}}
+      </button>
+    </view>
   </view>
 </view>

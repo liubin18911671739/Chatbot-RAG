@@ -3,6 +3,7 @@ import apiService from '../../utils/api.js'
 import storageManager from '../../utils/storage.js'
 import utils from '../../utils/utils.js'
 import networkValidator from '../../utils/network-validator.js'
+import authService from '../../utils/auth.js'
 const { getConfig } = require('../../config/env.js')
 
 Page({
@@ -23,6 +24,11 @@ Page({
   },
   onLoad(options) {
     console.log('chat页面加载，参数:', options)
+    
+    // 检查认证状态
+    if (!this.checkAuthStatus()) {
+      return
+    }
     
     // 获取环境配置
     const config = getConfig()
@@ -465,5 +471,24 @@ Page({
       
       return allowOnError
     }
+  },
+
+  // 检查认证状态
+  checkAuthStatus() {
+    const isLoggedIn = authService.checkLoginStatus()
+    if (!isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '请先进行认证后再使用聊天功能',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          })
+        }
+      })
+      return false
+    }
+    return true
   }
 })

@@ -240,6 +240,45 @@
   opacity: 0.7;
 }
 
+/* RADIUS认证相关样式 */
+.radius-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: white;
+  border: 4rpx solid var(--border-color);
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.auth-badge {
+  background-color: var(--success-color);
+  color: white;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  font-weight: bold;
+}
+
+.auth-time {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.logout-btn {
+  margin-left: auto;
+}
+
 /* 响应式调整 */
 @media screen and (max-width: 400px) {
   .container {

@@ -23,6 +23,10 @@ page {
   --radius-small: 8rpx;
   --radius-medium: 16rpx;
   --radius-large: 24rpx;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
 }
 
 /* 通用样式 */

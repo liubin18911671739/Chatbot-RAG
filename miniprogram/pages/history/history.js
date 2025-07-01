@@ -1,6 +1,7 @@
 // pages/history/history.js
 import storageManager from '../../utils/storage.js'
 import utils from '../../utils/utils.js'
+import authService from '../../utils/auth.js'
 
 Page({
   data: {
@@ -13,12 +14,37 @@ Page({
   },
 
   onLoad() {
+    // 检查认证状态
+    if (!this.checkAuthStatus()) {
+      return
+    }
     this.loadChatHistories()
   },
 
   onShow() {
     // 页面显示时刷新历史记录
-    this.loadChatHistories()
+    if (this.checkAuthStatus()) {
+      this.loadChatHistories()
+    }
+  },
+
+  // 检查认证状态
+  checkAuthStatus() {
+    const isLoggedIn = authService.checkLoginStatus()
+    if (!isLoggedIn) {
+      wx.showModal({
+        title: '需要登录',
+        content: '请先进行认证后再查看历史记录',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          })
+        }
+      })
+      return false
+    }
+    return true
   },
 
   loadChatHistories() {

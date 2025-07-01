@@ -1,5 +1,6 @@
 // miniprogram/app.js
 import networkValidator from './utils/network-validator.js'
+import authService from './utils/auth.js'
 
 App({
   onLaunch() {
@@ -13,10 +14,13 @@ App({
       this.globalData.canIUseGetUserProfile = true
     }
 
+    // 检查RADIUS认证状态
+    this.checkAuthStatus()
+
     // 初始化API配置
     this.initializeApp()
     
-    // 校园网络环境检测
+    // 校园网络检测
     this.validateNetworkAccess()
     
     // 启用vConsole查看日志
@@ -35,6 +39,39 @@ App({
     this.globalData.apiBaseUrl = 'http://10.10.15.211:5000/api'
     
     console.log('小程序初始化完成')
+  },
+
+  // 检查认证状态
+  checkAuthStatus() {
+    const isLoggedIn = authService.checkLoginStatus()
+    const currentUser = authService.getCurrentUser()
+    
+    this.globalData.isLoggedIn = isLoggedIn
+    this.globalData.currentUser = currentUser
+    
+    console.log('全局认证状态检查:', { isLoggedIn, currentUser })
+  },
+
+  // 全局认证检查方法
+  checkAuth() {
+    return new Promise((resolve, reject) => {
+      const isLoggedIn = authService.checkLoginStatus()
+      if (isLoggedIn) {
+        resolve(true)
+      } else {
+        wx.showModal({
+          title: '需要登录',
+          content: '请先登录后再使用此功能',
+          showCancel: false,
+          success: () => {
+            wx.switchTab({
+              url: '/pages/index/index'
+            })
+          }
+        })
+        reject(false)
+      }
+    })
   },
 
   // 校园网络环境验证
@@ -103,6 +140,10 @@ App({
     currentScene: null,
     sessionId: null,
     networkValidation: null,
-    campusNetworkValidator: networkValidator
+    campusNetworkValidator: networkValidator,
+    // RADIUS认证相关
+    isLoggedIn: false,
+    currentUser: null,
+    authService: authService
   }
 })
