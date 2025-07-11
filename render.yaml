@@ -1,0 +1,146 @@
+previews:
+  generation: automatic
+
+services:
+  # 后端API服务
+  - type: web
+    runtime: python
+    name: yiyun-chat-backend
+    repo: https://github.com/your-username/yiyun-chat.git
+    buildCommand: |
+      cd backend && pip install --no-cache-dir -r requirements.txt
+    startCommand: |
+      cd backend && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --max-requests 1000 --preload app:app
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: RAG_SERVICE_URL
+        value: "http://10.10.15.210:5000"
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONPATH
+        value: /opt/render/project/src/backend
+      - key: GUNICORN_CMD_ARGS
+        value: "--bind=0.0.0.0:$PORT --workers=2 --timeout=120"
+      - fromGroup: app-settings
+      - fromGroup: security-settings
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+      ignoredPaths:
+        - backend/logs/**
+        - backend/__pycache__/**
+        - backend/**/*.pyc
+        - backend/tests/**
+        - backend/**/*.log
+
+  # 前端静态网站
+  - type: web
+    runtime: static
+    name: yiyun-chat-frontend
+    repo: https://github.com/your-username/yiyun-chat.git
+    buildCommand: |
+      cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    plan: free
+    region: singapore
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VUE_APP_API_BASE_URL
+        value: https://yiyun-chat-backend.onrender.com
+      - key: VUE_APP_API_TIMEOUT
+        value: "30000"
+      - key: VUE_APP_ENV
+        value: production
+    buildFilter:
+      paths:
+        - frontend/**
+        - render.yaml
+      ignoredPaths:
+        - frontend/node_modules/**
+        - frontend/dist/**
+        - frontend/cypress/**
+        - frontend/debug/**
+        - frontend/**/*.log
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: "1; mode=block"
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: "geolocation=(), microphone=(), camera=()"
+      - path: /static/*
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      - path: /assets/*
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+      - path: /
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://yiyun-chat-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+# 环境变量组
+envVarGroups:
+  - name: app-settings
+    envVars:
+      - key: MAX_CHAT_HISTORY
+        value: "10"
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_RUN_HOST
+        value: 0.0.0.0
+      - key: FLASK_RUN_PORT
+        value: "5000"
+      - key: JSON_AS_ASCII
+        value: "false"
+      - key: JSON_SORT_KEYS
+        value: "false"
+      - key: THREADS_PER_PAGE
+        value: "8"
+      - key: WEB_CONCURRENCY
+        value: "2"
+  
+  - name: security-settings
+    envVars:
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: SECURE_HEADERS
+        value: "true"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_COOKIE_HTTPONLY
+        value: "true"
+      - key: SESSION_COOKIE_SAMESITE
+        value: "Strict"
