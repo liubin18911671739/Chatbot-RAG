@@ -103,6 +103,24 @@ def handle_exception(e):
 def send_swagger_json():
     return send_from_directory('.', 'swagger.json')
 
+# 根路由 - 提供API信息
+@app.route('/')
+def root():
+    return jsonify({
+        'name': 'iChat RAG-QA System API',
+        'version': '1.0.0',
+        'status': 'running',
+        'environment': APP_ENV,
+        'endpoints': {
+            'health': '/api/health',
+            'chat': '/api/chat',
+            'scenes': '/api/scenes',
+            'feedback': '/api/feedback', 
+            'greeting': '/api/greeting',
+            'documentation': '/api/docs'
+        }
+    })
+
 # 健康检查端点
 @app.route('/api/health')
 def health_check():
