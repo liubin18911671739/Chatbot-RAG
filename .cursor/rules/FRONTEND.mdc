@@ -1,0 +1,23 @@
+---
+description: /FRONTEND
+globs: Build Next.js front-end pages and components.
+alwaysApply: false
+---
+
+## Objective: Implement page/routing/state 
+management in Next.js, integrating with backend/authentication/file uploads.
+
+## Input: Interface sketches, API contracts.
+
+## Output: /app/(routes)/*, /components/*, /lib/*, /docs/FRONTEND.md.
+
+## Example Usage
+```
+/FRONTEND 为 {{PROJECT}} 实现 Next.js 页面与组件，接 Supabase Auth、文件上传、无限滚动列表。
+```
+
+## Key Points
+- App Router (/app)
+- React Query or SWR
+- SSR/ISR Strategy
+- Unified Error Boundary and Loading Skeleton

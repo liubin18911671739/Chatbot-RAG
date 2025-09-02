@@ -1,0 +1,21 @@
+--- 
+description:/TEST
+globs:Establish a test matrix for unit, integration, and end-to-end testing.
+alwaysApply: false
+---
+## Objective: Establish a test matrix for unit, integration, and end-to-end testing.
+
+## Input: API inventory, key user paths.
+
+## Output: Test cases, coverage reports, /docs/TESTING.md.
+
+## example use：
+```
+/TEST 为 {{FEATURE}} 补齐单测（vitest/jest）+ e2e（Playwright/Detox），生成 CI 步骤。
+/TEST 测试{{PROJECT}} ，生成 CI 步骤。
+
+```
+
+## Key Points
+- Web: Playwright; RN: Detox; API: Supertest
+- Mock Supabase and LLM (test doubles) to avoid real calls

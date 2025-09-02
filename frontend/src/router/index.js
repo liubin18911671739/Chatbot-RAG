@@ -30,6 +30,13 @@ const routes = [
     component: () => import('../views/AdminView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  // 添加模拟聊天测试路由
+  {
+    path: '/mock-chat-test',
+    name: 'MockChatTest',
+    component: () => import('../views/MockChatTestView.vue'),
+    meta: { requiresAuth: false }, // 测试页面不需要认证
+  },
 ];
 
 const router = createRouter({

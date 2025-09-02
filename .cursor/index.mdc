@@ -1,0 +1,18 @@
+---
+description:
+globs: Project Overview
+alwaysApply: true
+---
+
+# Project Overview
+- Stack: React + Next.js (App Router) + Expo + Supabase (Postgres/RLS) + DashScope + Render/Vercel + pnpm/turbo + 微信小程序.
+- Monorepo layout: apps/web, apps/mobile, packages/ui, packages/utils, supabase, infra, docs.
+- Secrets: never expose service keys client-side; DashScope calls server-only; use env var schema.
+
+- Variable placeholder：{{PROJECT}}、{{FEATURE}}、{{SCREENSHOT_URL}}、{{SCHEMA_HINT}}、{{API_LIST}}、{{LLM_MODEL}}、{{ENV}}、{{DATA_EXAMPLES}} etc。
+
+- Output requirements: The output of each rule must include:
+(1) List of changes (files changed)
+(2) Key code blocks (with file paths)
+(3) Running/verification steps
+(4) Rollback instructions

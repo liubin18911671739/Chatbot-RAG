@@ -1,0 +1,26 @@
+---
+description:UI
+globs: Generate cross-platform design tokens and UI components.
+alwaysApply: false
+---
+
+## Objective: Generate unified 
+design tokens and styles from a page screenshot or style guide.
+
+## Input: {{SCREENSHOT_URL}} 、the add picture or design description.
+
+## Output: /packages/tokens, /packages/ui, brand style documentation.
+
+## Example Usage
+```
+/UI 根据”蔚蓝+科技为样式“生成 Web 与 React Native 统一设计令牌（色板/字号/间距/阴影/圆角），产出 tokens 与说明。
+```
+## Output
+- /packages/tokens/tokens.json (color palette, font sizes, spacing, shadows, rounded corners, component dimensions)
+- /packages/ui/* (Cross-platform components like Button, Input, Card, Sheet, etc.)
+- /docs/UI_GUIDE.md (Reuse across Web/Native/Weixin)
+
+## Key Points
+- React: CSS vars + Tailwind (optional)
+- RN/Expo: StyleSheet + token adaptation
+- Weixin: app.wxss mapping with custom components

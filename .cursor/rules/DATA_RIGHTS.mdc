@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /DATA_RIGHTS
+
+## Goal
+Implement export/delete APIs with audits.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/DATA_RIGHTS example with {PLACEHOLDERS}.
+```

@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /BILLING
+
+## Goal
+Implement billing, quotas, payments.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/BILLING example with {PLACEHOLDERS}.
+```

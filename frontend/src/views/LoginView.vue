@@ -103,6 +103,11 @@ export default {
           username: '20080025',
           password: '20080025@123',
           role: 'user' // 普通用户角色
+        },
+        {
+          username: 'test',
+          password: 'test@123',
+          role: 'user' // 普通用户角色
         }
       ],      // 添加API连接状态标志
       apiConnected: false,

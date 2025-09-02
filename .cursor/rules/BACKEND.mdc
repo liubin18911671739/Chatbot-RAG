@@ -1,0 +1,23 @@
+---
+description: /BACKEND
+globs: Design based on Supabase/Postgres patterns, enabling RLS, vector search, and authentication policies.
+alwaysApply: false
+---
+# /BACKEND
+
+## Objective: Design based on Supabase/Postgres patterns, enabling RLS, vector search, and authentication policies.
+
+## Input: Entity list, access patterns, sample data.
+
+## Output: Migration scripts, RLS policies, /docs/DB.md.
+
+## Example Usage
+```
+/BACKEND 为 {{PROJECT}} 设计和实现 REST/Edge 接口，封装 Supabase 查询与 LLM 调用（opengml OpenAI-compatible）。
+```
+
+## Key Output Components
+- Unify error codes and pagination protocols
+- LLM timeout/retry/rate limiting
+- Protect secrets (environment variables)
+- Abstractions: /lib/llm.ts, /lib/db.ts, /lib/vector.ts

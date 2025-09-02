@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /AGENT_SUPABASE_EDGE
+
+## Goal
+Create Supabase Edge Functions triggered by DB.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/AGENT_SUPABASE_EDGE example with {PLACEHOLDERS}.
+```

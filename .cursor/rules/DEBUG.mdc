@@ -1,0 +1,22 @@
+---
+description: /DEBUG
+globs: Identify and resolve cross-platform issues, document root causes, fixes, and regression test cases.
+alwaysApply: false
+---
+
+## Objective: Identify and resolve cross-platform issues, document root causes, fixes, and regression test cases.
+
+## Input: Error logs, network logs, reproduction steps.
+
+## Output: /docs/DEBUG_REPORT.md, supplementary tests.
+
+## Example Usage
+```
+/DEBUG 诊断 {{FEATURE}} 在 Android 真机崩溃问题，附复现脚本与最小复现实例。
+/DEBUG  查找和诊断{{PROJECT}}中的全部问题，最后修复这些问题
+
+```
+
+## Key Points
+- “Sandwich” Report: Phenomenon → Root Cause → Remediation
+- Increase regression testing (unit/end-to-end)

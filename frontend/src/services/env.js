@@ -35,6 +35,16 @@ const envConfig = {
     enableLog: true,
     useProxy: false,
     campusRestriction: false  // 本地环境不启用校园网限制
+  },
+  // 模拟测试环境
+  mocktest: {
+    baseURL: '',
+    timeout: 2000,
+    enableMock: true,
+    enableLog: true,
+    useProxy: false,
+    campusRestriction: false,
+    mockDelay: 1000  // 模拟网络延迟
   }
 }
 

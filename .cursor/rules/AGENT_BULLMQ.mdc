@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /AGENT_BULLMQ
+
+## Goal
+Setup BullMQ worker for long jobs.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/AGENT_BULLMQ example with {PLACEHOLDERS}.
+```

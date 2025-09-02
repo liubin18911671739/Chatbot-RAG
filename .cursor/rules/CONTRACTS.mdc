@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /CONTRACTS
+
+## Goal
+Define shared data contracts and versioned APIs.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/CONTRACTS example with {PLACEHOLDERS}.
+```

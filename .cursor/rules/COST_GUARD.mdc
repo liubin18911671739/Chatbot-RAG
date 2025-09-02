@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /COST_GUARD
+
+## Goal
+Add LLM cost/latency telemetry with guards.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/COST_GUARD example with {PLACEHOLDERS}.
+```

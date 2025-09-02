@@ -2,7 +2,8 @@ from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from routes import bp  # 导入主Blueprint
-from routes.auth import auth_bp  # 导入身份验证Blueprint
+from routes.auth import auth_bp as radius_auth_bp  # 导入RADIUS认证Blueprint
+from routes.hybrid_auth import auth_bp as hybrid_auth_bp  # 导入混合认证Blueprint
 import logging
 import platform
 from logging.handlers import RotatingFileHandler
@@ -66,9 +67,13 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 # Register the main API blueprint
 app.register_blueprint(bp, url_prefix='/api')  # 添加url_prefix
 
-# 注册认证模块的蓝图，支持RADIUS身份验证
-# 当前包含的端点: /api/auth/radius-login
-app.register_blueprint(auth_bp, url_prefix='/api/auth')  
+# 注册RADIUS认证模块的蓝图，支持RADIUS身份验证
+# 当前包含的端点: /api/radius-auth/radius-login
+app.register_blueprint(radius_auth_bp, url_prefix='/api/radius-auth')
+
+# 注册混合认证模块的蓝图，支持RADIUS和本地数据库认证
+# 当前包含的端点: /api/auth/login, /api/auth/create-admin, /api/auth/users
+app.register_blueprint(hybrid_auth_bp, url_prefix='/api/auth')  
 
 # 记录认证服务状态
 from routes.auth import RADIUS_SERVER

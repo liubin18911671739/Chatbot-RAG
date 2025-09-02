@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /GROWTH_LOOPS
+
+## Goal
+Implement referrals, share cards, analytics, anti-fraud.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/GROWTH_LOOPS example with {PLACEHOLDERS}.
+```

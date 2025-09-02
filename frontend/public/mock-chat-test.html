@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端聊天功能模拟测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .test-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .switch.active {
+            background: #667eea;
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .switch.active::after {
+            transform: translateX(30px);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin: 0 5px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .chat-area {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            height: 500px;
+        }
+
+        .scene-selector {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .scene-selector h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .scene-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .scene-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .scene-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message.system {
+            justify-content: center;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-content {
+            background: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.system .message-content {
+            background: #fff3cd;
+            color: #856404;
+            font-style: italic;
+            max-width: 60%;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .input-area {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .message-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #666;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .chat-area {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .scene-selector {
+                order: 2;
+            }
+            
+            .chat-box {
+                order: 1;
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 前端聊天功能模拟测试</h1>
+            <p>测试前端聊天组件的功能性和用户体验</p>
+        </div>
+
+        <div class="test-panel">
+            <div class="controls">
+                <div class="mode-toggle">
+                    <span>模拟模式:</span>
+                    <div class="switch active" id="modeSwitch" onclick="toggleMode()"></div>
+                    <span id="modeLabel">开启</span>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" onclick="clearChat()">🗑️ 清除对话</button>
+                    <button class="btn btn-primary" onclick="runAutoTest()" id="autoTestBtn">🚀 自动测试</button>
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div class="scene-selector">
+                    <h3>选择场景</h3>
+                    <button class="scene-btn active" data-scene="general" onclick="selectScene(this, 'general')">通用助手</button>
+                    <button class="scene-btn" data-scene="db_xuexizhidao" onclick="selectScene(this, 'db_xuexizhidao')">学习指导</button>
+                    <button class="scene-btn" data-scene="db_zhihuisizheng" onclick="selectScene(this, 'db_zhihuisizheng')">思政学习</button>
+                    <button class="scene-btn" data-scene="db_keyanfuzhu" onclick="selectScene(this, 'db_keyanfuzhu')">科研辅助</button>
+                    <button class="scene-btn" data-scene="db_wangshangbanshiting" onclick="selectScene(this, 'db_wangshangbanshiting')">网上办事厅</button>
+                </div>
+
+                <div class="chat-box">
+                    <div class="messages" id="messages">
+                        <div class="message system">
+                            <div class="message-content">
+                                欢迎使用聊天功能测试！请选择场景并开始对话。
+                            </div>
+                        </div>
+                    </div>
+                    <div class="loading" id="loading">🤖 AI正在思考中...</div>
+                    <div class="input-area">
+                        <div class="input-row">
+                            <input type="text" class="message-input" id="messageInput" placeholder="请输入您的问题..." onkeypress="handleEnter(event)">
+                            <button class="send-btn" onclick="sendMessage()" id="sendBtn">📤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-panel">
+            <h3>📊 测试统计</h3>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalMessages">0</div>
+                    <div class="stat-label">消息总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgResponseTime">0ms</div>
+                    <div class="stat-label">平均响应时间</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="successRate">100%</div>
+                    <div class="stat-label">成功率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="currentMode">模拟</div>
+                    <div class="stat-label">当前模式</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 测试数据和状态
+        let mockMode = true;
+        let currentScene = 'general';
+        let messageCount = 0;
+        let responseTimes = [];
+        let successCount = 0;
+
+        // 模拟回答数据库
+        const mockResponses = {
+            general: [
+                "您好！我是北京第二外国语学院的AI助手，很高兴为您服务！",
+                "感谢您的问题，让我为您查找相关信息...",
+                "这是一个很好的问题，我来帮您解答。"
+            ],
+            db_xuexizhidao: [
+                "学习方法很重要，建议您制定合理的学习计划。",
+                "对于语言学习，多听多说多练习是关键。"
+            ],
+            db_zhihuisizheng: [
+                "思政学习有助于提高思想觉悟和政治素养。",
+                "建议您多关注时事政治，增强政治敏感性。"
+            ],
+            db_keyanfuzhu: [
+                "科研需要严谨的态度和创新的思维。",
+                "文献调研是科研的重要基础工作。"
+            ],
+            db_wangshangbanshiting: [
+                "您可以通过学校官网访问网上办事厅。",
+                "大部分学务手续都可以在线办理。"
+            ]
+        };
+
+        const keywords = {
+            "你好": "您好！欢迎使用北京第二外国语学院智能问答系统！",
+            "谢谢": "不客气，很高兴能帮助到您！",
+            "学校": "北京第二外国语学院是一所以外语为特色的综合性大学。"
+        };
+
+        // 模拟API调用
+        function simulateApiCall(message, scene) {
+            return new Promise((resolve) => {
+                const delay = mockMode ? 1000 + Math.random() * 1000 : 2000 + Math.random() * 2000;
+                setTimeout(() => {
+                    let response;
+                    
+                    if (mockMode) {
+                        // 检查关键词
+                        const lowerMessage = message.toLowerCase();
+                        for (const [keyword, reply] of Object.entries(keywords)) {
+                            if (lowerMessage.includes(keyword)) {
+                                response = reply;
+                                break;
+                            }
+                        }
+                        
+                        // 如果没有匹配关键词，使用场景回答
+                        if (!response) {
+                            const responses = mockResponses[scene] || mockResponses.general;
+                            response = responses[Math.floor(Math.random() * responses.length)];
+                        }
+                    } else {
+                        response = "真实API暂不可用，这是一个模拟回答。";
+                    }
+                    
+                    resolve(response);
+                }, delay);
+            });
+        }
+
+        // 切换模式
+        function toggleMode() {
+            mockMode = !mockMode;
+            const switchEl = document.getElementById('modeSwitch');
+            const labelEl = document.getElementById('modeLabel');
+            const modeEl = document.getElementById('currentMode');
+            
+            if (mockMode) {
+                switchEl.classList.add('active');
+                labelEl.textContent = '开启';
+                modeEl.textContent = '模拟';
+            } else {
+                switchEl.classList.remove('active');
+                labelEl.textContent = '关闭';
+                modeEl.textContent = '真实';
+            }
+            
+            addSystemMessage(`已切换到${mockMode ? '模拟' : '真实'}模式`);
+        }
+
+        // 选择场景
+        function selectScene(button, scene) {
+            currentScene = scene;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.scene-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            addSystemMessage(`已切换到场景：${button.textContent}`);
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            input.value = '';
+            input.disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('loading').classList.add('show');
+            
+            // 添加用户消息
+            addMessage('user', message);
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await simulateApiCall(message, currentScene);
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                responseTimes.push(responseTime);
+                successCount++;
+                messageCount++;
+                
+                // 添加AI回复
+                addMessage('assistant', response);
+                
+                updateStats();
+            } catch (error) {
+                addMessage('assistant', '抱歉，发生了错误：' + error.message);
+            } finally {
+                input.disabled = false;
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('loading').classList.remove('show');
+                input.focus();
+            }
+        }
+
+        // 添加消息
+        function addMessage(type, content) {
+            const messages = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            
+            const contentEl = document.createElement('div');
+            contentEl.className = 'message-content';
+            contentEl.textContent = content;
+            
+            const metaEl = document.createElement('div');
+            metaEl.className = 'message-meta';
+            metaEl.textContent = new Date().toLocaleTimeString();
+            
+            contentEl.appendChild(metaEl);
+            messageEl.appendChild(contentEl);
+            messages.appendChild(messageEl);
+            
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // 添加系统消息
+        function addSystemMessage(content) {
+            addMessage('system', content);
+        }
+
+        // 更新统计
+        function updateStats() {
+            document.getElementById('totalMessages').textContent = messageCount;
+            
+            if (responseTimes.length > 0) {
+                const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+                document.getElementById('avgResponseTime').textContent = Math.round(avgTime) + 'ms';
+            }
+            
+            if (messageCount > 0) {
+                const rate = Math.round((successCount / messageCount) * 100);
+                document.getElementById('successRate').textContent = rate + '%';
+            }
+        }
+
+        // 清除对话
+        function clearChat() {
+            document.getElementById('messages').innerHTML = '';
+            addSystemMessage('历史记录已清除');
+            messageCount = 0;
+            responseTimes = [];
+            successCount = 0;
+            updateStats();
+        }
+
+        // 自动测试
+        async function runAutoTest() {
+            const btn = document.getElementById('autoTestBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 测试中...';
+            
+            clearChat();
+            
+            const testMessages = [
+                '你好',
+                '学校有什么专业？',
+                '如何申请奖学金？',
+                '图书馆在哪里？',
+                '谢谢你的帮助'
+            ];
+            
+            for (const message of testMessages) {
+                document.getElementById('messageInput').value = message;
+                await sendMessage();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            addSystemMessage('自动测试完成！');
+            btn.disabled = false;
+            btn.textContent = '🚀 自动测试';
+        }
+
+        // 处理回车键
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
+</body>
+</html>

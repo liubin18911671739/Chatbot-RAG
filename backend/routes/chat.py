@@ -5,6 +5,23 @@ import json, re, time
 from google import genai
 from google.genai import types
 
+@bp.route('/chat', methods=['GET'])
+def chat_get():
+    """处理对聊天接口的GET请求（错误请求）"""
+    return jsonify({
+        'status': 'error',
+        'message': 'Chat endpoint only accepts POST requests',
+        'usage': 'Please send a POST request with JSON body containing "prompt" field',
+        'example': {
+            'url': '/api/chat',
+            'method': 'POST',
+            'body': {
+                'prompt': 'Your question here',
+                'scene_id': 'optional scene identifier'
+            }
+        }
+    }), 405
+
 @bp.route('/chat', methods=['POST'])
 def chat():
     """处理聊天请求"""
@@ -204,6 +221,17 @@ def call_gemini_api(prompt, scene_id='general'):
         print(f"解析 DeepSeek API 响应时出错: {str(e)}")
         print(f"响应内容: {response_data}")
         raise Exception("无法解析 DeepSeek API 响应")
+
+@bp.route('/chaat', methods=['GET', 'POST'])
+def chat_typo():
+    """处理常见的chat拼写错误"""
+    return jsonify({
+        'status': 'error',
+        'message': 'URL spelling error detected',
+        'correct_url': '/api/chat',
+        'your_request': '/api/chaat',
+        'suggestion': 'Please check the spelling and use /api/chat instead'
+    }), 404
 
 # 测试主函数
 def main():

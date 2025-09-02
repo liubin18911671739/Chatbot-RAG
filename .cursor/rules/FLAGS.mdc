@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /FLAGS
+
+## Goal
+Implement feature flags with rollout plan.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/FLAGS example with {PLACEHOLDERS}.
+```

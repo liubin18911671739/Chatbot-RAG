@@ -1,0 +1,19 @@
+---
+description: /DEPLOY
+globs:  Expo EAS (iOS/Android)
+alwaysApply: false
+---
+# /DEPLOY
+
+## Goal：Vercel (Web/Edge), Render (Backend Services/Worker), Expo EAS (iOS/Android), WeChat Mini Program upload pipeline.
+
+## nput: Environment variables, domain names, deployment policies.
+
+## Output: vercel.json, render.yaml, eas.json, ci.yml, /docs/DEPLOY.md.
+
+## Example Usage
+```
+/DEPLOY 生成 Vercel（Web/Edge Fn）+ Render（Worker/Redis）+ EAS（iOS/Android）+ 小程序（Taro）流水线与变量清单。
+```
+
+

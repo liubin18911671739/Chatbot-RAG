@@ -267,6 +267,276 @@
           }
         }
       },
+      "/api/auth/login": {
+        "post": {
+          "summary": "混合认证登录",
+          "description": "支持RADIUS和本地数据库认证的登录接口",
+          "operationId": "hybridLogin",
+          "tags": ["用户认证"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["username", "password"],
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "用户名",
+                      "example": "admin"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "密码",
+                      "example": "admin@123"
+                    },
+                    "auth_type": {
+                      "type": "string",
+                      "description": "认证类型 (radius/local/hybrid)",
+                      "example": "local",
+                      "enum": ["radius", "local", "hybrid"]
+                    },
+                    "nas_ip_address": {
+                      "type": "string",
+                      "description": "NAS-IP-Address (仅用于RADIUS认证)",
+                      "example": "10.10.15.211"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "认证成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "登录成功"
+                      },
+                      "token": {
+                        "type": "string",
+                        "example": "dummy_token_admin"
+                      },
+                      "user": {
+                        "type": "object",
+                        "properties": {
+                          "username": {
+                            "type": "string",
+                            "example": "admin"
+                          },
+                          "auth_method": {
+                            "type": "string",
+                            "example": "本地数据库"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "认证失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/create-admin": {
+        "post": {
+          "summary": "创建管理员用户",
+          "description": "创建新的管理员用户",
+          "operationId": "createAdmin",
+          "tags": ["用户认证"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["username", "password"],
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "用户名",
+                      "example": "newadmin"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "密码",
+                      "example": "newpassword"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "邮箱地址",
+                      "example": "newadmin@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "创建成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "用户创建成功"
+                      },
+                      "user": {
+                        "type": "object",
+                        "properties": {
+                          "username": {
+                            "type": "string",
+                            "example": "newadmin"
+                          },
+                          "email": {
+                            "type": "string",
+                            "example": "newadmin@example.com"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/users": {
+        "get": {
+          "summary": "获取用户列表",
+          "description": "获取系统中所有用户的列表",
+          "operationId": "getUsers",
+          "tags": ["用户认证"],
+          "responses": {
+            "200": {
+              "description": "获取成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "users": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "username": {
+                              "type": "string",
+                              "example": "admin"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "admin@ichat.com"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/auth/health": {
+        "get": {
+          "summary": "认证服务健康检查",
+          "description": "检查认证服务的运行状态",
+          "operationId": "authHealth",
+          "tags": ["用户认证"],
+          "responses": {
+            "200": {
+              "description": "服务正常",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "认证服务正常运行"
+                      },
+                      "radius_server": {
+                        "type": "string",
+                        "example": "10.10.15.95"
+                      },
+                      "radius_port": {
+                        "type": "integer",
+                        "example": 1812
+                      },
+                      "local_db": {
+                        "type": "string",
+                        "example": "sqlite:///test_admin.db"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "/api/health": {
         "get": {
           "summary": "健康检查接口",
@@ -284,8 +554,303 @@
                       "status": {
                         "type": "string",
                         "example": "ok"
+                      },
+                      "platform": {
+                        "type": "string",
+                        "example": "Darwin"
+                      },
+                      "version": {
+                        "type": "string",
+                        "example": "1.0.0"
+                      },
+                      "environment": {
+                        "type": "string",
+                        "example": "development"
                       }
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/questions": {
+        "get": {
+          "summary": "获取问题列表",
+          "description": "获取系统中的所有问题列表",
+          "operationId": "getQuestions",
+          "tags": ["问题管理"],
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "example": "success"
+                      },
+                      "qas": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Question"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "503": {
+              "description": "无法连接到目标API服务器",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/suggestions": {
+        "get": {
+          "summary": "获取建议列表",
+          "description": "获取系统推荐的问题建议",
+          "operationId": "getSuggestions",
+          "tags": ["建议功能"],
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "example": "success"
+                      },
+                      "suggestions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "408": {
+              "description": "请求超时",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "503": {
+              "description": "无法连接到服务器",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/search": {
+        "get": {
+          "summary": "搜索问题",
+          "description": "根据查询内容搜索匹配的问题",
+          "operationId": "searchQuestion",
+          "tags": ["搜索功能"],
+          "parameters": [
+            {
+              "name": "query",
+              "in": "query",
+              "required": true,
+              "description": "搜索关键词",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "找到匹配的问题",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 1213
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "查询参数不能为空",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "未找到匹配的问题",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/questions": {
+        "post": {
+          "summary": "插入新问题",
+          "description": "向系统中添加新的问题",
+          "operationId": "insertQuestion",
+          "tags": ["问题管理"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionInsertRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "插入成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/update/{id}": {
+        "post": {
+          "summary": "更新问题",
+          "description": "根据ID更新现有问题",
+          "operationId": "updateQuestion",
+          "tags": ["问题管理"],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "问题ID",
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionUpdateRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "更新成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/delete/{id}": {
+        "post": {
+          "summary": "删除问题",
+          "description": "根据ID删除问题",
+          "operationId": "deleteQuestion",
+          "tags": ["问题管理"],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "问题ID",
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "删除成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
                   }
                 }
               }
@@ -435,6 +1000,69 @@
               "example": "SERVER_ERROR"
             }
           }
+        },
+        "Question": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 1213
+            },
+            "question": {
+              "type": "string",
+              "example": "什么是马克思主义？"
+            },
+            "answer": {
+              "type": "string",
+              "example": "马克思主义是关于全世界无产阶级和全人类彻底解放的学说。"
+            },
+            "category": {
+              "type": "string",
+              "example": "思政教育"
+            }
+          }
+        },
+        "QuestionInsertRequest": {
+          "type": "object",
+          "required": ["question", "answer"],
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "问题内容",
+              "example": "什么是马克思主义？"
+            },
+            "answer": {
+              "type": "string",
+              "description": "答案内容",
+              "example": "马克思主义是关于全世界无产阶级和全人类彻底解放的学说。"
+            },
+            "category": {
+              "type": "string",
+              "description": "问题分类",
+              "example": "思政教育"
+            }
+          }
+        },
+        "QuestionUpdateRequest": {
+          "type": "object",
+          "required": ["question", "answer"],
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "问题内容",
+              "example": "什么是马克思主义？"
+            },
+            "answer": {
+              "type": "string",
+              "description": "答案内容",
+              "example": "马克思主义是关于全世界无产阶级和全人类彻底解放的学说。"
+            },
+            "category": {
+              "type": "string",
+              "description": "问题分类",
+              "example": "思政教育"
+            }
+          }
         }
       }
     },    "tags": [
@@ -461,6 +1089,18 @@
       {
         "name": "用户认证",
         "description": "用户登录与认证相关功能"
+      },
+      {
+        "name": "问题管理",
+        "description": "问题的增删改查操作"
+      },
+      {
+        "name": "建议功能",
+        "description": "系统推荐的问题建议"
+      },
+      {
+        "name": "搜索功能",
+        "description": "问题搜索功能"
       }
     ]
   }

@@ -491,3 +491,8 @@ json
     console.error('搜索失败:', error);
     throw error;
   }
+
+  ⏺ Bash(python create_test_admin.py)
+  ⎿  成功创建测试管理员用户:      
+       用户名: admin
+       邮箱: admin@ichat.com

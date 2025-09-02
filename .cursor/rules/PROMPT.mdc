@@ -1,0 +1,22 @@
+---
+alwaysApply: false
+---
+# /PROMPT
+
+## Goal
+Create and version prompts in YAML with metadata.
+
+## Inputs
+- placeholders as needed
+
+## Outputs
+- list of files or docs
+
+## Steps
+1. Describe step 1
+2. Describe step 2
+
+## Example Usage
+```
+/PROMPT example with {PLACEHOLDERS}.
+```

@@ -3,118 +3,178 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
+iChat-develop is a comprehensive RAG-QA System (Retrieval-Augmented Generation Question-Answering) designed for Beijing International Studies University (BISU). It features multi-platform support including web frontend, WeChat mini-program, and includes campus network access restrictions.
 
-iChat is a comprehensive RAG-QA (Retrieval-Augmented Generation Question-Answering) system designed for Beijing International Studies University (BISU). It consists of three main components:
+## Architecture
+- **Backend**: Flask-based API server with RAG pipeline, multiple authentication methods (RADIUS, local DB), and external API integrations
+- **Frontend**: Vue.js 3 SPA with Element Plus UI components, Pinia state management, and responsive design
+- **Mobile**：expo
+- **Miniprogram**: WeChat mini-program with campus network access controls
+- **Deployment**: Docker Compose setup with Nginx reverse proxy
 
-- **Frontend**: Vue.js 3 web application with Element Plus UI
-- **Backend**: Flask API server with RAG implementation using sentence transformers
-- **Miniprogram**: WeChat mini-program with campus network access restrictions
+## Common Development Commands
 
-## Development Commands
-
-### Frontend (Vue.js)
-```bash
-cd frontend
-npm install              # Install dependencies
-npm run serve           # Development server (port 8080)
-npm run build           # Production build
-npm run debug           # Development server with verbose logging
-```
-
-### Backend (Flask)
+### Backend Development
 ```bash
 cd backend
-pip install -r requirements.txt    # Install dependencies
-python app.py                      # Development server (port 5000)
-gunicorn -w 4 -b 0.0.0.0:5000 app:app  # Production server
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run development server
+python app.py
+
+# Run with production config
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
+
+### Frontend Development
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Development server (runs on http://localhost:8080)
+npm run serve
+
+# Build for production
+npm run build
+
+# Lint code
+npm run lint
 ```
 
 ### Testing
 ```bash
-# Backend tests
+# Backend tests (from project root)
 cd backend
-pytest tests/
+python -m pytest tests/
 
-# Frontend API tests
-cd test
-node test_sendChatMessage_simple.js    # Quick API test
-node test_sendChatMessage.js           # Full API test suite
+# Run specific test files
+python test_auth.py
+python test_gemini.py
+
+# Frontend E2E tests
+cd frontend
+npx cypress run
 ```
 
 ### Docker Deployment
 ```bash
-docker-compose up --build    # Full stack deployment
+# Full stack deployment
+docker-compose up --build
+
+# Individual services
+docker-compose up frontend
+docker-compose up backend
 ```
 
-## Architecture Overview
+## Key Architecture Components
 
-### Backend Structure
-- `routes/`: API endpoints organized by functionality
-  - `chat.py`: Main chat/QA endpoint using RAG pipeline
-  - `scenes.py`: Knowledge domain management
-  - `auth.py`: Authentication and authorization
-  - `feedback.py`: User feedback collection
-- `services/`: Core business logic
-  - `chat_service.py`: RAG implementation with sentence transformers
-  - `rag_service.py`: Document processing and vector search
-- `models/`: Database models and schemas
-- `utils/`: Helper functions and utilities
+### Backend Structure (`/backend/`)
+- `app.py` - Main Flask application with CORS, Swagger UI, and global error handling
+- `routes/` - API endpoints organized by functionality:
+  - `chat.py` - Main chat interface with primary/fallback API calls
+  - `auth.py` - RADIUS authentication
+  - `hybrid_auth.py` - Combined RADIUS and local DB authentication
+  - `scenes.py` - Knowledge domain management
+  - `feedback.py`, `greeting.py`, `suggestions.py` - Support endpoints
+- `services/` - Business logic layer (chat_service.py, rag_service.py)
+- `models/` - Database models and connections
+- `utils/` - Helper functions and utilities
 
-### Frontend Structure
-- `src/components/`: Vue components
-  - `ChatBox.vue`: Main chat interface
-  - `AgentSelector.vue`: Scene/domain selection
-  - `ResponseRenderer.vue`: AI response display with markdown
-- `src/services/`: API communication layer
-  - `chatService.js`: Chat API integration
-  - `auth.js`: Authentication service
-- `src/stores/`: Pinia state management
-- `src/views/`: Page-level components
+### Frontend Structure (`/frontend/`)
+- Vue 3 with Composition API
+- Element Plus for UI components
+- Pinia for state management (replacing Vuex in newer parts)
+- Key components:
+  - `ChatBox.vue` - Main chat interface
+  - `AgentSelector.vue` - Scene/domain selection
+  - `HistoryPanel.vue` - Conversation history
+  - `ResponseRenderer.vue` - AI response display with markdown support
 
-### Miniprogram Structure
-- **Campus Network Restrictions**: Enforces access only from BISU campus network
-- `utils/network-validator.js`: Multi-layer network validation (API connectivity, IP ranges, GPS)
-- `pages/`: WeChat mini-program pages
-- Admin configuration with password protection
+### API Integration
+- Primary API: `http://10.10.15.210:5000` (production)
+- Fallback API: DeepSeek Chat API for when primary fails
+- Proxy configuration in `vue.config.cjs` routes `/api/*` to backend
 
-## Key Technical Details
+### Authentication System
+- Dual authentication: RADIUS (campus network) + local database
+- JWT tokens for session management
+- Admin user creation via `create_test_admin.py`
+- Network access validation for campus-only usage
 
-### RAG Implementation
-- Uses sentence transformers for text embeddings
-- Vector similarity search for context retrieval  
-- Supports multiple knowledge domains (scenes):
-  - 思政学习空间 (Political Education)
-  - 通用助手 (General Assistant)
-  - 学习指导 (Learning Guidance)
-  - 科研辅助 (Research Assistance)
+### Campus Network Restrictions
+- Multi-layer validation: API connectivity, IP range checking, GPS location
+- Configurable via admin interface in WeChat mini-program
+- Development mode bypasses for testing
 
-### API Endpoints
-- `POST /api/chat`: Main QA endpoint
-- `GET /api/scenes`: Available knowledge domains
-- `GET /api/greeting`: Welcome messages
-- `POST /api/feedback`: User feedback collection
-- `GET /api/suggestions`: Query suggestions
-- `GET /api/questions`: Question management
-- `POST /api/questions`: Insert new questions
-- `POST /api/update/{id}`: Update questions
-- `POST /api/delete/{id}`: Delete questions
-- `GET /api/search`: Search questions with params
-
-### Campus Network Security
-The system implements comprehensive campus network restrictions:
-- **API Connectivity Check**: Validates connection to campus servers (10.10.15.211, 10.10.15.210)
-- **IP Range Validation**: Checks for campus network segments
-- **GPS Location Verification**: Ensures physical presence on campus
-- **Admin Configuration**: Password-protected settings (password: bisu2024admin)
+### Scene-Based Knowledge Domains
+Available scenes configured in backend:
+- `db_sizheng` - Political Education Resources
+- `db_xuexizhidao` - Learning Guidance  
+- `db_zhihuisizheng` - Smart Political Education
+- `db_keyanfuzhu` - Research Assistance
+- `db_wangshangbanshiting` - Campus Administrative Services
+- `general` - General Assistant (default)
 
 ### Environment Configuration
-- Development: Debug logging enabled, local test mode
-- Production: Optimized logging, network restrictions enforced
-- API base URLs: 10.10.15.210:5000 (primary), 10.10.15.211:5000 (fallback)
+- Backend: Environment variable `APP_ENV` (development/testing/production)
+- Frontend: Vue CLI modes with proxy configuration
+- Docker: Service networking with health checks
 
-## Important Notes
+## WeChat Mini-Program (`/miniprogram/`)
 
-- The system uses Chinese language interfaces and documentation
-- Network restrictions are designed specifically for BISU campus environment
-- All API responses include Chinese text and should handle UTF-8 encoding properly
-- The RAG system is optimized for Chinese language queries about university policies and procedures
+### Structure and Configuration
+- **AppID**: `wxa3fc6e84217531a2` - WeChat Mini-Program identifier
+- **Main Entry**: `app.js` - Global app initialization with network validation
+- **Environment Config**: `config/env.js` - Multi-environment support (development/staging/production)
+- **Campus Restriction**: Configurable per environment (disabled in dev, enabled in production)
+
+### Key Features
+1. **Campus Network Validation**: Multi-layer access control system
+   - API connectivity tests (`10.10.15.211`, `10.10.15.210`)
+   - IP range validation (10.10.0.0/16, 192.168.0.0/16, 172.16.0.0/12)
+   - GPS location verification (Beijing International Studies University bounds)
+   - Administrative override via password-protected config panel
+
+2. **RADIUS Authentication**: Integration with campus authentication system
+   - Credentials validated against RADIUS servers
+   - Local storage for session management
+   - Fallback for development environments
+
+3. **Adaptive API Integration**: Environment-based API routing with fallback mechanisms
+
+### Page Structure
+- **index**: Home page with welcome messages and quick actions
+- **chat**: Main conversation interface with scene selection
+- **scenes**: Domain-specific AI assistants selection
+- **history**: Conversation history management
+- **profile**: User settings and admin access
+- **admin-config**: Network restriction configuration (password: `bisu2024admin`)
+- **access-denied**: Campus restriction violation handling
+
+### Development Commands
+```bash
+# WeChat Developer Tools required for mini-program development
+# Import project with AppID: wxa3fc6e84217531a2
+# Configure server domains in WeChat MP Admin Panel
+```
+
+### Network Validation System
+- **Class**: `NetworkValidator` in `utils/network-validator.js`
+- **Admin Password**: `bisu2024admin` (stored key: `bisu_admin_2024`)
+- **Campus Coordinates**: ~39.945°N, 116.465°E (approximate bounds)
+- **Validation Bypass**: Development environment or config disabled
+
+### Key Files to Know
+- `miniprogram/utils/network-validator.js:26` - Core campus validation logic
+- `miniprogram/utils/auth.js:13` - RADIUS authentication implementation
+- `miniprogram/config/env.js:42` - Environment detection and API routing
+- `miniprogram/app.js:78` - Global network validation on app launch
+- `backend/swagger.json` - Complete API documentation
+- `docker-compose.yml` - Full deployment configuration
+- `frontend/vue.config.cjs` - Development proxy and build settings
+- `backend/routes/chat.py:117` - Main chat logic with fallback mechanism
+- `frontend/src/main.js` - App initialization and global configurations
