@@ -1,4 +1,4 @@
-// test/radius-auth-test.js
+// test/auth-test.js
 // RADIUS认证功能测试脚本
 
 import authService from '../utils/auth.js'

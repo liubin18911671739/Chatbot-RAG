@@ -15,7 +15,7 @@ class AuthService {
     
     return new Promise((resolve, reject) => {
       wx.request({
-        url: `${API_BASE_URL}/api/radius-auth/radius-login`,
+        url: `${API_BASE_URL}/api/auth/radius-login`,
         method: 'POST',
         data: {
           username,

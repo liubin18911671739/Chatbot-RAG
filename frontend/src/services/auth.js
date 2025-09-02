@@ -19,7 +19,7 @@ class AuthService {
         console.log('开始RADIUS认证流程...');
         
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/radius-auth/radius-login`, {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/radius-login`, {
                 username,
                 password
             }, {

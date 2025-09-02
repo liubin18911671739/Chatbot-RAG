@@ -26,7 +26,7 @@
 ### 应用入口与配置
 - `backend/app.py`
   - Flask 应用 + CORS + Swagger UI（`/api/docs` -> `backend/swagger.json`）
-  - 注册主蓝图 `/api`（`backend/routes/__init__.py`），注册 RADIUS 认证蓝图 `/api/radius-auth` 与混合认证蓝图 `/api/auth`
+  - 注册主蓝图 `/api`（`backend/routes/__init__.py`），注册 RADIUS 认证蓝图 `/api/auth` 与混合认证蓝图 `/api/auth`
   - 健康检查：`/api/health`（同时根路径 `/` 返回系统信息）
   - 本地/测试模式下启用详细日志，日志轮转写入 `backend/logs/app.log`
 
@@ -66,7 +66,7 @@
 
 ### 认证模块
 - RADIUS：`routes/auth.py`
-  - 蓝图前缀：`/api/radius-auth`
+  - 蓝图前缀：`/api/auth`
   - 端点：`/radius-login`、`/test-radius-connection` 等。
   - 使用 `pyrad` 与字典文件（`backend/dictionary`），Windows 下包含 `select.poll` 兼容补丁与原生 socket fallback。
   - 默认常量硬编码：`RADIUS_SERVER='10.10.15.95'`，`RADIUS_SECRET=b'123456'`（风险）。
@@ -224,7 +224,7 @@
 - 问候语：`GET /api/greeting`
 - 反馈：`POST /api/feedback`
 - 认证：
-  - RADIUS：`POST /api/radius-auth/radius-login`
+  - RADIUS：`POST /api/auth/radius-login`
   - 混合：`POST /api/auth/login`、`POST /api/auth/create-admin`、`GET /api/auth/users`
 - 小程序 API 基址（默认）：`http://10.10.15.211:5000`
 - Web 前端默认后端：`http://localhost:5000`

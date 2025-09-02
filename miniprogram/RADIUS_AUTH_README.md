@@ -152,7 +152,7 @@ checkAuthStatus() {
 ### 调试方法
 ```javascript
 // 在控制台运行测试
-import { testRadiusAuth } from './test/radius-auth-test.js'
+import { testRadiusAuth } from './test/auth-test.js'
 testRadiusAuth()
 ```
 
