@@ -11,7 +11,7 @@
     },
     "servers": [
       {
-        "url": "http://10.10.15.210:5000",
+        "url": "http://localhost:5000",
         "description": "开发环境服务器"
       },
       {
@@ -182,7 +182,7 @@
             }
           }
         }
-      },      "/api/auth/radius-login": {
+      },      "/api/radius-auth/radius-login": {
         "post": {
           "summary": "RADIUS认证登录",
           "description": "使用RADIUS服务器进行身份验证",
@@ -260,6 +260,156 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/radius-auth/test-radius-connection": {
+        "get": {
+          "summary": "测试RADIUS连接",
+          "description": "测试RADIUS服务器连接状态",
+          "operationId": "testRadiusConnection",
+          "tags": ["用户认证"],
+          "responses": {
+            "200": {
+              "description": "连接测试成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "RADIUS server connection test successful"
+                      },
+                      "server": {
+                        "type": "string",
+                        "example": "10.10.15.95"
+                      },
+                      "port": {
+                        "type": "integer",
+                        "example": 1812
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "连接失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/radius-auth/windows-radius-workaround": {
+        "get": {
+          "summary": "Windows RADIUS绕过方案",
+          "description": "Windows平台下的RADIUS认证绕过方案",
+          "operationId": "windowsRadiusWorkaround",
+          "tags": ["用户认证"],
+          "responses": {
+            "200": {
+              "description": "成功响应",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Windows RADIUS workaround test endpoint"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/radius-auth/windows-direct-auth": {
+        "post": {
+          "summary": "Windows直接RADIUS认证",
+          "description": "Windows平台下的直接RADIUS认证",
+          "operationId": "windowsDirectAuth",
+          "tags": ["用户认证"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["username", "password"],
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "用户名",
+                      "example": "testuser"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "密码",
+                      "example": "password"
+                    },
+                    "nas_ip_address": {
+                      "type": "string",
+                      "description": "NAS-IP-Address",
+                      "example": "10.10.15.211"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "认证成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Windows direct authentication successful"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "认证失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Windows direct authentication failed"
+                      }
+                    }
                   }
                 }
               }
@@ -615,6 +765,44 @@
               }
             }
           }
+        },
+        "post": {
+          "summary": "插入新问题",
+          "description": "向系统中添加新的问题",
+          "operationId": "insertQuestion",
+          "tags": ["问题管理"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionInsertRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "插入成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuccessResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "/api/suggestions": {
@@ -715,46 +903,6 @@
             },
             "404": {
               "description": "未找到匹配的问题",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorResponse"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/api/questions": {
-        "post": {
-          "summary": "插入新问题",
-          "description": "向系统中添加新的问题",
-          "operationId": "insertQuestion",
-          "tags": ["问题管理"],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuestionInsertRequest"
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "插入成功",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/SuccessResponse"
-                  }
-                }
-              }
-            },
-            "400": {
-              "description": "请求参数错误",
               "content": {
                 "application/json": {
                   "schema": {
