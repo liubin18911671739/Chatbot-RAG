@@ -68,8 +68,8 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 app.register_blueprint(bp, url_prefix='/api')  # 添加url_prefix
 
 # 注册RADIUS认证模块的蓝图，支持RADIUS身份验证
-# 当前包含的端点: /api/radius-auth/radius-login
-app.register_blueprint(radius_auth_bp, url_prefix='/api/radius-auth')
+# 当前包含的端点: /api/auth/radius-login
+app.register_blueprint(radius_auth_bp, url_prefix='/api/auth')
 
 # 注册混合认证模块的蓝图，支持RADIUS和本地数据库认证
 # 当前包含的端点: /api/auth/login, /api/auth/create-admin, /api/auth/users

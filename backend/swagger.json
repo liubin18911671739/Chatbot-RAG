@@ -182,7 +182,7 @@
             }
           }
         }
-      },      "/api/radius-auth/radius-login": {
+      },      "/api/auth/radius-login": {
         "post": {
           "summary": "RADIUS认证登录",
           "description": "使用RADIUS服务器进行身份验证",
@@ -267,7 +267,7 @@
           }
         }
       },
-      "/api/radius-auth/test-radius-connection": {
+      "/api/auth/test-radius-connection": {
         "get": {
           "summary": "测试RADIUS连接",
           "description": "测试RADIUS服务器连接状态",
@@ -311,7 +311,7 @@
           }
         }
       },
-      "/api/radius-auth/windows-radius-workaround": {
+      "/api/auth/windows-radius-workaround": {
         "get": {
           "summary": "Windows RADIUS绕过方案",
           "description": "Windows平台下的RADIUS认证绕过方案",
@@ -337,7 +337,7 @@
           }
         }
       },
-      "/api/radius-auth/windows-direct-auth": {
+      "/api/auth/windows-direct-auth": {
         "post": {
           "summary": "Windows直接RADIUS认证",
           "description": "Windows平台下的直接RADIUS认证",
