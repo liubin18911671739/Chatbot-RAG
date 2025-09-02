@@ -12,8 +12,8 @@ class NetworkValidator {
     this.campusApiHosts = [
       '10.10.15.211',      // 当前API服务器
       '10.10.15.210',      // 备用服务器
-      'localhost',         // 本地开发
-      '127.0.0.1'          // 本地回环
+      // 'localhost',         // 本地开发
+      // '127.0.0.1'          // 本地回环
     ]
     
     this.restrictionEnabled = true  // 是否启用校园网限制

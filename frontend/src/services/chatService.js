@@ -3,7 +3,7 @@ import axios from 'axios';
 // 环境配置
 const getConfig = () => {
   return {
-    baseURL: 'http://localhost:5000',
+    baseURL: 'http://10.10.15.211:5000',
     backupURLs: [
       'http://10.10.15.210:5000',
       'http://10.10.15.211:5000'
@@ -26,7 +26,7 @@ class ChatService {
   // 初始化API配置
   init() {
     this.config = getConfig();
-    this.baseUrl = 'http://localhost:5000';
+    this.baseUrl = 'http://10.10.15.211:5000';
     this.timeout = this.config.timeout || 60000;
     
     console.log('API服务初始化:', {

@@ -7,7 +7,7 @@ import router from '../router'; // 导入路由实例用于认证后跳转
 // RADIUS认证的API端点
 // const API_URL = 'http://localhost:5000/api/auth/';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://10.10.15.211:5000';
 
 // const API_URL = 'http://aiqa.bisu.edu.cn:5000/api/auth/';
 // const RADIUS_LOGIN_URL = 'http://aiqa.bisu.edu.cn:5000/api/auth/radius-login';

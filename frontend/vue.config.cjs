@@ -7,9 +7,9 @@ module.exports = {
     proxy: {
       '/api': {
         // 使用开发服务器地址
-        target: 'http://localhost:5000',
+        // target: 'http://localhost:5000',
         // 使用生产服务器地址
-        // target: 'http://10.10.15.211:5000',
+        target: 'http://10.10.15.211:5000',
 
         changeOrigin: true,
         // 正确设置超时
