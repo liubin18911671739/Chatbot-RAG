@@ -1,4 +1,6 @@
 # iChat Rag-QA System
+
+[Contributor Guide → AGENTS.md](AGENTS.md)
 {
   "registry-mirrors": [
     "https://registry.cn-hangzhou.aliyuncs.com",
@@ -161,7 +163,7 @@ def greeting():
    ```
    pip install -r requirements.txt
    ```
-
+  
 3. 启动后端服务：
    ```
    # 开发模式

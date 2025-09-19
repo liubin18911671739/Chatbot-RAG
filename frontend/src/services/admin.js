@@ -547,7 +547,7 @@ export const fetchSettings = async () => {
   } catch (error) {
     console.error('获取系统设置失败:', error);
     return {
-      systemName: '海棠校园问答系统',
+      systemName: '棠心校园问答系统',
       welcomeMessage: '你好！我是棠心问答AI辅导员，随时为你提供帮助～'
     };
   }

@@ -22,7 +22,7 @@ const production = {
 
 // 开发环境配置
 const development = {
-  API_BASE_URL: 'http://localhost:5000',
+  API_BASE_URL: 'http://10.10.15.211:5000',
   campusRestriction: {
     enabled: false,
     allowDevelopment: true,
