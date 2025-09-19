@@ -4,6 +4,7 @@ import requests
 import json, re, time
 from google import genai
 from google.genai import types
+from routes.analytics import log_search_query
 
 @bp.route('/chat', methods=['GET'])
 def chat_get():
@@ -25,18 +26,24 @@ def chat_get():
 @bp.route('/chat', methods=['POST'])
 def chat():
     """处理聊天请求"""
+    start_time = time.time()
     data = request.get_json()
-    
+
     # 输出调试信息
     print(f"收到聊天请求: {data}")
-    
+
     # 验证输入数据
     if not data or 'prompt' not in data:
         print("错误: 缺少prompt字段")
         return jsonify({"status": "error", "message": "缺少提示信息"}), 400
-    
+
     prompt = data['prompt']
     scene_id = data.get('scene_id')  # 支持可选的scene_id参数
+
+    # 获取请求信息用于分析
+    session_id = data.get('session_id') or request.headers.get('X-Session-ID')
+    ip_address = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    user_agent = request.headers.get('User-Agent')
     
     # 首先尝试主API
     try:
@@ -60,7 +67,7 @@ def chat():
                 try:
                     print("主API失败，调用备用API (Gemini/DeepSeek)...")
                     api_response = call_gemini_api(prompt, scene_id)
-                    
+
                     # 构建响应
                     response_data = {
                         "status": "success",
@@ -68,17 +75,58 @@ def chat():
                         "attachment_data": [],
                         "special_note": "响应来自备用API服务"
                     }
-                    
+
+                    # 记录成功的搜索（备用API）
+                    response_time = int((time.time() - start_time) * 1000)
+                    log_search_query(
+                        query_text=prompt,
+                        scene_id=scene_id,
+                        session_id=session_id,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        response_time=response_time,
+                        response_status='success',
+                        api_source='fallback'
+                    )
+
                     print(f"备用API返回响应: {response_data}")
                     return jsonify(response_data)
-                    
+
                 except Exception as e:
                     print(f"备用API调用失败: {str(e)}")
+
+                    # 记录失败的搜索
+                    response_time = int((time.time() - start_time) * 1000)
+                    log_search_query(
+                        query_text=prompt,
+                        scene_id=scene_id,
+                        session_id=session_id,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        response_time=response_time,
+                        response_status='error',
+                        api_source='fallback'
+                    )
+
                     return jsonify({
-                        "status": "error", 
+                        "status": "error",
                         "message": "所有API调用均失败，请稍后再试",
                         "error_detail": str(e)
                     }), 500
+
+            # 记录成功的搜索（主API）
+            response_time = int((time.time() - start_time) * 1000)
+            log_search_query(
+                query_text=prompt,
+                scene_id=scene_id,
+                session_id=session_id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                response_time=response_time,
+                response_status='success',
+                api_source='primary'
+            )
+
             return jsonify(response_data)
         else:
             print(f"主API调用失败，状态码: {response.status_code}, 错误信息: {response.text}")
@@ -94,7 +142,7 @@ def chat():
     try:
         print("主API失败，调用备用API (Gemini/DeepSeek)...")
         api_response = call_gemini_api(prompt, scene_id)
-        
+
         # 构建响应
         response_data = {
             "status": "success",
@@ -102,14 +150,41 @@ def chat():
             "attachment_data": [],
             "special_note": "响应来自备用API服务"
         }
-        
+
+        # 记录成功的搜索（备用API）
+        response_time = int((time.time() - start_time) * 1000)
+        log_search_query(
+            query_text=prompt,
+            scene_id=scene_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            response_time=response_time,
+            response_status='success',
+            api_source='fallback'
+        )
+
         print(f"备用API返回响应: {response_data}")
         return jsonify(response_data)
-        
+
     except Exception as e:
         print(f"备用API调用失败: {str(e)}")
+
+        # 记录失败的搜索
+        response_time = int((time.time() - start_time) * 1000)
+        log_search_query(
+            query_text=prompt,
+            scene_id=scene_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            response_time=response_time,
+            response_status='error',
+            api_source='fallback'
+        )
+
         return jsonify({
-            "status": "error", 
+            "status": "error",
             "message": "所有API调用均失败，请稍后再试",
             "error_detail": str(e)
         }), 500

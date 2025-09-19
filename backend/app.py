@@ -4,6 +4,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from routes import bp  # 导入主Blueprint
 from routes.auth import auth_bp as radius_auth_bp  # 导入RADIUS认证Blueprint
 from routes.hybrid_auth import auth_bp as hybrid_auth_bp  # 导入混合认证Blueprint
+from routes.analytics import analytics_bp  # 导入分析统计Blueprint
 import logging
 import platform
 from logging.handlers import RotatingFileHandler
@@ -73,7 +74,22 @@ app.register_blueprint(radius_auth_bp, url_prefix='/api/auth')
 
 # 注册混合认证模块的蓝图，支持RADIUS和本地数据库认证
 # 当前包含的端点: /api/auth/login, /api/auth/create-admin, /api/auth/users
-app.register_blueprint(hybrid_auth_bp, url_prefix='/api/auth')  
+app.register_blueprint(hybrid_auth_bp, url_prefix='/api/auth')
+
+# 注册分析统计模块的蓝图，提供检索词统计和分析功能
+# 当前包含的端点: /api/analytics/search-stats, /api/analytics/popular-queries 等
+app.register_blueprint(analytics_bp, url_prefix='/api')
+
+# 初始化数据库
+from models.database import db
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# 创建数据库表
+with app.app_context():
+    db.create_all()
+    logger.info("数据库表初始化完成")
 
 # 记录认证服务状态
 from routes.auth import RADIUS_SERVER

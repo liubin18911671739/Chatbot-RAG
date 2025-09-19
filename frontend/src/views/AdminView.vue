@@ -18,6 +18,10 @@
             <i class="icon-student"></i>
             <span>校园共建问题</span>
           </div>
+          <div class="nav-item" :class="{ active: activeTab === 'analytics' }" @click="activeTab = 'analytics'">
+            <i class="icon-chart"></i>
+            <span>检索分析</span>
+          </div>
           <!-- <div class="nav-item" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
             <i class="icon-users"></i>
             <span>用户管理</span>
@@ -158,6 +162,11 @@
               <p>暂无用户数据</p>
             </div>
           </div>
+        </div>
+
+        <!-- 检索分析面板 -->
+        <div v-if="activeTab === 'analytics'" class="panel analytics-panel">
+          <AnalyticsView />
         </div>
 
         <!-- 系统设置面板 -->
@@ -471,6 +480,7 @@ import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import MarkdownIt from 'markdown-it';
+import AnalyticsView from '../components/AnalyticsView.vue';
 import {
   fetchDocuments,
   fetchUsers,
@@ -494,6 +504,9 @@ import {
 
 export default {
   name: 'AdminView',
+  components: {
+    AnalyticsView
+  },
   setup() {    const router = useRouter();
     
     // 创建 markdown 解析器实例
@@ -2092,5 +2105,21 @@ tbody td {
   background-color: #f8f9fa;
   border-radius: 6px;
   border: 1px solid #e9ecef;
+}
+
+/* 分析面板样式 */
+.analytics-panel {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.analytics-panel .analytics-view {
+  background: transparent;
+}
+
+/* 图标样式 */
+.icon-chart::before {
+  content: "📊";
 }
 </style>
