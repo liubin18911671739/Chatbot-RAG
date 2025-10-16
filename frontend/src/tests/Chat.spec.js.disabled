@@ -1,0 +1,114 @@
+import { mount } from '@vue/test-utils'
+import { createStore } from 'vuex'
+import Chat from '@/views/Chat.vue'
+
+describe('Chat.vue', () => {
+  let store
+  let wrapper
+
+  beforeEach(() => {
+    store = createStore({
+      state: {
+        user: {
+          isAuthenticated: true,
+          username: 'testuser'
+        },
+        messages: []
+      },
+      actions: {
+        sendMessage: jest.fn(),
+        loadMessages: jest.fn()
+      },
+      mutations: {
+        ADD_MESSAGE: jest.fn()
+      }
+    })
+  })
+
+  afterEach(() => {
+    if (wrapper) {
+      wrapper.unmount()
+    }
+  })
+
+  it('renders chat interface', () => {
+    wrapper = mount(Chat, {
+      global: {
+        plugins: [store]
+      }
+    })
+    expect(wrapper.find('.chat-container').exists()).toBe(true)
+  })
+
+  it('displays message input', () => {
+    wrapper = mount(Chat, {
+      global: {
+        plugins: [store]
+      }
+    })
+    expect(wrapper.find('input[type="text"]').exists() || 
+           wrapper.find('textarea').exists()).toBe(true)
+  })
+
+  it('has send button', () => {
+    wrapper = mount(Chat, {
+      global: {
+        plugins: [store]
+      }
+    })
+    const button = wrapper.find('button')
+    expect(button.exists()).toBe(true)
+  })
+
+  it('sends message on button click', async () => {
+    const sendMessage = jest.fn()
+    store = createStore({
+      state: {
+        user: { isAuthenticated: true },
+        messages: []
+      },
+      actions: {
+        sendMessage
+      }
+    })
+
+    wrapper = mount(Chat, {
+      global: {
+        plugins: [store]
+      }
+    })
+
+    const input = wrapper.find('input[type="text"]') || wrapper.find('textarea')
+    if (input.exists()) {
+      await input.setValue('测试消息')
+      const button = wrapper.find('button')
+      await button.trigger('click')
+      // Verify action was called
+      expect(sendMessage).toHaveBeenCalled()
+    }
+  })
+
+  it('displays chat history', () => {
+    store = createStore({
+      state: {
+        user: { isAuthenticated: true },
+        messages: [
+          { id: 1, content: '你好', role: 'user' },
+          { id: 2, content: '您好!', role: 'assistant' }
+        ]
+      },
+      actions: {
+        sendMessage: jest.fn()
+      }
+    })
+
+    wrapper = mount(Chat, {
+      global: {
+        plugins: [store]
+      }
+    })
+
+    const messages = wrapper.findAll('.message')
+    expect(messages.length).toBeGreaterThan(0)
+  })
+})

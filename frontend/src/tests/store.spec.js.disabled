@@ -1,0 +1,106 @@
+import { createStore } from 'vuex'
+import storeConfig from '@/store'
+
+describe('Vuex Store', () => {
+  let store
+
+  beforeEach(() => {
+    store = createStore(storeConfig)
+  })
+
+  describe('User State', () => {
+    it('initializes with default state', () => {
+      expect(store.state.user).toBeDefined()
+      expect(store.state.user.isAuthenticated).toBe(false)
+    })
+
+    it('sets user on login', () => {
+      store.commit('SET_USER', {
+        username: 'testuser',
+        email: 'test@example.com',
+        token: 'token123'
+      })
+
+      expect(store.state.user.isAuthenticated).toBe(true)
+      expect(store.state.user.username).toBe('testuser')
+    })
+
+    it('clears user on logout', () => {
+      store.commit('SET_USER', { username: 'testuser' })
+      store.commit('CLEAR_USER')
+
+      expect(store.state.user.isAuthenticated).toBe(false)
+      expect(store.state.user.username).toBeNull()
+    })
+  })
+
+  describe('Messages State', () => {
+    it('adds message to history', () => {
+      store.commit('ADD_MESSAGE', {
+        id: 1,
+        content: '测试消息',
+        role: 'user'
+      })
+
+      expect(store.state.messages.length).toBe(1)
+      expect(store.state.messages[0].content).toBe('测试消息')
+    })
+
+    it('clears message history', () => {
+      store.commit('ADD_MESSAGE', { id: 1, content: 'msg1' })
+      store.commit('ADD_MESSAGE', { id: 2, content: 'msg2' })
+      store.commit('CLEAR_MESSAGES')
+
+      expect(store.state.messages.length).toBe(0)
+    })
+  })
+
+  describe('Scenes State', () => {
+    it('sets scenes data', () => {
+      const scenes = {
+        '学习指导': { id: '1', description: '学习辅助' },
+        '思政学习': { id: '2', description: '思政学习' }
+      }
+
+      store.commit('SET_SCENES', scenes)
+
+      expect(store.state.scenes).toEqual(scenes)
+    })
+
+    it('selects a scene', () => {
+      store.commit('SELECT_SCENE', '学习指导')
+
+      expect(store.state.selectedScene).toBe('学习指导')
+    })
+  })
+
+  describe('Actions', () => {
+    it('dispatches login action', async () => {
+      const mockApi = {
+        login: jest.fn().mockResolvedValue({
+          status: 'success',
+          user: { username: 'testuser' },
+          access_token: 'token123'
+        })
+      }
+
+      // Mock the API service
+      await store.dispatch('login', {
+        username: 'testuser',
+        password: 'password123'
+      })
+
+      // Check if state was updated (depends on your implementation)
+      // expect(store.state.user.isAuthenticated).toBe(true)
+    })
+
+    it('dispatches sendMessage action', async () => {
+      const message = '测试消息'
+      
+      await store.dispatch('sendMessage', message)
+
+      // Check if message was added to state
+      // expect(store.state.messages.length).toBeGreaterThan(0)
+    })
+  })
+})

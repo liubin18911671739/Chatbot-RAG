@@ -1,0 +1,164 @@
+import apiService from '@/services/api'
+
+// Mock fetch
+global.fetch = jest.fn()
+
+describe('API Service', () => {
+  beforeEach(() => {
+    fetch.mockClear()
+  })
+
+  describe('Authentication', () => {
+    it('sends login request', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ 
+          status: 'success', 
+          access_token: 'token123',
+          user: { username: 'testuser' }
+        })
+      })
+
+      const result = await apiService.login('testuser', 'password123')
+      
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/login'),
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.any(String)
+        })
+      )
+      expect(result.status).toBe('success')
+    })
+
+    it('sends register request', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'success' })
+      })
+
+      const result = await apiService.register({
+        username: 'newuser',
+        email: 'new@example.com',
+        password: 'pass123'
+      })
+      
+      expect(fetch).toHaveBeenCalled()
+      expect(result.status).toBe('success')
+    })
+
+    it('handles login error', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ status: 'error', message: 'Invalid credentials' })
+      })
+
+      try {
+        await apiService.login('wrong', 'credentials')
+      } catch (error) {
+        expect(error.message).toContain('Invalid credentials')
+      }
+    })
+  })
+
+  describe('Chat', () => {
+    it('sends chat message', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ 
+          status: 'success',
+          response: '这是回复'
+        })
+      })
+
+      const result = await apiService.sendMessage('你好')
+      
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/chat'),
+        expect.objectContaining({
+          method: 'POST'
+        })
+      )
+      expect(result.response).toBe('这是回复')
+    })
+
+    it('sends message with context', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'success', response: '回复' })
+      })
+
+      const context = [{ role: 'user', content: '之前的消息' }]
+      await apiService.sendMessage('新消息', { context })
+      
+      expect(fetch).toHaveBeenCalled()
+    })
+  })
+
+  describe('Questions', () => {
+    it('fetches all questions', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ([
+          { id: 1, question: 'Q1', answer: 'A1' },
+          { id: 2, question: 'Q2', answer: 'A2' }
+        ])
+      })
+
+      const result = await apiService.getQuestions()
+      
+      expect(fetch).toHaveBeenCalled()
+      expect(result.length).toBe(2)
+    })
+
+    it('searches questions', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ([{ id: 1, question: '搜索结果' }])
+      })
+
+      const result = await apiService.searchQuestions('关键词')
+      
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('search'),
+        expect.any(Object)
+      )
+      expect(result.length).toBe(1)
+    })
+  })
+
+  describe('Scenes', () => {
+    it('fetches all scenes', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          '学习指导': { id: '1', description: '学习辅助' },
+          '思政学习空间': { id: '2', description: '思政学习' }
+        })
+      })
+
+      const result = await apiService.getScenes()
+      
+      expect(fetch).toHaveBeenCalled()
+      expect(result).toHaveProperty('学习指导')
+    })
+  })
+
+  describe('Feedback', () => {
+    it('submits feedback', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'success' })
+      })
+
+      const result = await apiService.submitFeedback({
+        message: '反馈内容',
+        rating: 5
+      })
+      
+      expect(fetch).toHaveBeenCalled()
+      expect(result.status).toBe('success')
+    })
+  })
+})

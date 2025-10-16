@@ -1,0 +1,94 @@
+import { mount } from '@vue/test-utils'
+import Scenes from '@/views/Scenes.vue'
+import { createStore } from 'vuex'
+
+describe('Scenes.vue', () => {
+  let store
+  let wrapper
+
+  beforeEach(() => {
+    store = createStore({
+      state: {
+        scenes: [
+          { id: '1', name: '学习指导', description: '学习辅助', status: 'available' },
+          { id: '2', name: '思政学习空间', description: '思政学习', status: 'available' }
+        ]
+      },
+      actions: {
+        loadScenes: jest.fn()
+      }
+    })
+  })
+
+  afterEach(() => {
+    if (wrapper) {
+      wrapper.unmount()
+    }
+  })
+
+  it('renders scenes list', () => {
+    wrapper = mount(Scenes, {
+      global: {
+        plugins: [store]
+      }
+    })
+    expect(wrapper.find('.scenes-container').exists() || 
+           wrapper.find('.scenes').exists()).toBe(true)
+  })
+
+  it('displays all scenes', () => {
+    wrapper = mount(Scenes, {
+      global: {
+        plugins: [store]
+      }
+    })
+    const sceneItems = wrapper.findAll('.scene-item') || wrapper.findAll('.scene-card')
+    expect(sceneItems.length).toBeGreaterThan(0)
+  })
+
+  it('shows scene details', () => {
+    wrapper = mount(Scenes, {
+      global: {
+        plugins: [store]
+      }
+    })
+    expect(wrapper.text()).toContain('学习指导')
+    expect(wrapper.text()).toContain('思政学习空间')
+  })
+
+  it('loads scenes on mount', () => {
+    const loadScenes = jest.fn()
+    store = createStore({
+      state: {
+        scenes: []
+      },
+      actions: {
+        loadScenes
+      }
+    })
+
+    wrapper = mount(Scenes, {
+      global: {
+        plugins: [store]
+      }
+    })
+
+    expect(loadScenes).toHaveBeenCalled()
+  })
+
+  it('handles scene selection', async () => {
+    wrapper = mount(Scenes, {
+      global: {
+        plugins: [store]
+      }
+    })
+
+    const sceneItem = wrapper.find('.scene-item') || wrapper.find('.scene-card')
+    if (sceneItem.exists()) {
+      await sceneItem.trigger('click')
+      // Verify scene is selected
+      expect(wrapper.emitted()).toHaveProperty('scene-selected') ||
+      expect(sceneItem.classes()).toContain('selected')
+    }
+  })
+})

@@ -1,0 +1,109 @@
+import { mount } from '@vue/test-utils'
+import Login from '@/views/Login.vue'
+import { createStore } from 'vuex'
+import { createRouter, createMemoryHistory } from 'vue-router'
+
+describe('Login.vue', () => {
+  let store
+  let router
+  let wrapper
+
+  beforeEach(() => {
+    store = createStore({
+      state: {
+        user: {
+          isAuthenticated: false
+        }
+      },
+      actions: {
+        login: jest.fn()
+      }
+    })
+
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/login', component: Login },
+        { path: '/chat', component: { template: '<div>Chat</div>' } }
+      ]
+    })
+  })
+
+  afterEach(() => {
+    if (wrapper) {
+      wrapper.unmount()
+    }
+  })
+
+  it('renders login form', () => {
+    wrapper = mount(Login, {
+      global: {
+        plugins: [store, router]
+      }
+    })
+    expect(wrapper.find('form').exists()).toBe(true)
+  })
+
+  it('has username and password inputs', () => {
+    wrapper = mount(Login, {
+      global: {
+        plugins: [store, router]
+      }
+    })
+    const inputs = wrapper.findAll('input')
+    expect(inputs.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('has submit button', () => {
+    wrapper = mount(Login, {
+      global: {
+        plugins: [store, router]
+      }
+    })
+    const button = wrapper.find('button[type="submit"]') || wrapper.find('button')
+    expect(button.exists()).toBe(true)
+  })
+
+  it('validates required fields', async () => {
+    wrapper = mount(Login, {
+      global: {
+        plugins: [store, router]
+      }
+    })
+
+    const form = wrapper.find('form')
+    await form.trigger('submit')
+    
+    // Should have validation errors for empty fields
+    expect(wrapper.text()).toMatch(/required|必填|不能为空/i)
+  })
+
+  it('calls login action on valid submit', async () => {
+    const login = jest.fn()
+    store = createStore({
+      state: {
+        user: { isAuthenticated: false }
+      },
+      actions: {
+        login
+      }
+    })
+
+    wrapper = mount(Login, {
+      global: {
+        plugins: [store, router]
+      }
+    })
+
+    const inputs = wrapper.findAll('input')
+    if (inputs.length >= 2) {
+      await inputs[0].setValue('testuser')
+      await inputs[1].setValue('testpass123')
+      
+      const form = wrapper.find('form')
+      await form.trigger('submit')
+      
+      expect(login).toHaveBeenCalled()
+    }
+  })
+})
