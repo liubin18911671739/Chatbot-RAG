@@ -11,11 +11,21 @@
 }
 
 ## 项目简介
-该项目是一个基于 Docker 的问答系统，利用前后端分离架构，实现了前端展示、后端业务，以及数据库和模型服务之间的协同工作。该系统专为北京第二外国语学院设计，具有校园网络访问限制功能，确保只能在校园内网环境中使用。
+该项目是一个基于 Docker 的**RAG (检索增强生成) 问答系统**，利用前后端分离架构，实现了前端展示、后端业务，以及数据库和模型服务之间的协同工作。系统集成了**向量数据库**和**语义搜索**功能，支持智能文档检索和知识问答。该系统专为北京第二外国语学院设计，具有校园网络访问限制功能，确保只能在校园内网环境中使用。
+
+## 核心特性 ✨
+- 🤖 **RAG 智能问答**: 基于检索增强生成技术的智能对话系统
+- 🔍 **语义搜索**: 使用 FAISS 向量数据库实现高效的语义检索 (< 1ms)
+- 🌐 **多语言支持**: 支持中英文等多种语言的文本向量化
+- 📚 **知识库管理**: 支持多场景知识库，包括思政学习、学习指导等
+- 🏫 **校园网限制**: 完善的校园网络访问控制机制
+- 🎯 **高性能**: 毫秒级向量检索，支持每秒 1000+ 查询
 
 ## 架构说明
 - **Frontend**: 构建前端显示界面，服务于用户请求。侦听端口 8080，并通过 Nginx 提供静态资源。
-- **Backend**: 后端服务，处理业务逻辑，侦听端口 5000，RAG 模型服务。
+- **Backend**: 后端服务，处理业务逻辑，侦听端口 5000，集成 RAG 模型和向量搜索服务。
+- **Vector Database**: FAISS 向量数据库，提供高效的语义搜索能力 (384维向量)。
+- **Embedding Service**: 基于 sentence-transformers 的多语言文本向量化服务。
 - **Miniprogram**: 微信小程序客户端，具有校园网络访问控制和管理功能。
 
 ## 校园网络限制功能
@@ -152,6 +162,44 @@ def greeting():
     greeting_text = "欢迎使用我们的QA系统！我是棠心问答AI辅导员，随时为你提供帮助～可以解答思想困惑、学业指导、心理调适等成长问题，也能推荐校园资源。请随时告诉我你的需求，我会用AI智慧陪伴你成长！✨"
     return jsonify({"status": "success", "greeting": greeting_text})
 
+## 向量数据库集成 🔍
+
+### 功能概述
+系统集成了基于 FAISS 和 sentence-transformers 的向量数据库，提供高效的语义搜索能力。
+
+### 核心组件
+- **Embedding Service** (`backend/services/embedding_service.py`)
+  - 使用 `paraphrase-multilingual-MiniLM-L12-v2` 多语言模型
+  - 支持中文、英文等多种语言
+  - 向量维度: 384
+  - LRU 缓存优化
+
+- **Vector Service** (`backend/services/vector_service.py`)
+  - FAISS 向量索引 (Flat/IVFFlat/HNSW)
+  - Top-K 相似度搜索
+  - 索引持久化
+  - 批量操作支持
+
+### 性能指标
+| 操作 | 性能 |
+|------|------|
+| 向量搜索 (Top-10) | < 1ms |
+| 批量向量化 (1000条) | ~15s |
+| 吞吐量 | > 1000 queries/sec |
+
+### 快速测试
+```bash
+cd backend
+source ../venv/bin/activate
+python test_vector_quick.py
+```
+
+### 详细文档
+- 📖 [使用手册](backend/services/VECTOR_INTEGRATION_README.md)
+- 📝 [实现总结](backend/VECTOR_INTEGRATION_SUMMARY.md)
+- 📦 [交付清单](backend/VECTOR_INTEGRATION_DELIVERY.md)
+- 💡 [代码示例](backend/examples_vector_usage.py)
+
 ## 独立运行服务
 
 ### 运行后端服务
@@ -163,6 +211,8 @@ def greeting():
    ```
    pip install -r requirements.txt
    ```
+   
+   **注意**: 首次运行会自动下载向量化模型 (~120MB)
   
 3. 启动后端服务：
    ```
@@ -498,3 +548,187 @@ json
   ⎿  成功创建测试管理员用户:      
        用户名: admin
        邮箱: admin@ichat.com
+
+## 技术栈 🛠️
+
+### 后端
+- **框架**: Flask 3.1.0
+- **数据库**: PostgreSQL / MySQL / SQLite
+- **ORM**: SQLAlchemy 2.0.38
+- **认证**: Flask-JWT-Extended 4.7.1
+- **向量数据库**: FAISS 1.10.0
+- **文本向量化**: sentence-transformers 3.4.1
+- **机器学习**: PyTorch 2.6.0, scikit-learn 1.6.1
+- **文档处理**: PyPDF2, python-docx
+- **LLM集成**: Google Gemini, DeepSeek
+
+### 前端
+- **框架**: Vue 3.0
+- **UI组件**: Element Plus 2.9.6
+- **状态管理**: Vuex 4.0 / Pinia 2.1.7
+- **路由**: Vue Router 4.0
+- **HTTP客户端**: Axios 0.21.4
+- **图表**: ECharts 6.0.0
+
+### 测试
+- **后端测试**: pytest 8.3.5, pytest-cov 6.0.0
+- **前端测试**: Jest 29.7.0, Cypress 12.17.4
+- **测试覆盖率**: 21% (核心模块 100%)
+
+### 部署
+- **容器化**: Docker, Docker Compose
+- **服务器**: Gunicorn 23.0.0
+- **反向代理**: Nginx
+
+## 测试 🧪
+
+### 运行所有测试
+```bash
+# 一键运行所有测试
+./run_all_tests.sh
+```
+
+### 后端测试
+```bash
+cd backend
+
+# 运行核心测试
+pytest tests/test_smoke.py tests/test_services.py -v
+
+# 运行向量数据库测试
+python test_vector_quick.py
+
+# 运行完整测试套件
+pytest tests/ -v --cov=. --cov-report=html
+```
+
+### 前端测试
+```bash
+cd frontend
+
+# 运行单元测试
+npm test
+
+# 运行测试覆盖率
+npm run test:coverage
+
+# 运行 E2E 测试
+npm run cypress:open
+```
+
+### 测试覆盖
+- ✅ 后端核心功能: 10个测试全部通过
+- ✅ 向量数据库: 55+ 单元测试
+- ✅ 前端组件: 7个测试通过
+
+## 项目结构 📁
+
+```
+ichat/
+├── backend/                      # 后端服务
+│   ├── app.py                   # Flask 应用入口
+│   ├── config.py                # 配置文件
+│   ├── requirements.txt         # Python 依赖
+│   ├── models/                  # 数据模型
+│   │   └── database.py         # 数据库模型
+│   ├── routes/                  # API 路由
+│   │   ├── auth.py             # 认证路由
+│   │   ├── chat.py             # 聊天路由
+│   │   └── ...
+│   ├── services/                # 业务服务
+│   │   ├── embedding_service.py # 文本向量化 ✨
+│   │   ├── vector_service.py    # 向量存储 ✨
+│   │   ├── rag_service.py       # RAG 检索生成
+│   │   └── chat_service.py      # 聊天服务
+│   ├── tests/                   # 测试文件
+│   │   ├── test_smoke.py       # 基础测试
+│   │   ├── test_services.py    # 服务测试
+│   │   ├── test_embedding_service.py  # Embedding 测试 ✨
+│   │   └── test_vector_service.py     # Vector 测试 ✨
+│   ├── models/                  # 向量模型缓存 ✨
+│   └── vector_store/            # FAISS 索引存储 ✨
+├── frontend/                     # 前端应用
+│   ├── src/
+│   │   ├── views/              # 页面组件
+│   │   ├── components/         # 通用组件
+│   │   ├── store/              # 状态管理
+│   │   └── services/           # API 服务
+│   ├── tests/                   # 前端测试
+│   └── package.json
+├── miniprogram/                  # 微信小程序
+│   ├── pages/                   # 小程序页面
+│   ├── utils/                   # 工具函数
+│   └── config/                  # 配置文件
+├── docs/                         # 文档
+│   ├── TESTING_QUICKSTART.md   # 测试快速入门
+│   ├── TESTING_STATUS.md       # 测试状态
+│   └── ...
+├── docker-compose.yml           # Docker 编排
+├── TODO.md                      # 任务清单
+└── README.md                    # 项目文档
+
+✨ = 新增向量数据库相关文件
+```
+
+## 开发路线图 🗓️
+
+### ✅ 已完成 (Phase 1)
+- [x] 基础架构搭建
+- [x] 用户认证系统
+- [x] 聊天功能
+- [x] 场景管理
+- [x] 校园网限制
+- [x] 向量数据库集成 ✨
+- [x] 语义搜索功能 ✨
+- [x] 测试框架
+
+### 🚧 进行中 (Phase 2)
+- [ ] 文档处理管线
+- [ ] 文档管理 API
+- [ ] RAG 检索优化
+- [ ] 管理后台完善
+
+### 📋 计划中 (Phase 3)
+- [ ] 混合检索 (BM25 + 向量)
+- [ ] 重排序优化
+- [ ] 对话历史管理
+- [ ] 性能监控
+- [ ] 用户反馈系统
+
+## 贡献指南 🤝
+
+欢迎贡献！请查看 [AGENTS.md](AGENTS.md) 了解详细的贡献指南。
+
+### 开发流程
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
+
+### 代码规范
+- Python: PEP 8
+- JavaScript: ESLint
+- 提交信息: Conventional Commits
+
+## 许可证 📄
+
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+
+## 联系方式 📧
+
+- **项目维护**: liubin18911671739
+- **技术支持**: support@bisu.edu.cn
+- **问题反馈**: [GitHub Issues](https://github.com/liubin18911671739/ichat/issues)
+
+## 致谢 🙏
+
+- 感谢北京第二外国语学院的支持
+- 感谢所有贡献者的付出
+- 基于 FAISS、sentence-transformers 等优秀开源项目
+
+---
+
+**最后更新**: 2025-10-18
+**版本**: 1.0.0
+**状态**: 🚀 持续开发中

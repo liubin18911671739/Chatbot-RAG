@@ -82,14 +82,23 @@ app.register_blueprint(analytics_bp, url_prefix='/api')
 
 # 初始化数据库
 from models.database import db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
+from flask_migrate import Migrate
 
-# 创建数据库表
-with app.app_context():
-    db.create_all()
-    logger.info("数据库表初始化完成")
+# 数据库配置
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 初始化数据库和迁移
+db.init_app(app)
+migrate = Migrate(app, db)
+
+# 在开发模式下创建数据库表（生产环境使用迁移）
+if APP_ENV == 'development' and not os.path.exists('migrations'):
+    with app.app_context():
+        db.create_all()
+        logger.info("数据库表初始化完成（开发模式）")
+else:
+    logger.info("数据库使用迁移管理（请运行 flask db upgrade）")
 
 # 记录认证服务状态
 from routes.auth import RADIUS_SERVER
